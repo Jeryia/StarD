@@ -1,0 +1,241 @@
+#!%BASH%
+
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#### stard_daemons
+# Manges the potentially many daemons that stard 
+# launches for plugins and it's own internal 
+# daemons. Function identially to an init script.
+
+
+## Setup Enrivonment
+
+STANDALONE=%STANDALONE%
+if [ $STANDALONE -eq 0 ]; then
+	source %SYSCONFDIR%/stard
+else
+	source "./stard-launcher.conf"
+	baseDir="../"
+	SERVER_DIR="$baseDir/StarMade"
+	USER=`id -u`
+fi
+
+if [ 'x' == "x$SERVER_DIR" ]; then
+	echo "SERVER_DIR undefined. exiting"
+	exit 1
+fi
+
+if [ 'x' == "x$baseDir" ]; then
+	echo "baseDir undefined. exiting"
+	exit 1
+fi
+
+stard_home="$baseDir/stard"
+spool="$baseDir/spool"
+plugin_dir="$stard_home/plugins"
+stard_log="$stard_home/log"
+stard_plugin_log="$stard_home/log/plugins/"
+ACTIVE_PLUGINS=`$stard_home/bin/stard_get_plugin_list`
+PLUGINS=$plugin_dir/*
+PROG=$0
+
+stard_bin="$stard_home/bin"
+stard_daemons="stard-multiplexer"
+stard_run="$stard_home"
+
+
+
+
+## plugin_daemon_active
+# check if plugin's daemon is running
+# INPUT1: plugin name
+# OUTPUT: 0 if plugin's daemon is running, 1 if not, 2 if plugin has no daemon
+function plugin_daemon_active {
+	plugin=$1
+	if [ -x "$plugin_dir/$plugin/daemon" ]; then
+		PIDFILE="$plugin_dir/$plugin/daemon.pid"
+		if [ -r "$PIDFILE" ]; then
+			pgrep -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1
+			RET=$?
+			if [ $RET -eq 0 ]; then
+				return 0
+			else
+				return 1
+			fi
+		else 
+			return 1
+		fi
+	fi
+	return 2
+}
+
+## plugin_status
+# Get the status of all plugins who should be running
+# OUTPUT: 0 if all are running, 1 if not
+function plugin_status {
+	STATUS=0
+	for plugin in $ACTIVE_PLUGINS; do
+		plugin_daemon_active $plugin
+		RET=$?
+		if [ $RET -eq 0 ]; then
+			echo "$plugin is running"
+		fi
+		if [ $RET -eq 1 ]; then
+			echo "$plugin is not running"
+			STATUS=1
+		fi
+	done
+	return $STATUS
+}
+
+## start_plugins
+# start all plugins that should be started
+# OUTPUT: success or failure
+function start_plugins {
+	echo -n "Starting Plugin daemons..."
+	notRunning=`plugin_status | grep 'not running' | awk '{print \$1}'`
+	setup_logging
+	for plugin in $notRunning; do
+		if [ -x "$plugin_dir/$plugin/daemon" ]; then
+			CWD=`pwd`
+			cd "$plugin_dir/$plugin"
+			exec_prefix=`$stard_bin/exec_prefix "$plugin_dir/$plugin/daemon"`
+			nohup $exec_prefix $plugin_dir/$plugin/daemon > "$stard_plugin_log/$plugin-log/$plugin-deamon.log" 2>&1 &
+			echo -n $! > $plugin_dir/$plugin/daemon.pid
+			cd $CWD
+		fi
+	done
+	plugin_status > /dev/null 2>&1
+	RET=$?
+	if [ $RET -eq 0 ]; then
+		echo Success
+		return 0
+	fi
+	echo Failure
+	return 1
+}
+
+## stop_plugins
+# stop all plugins
+function stop_plugins {
+	for plugin in $PLUGINS; do
+		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
+			PID=`cat $plugin_dir/$plugin/daemon.pid`
+			kill $PID
+		fi
+	done
+	sleep 5
+	for plugin in $PLUGINS; do
+		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
+			pkill -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+			sleep 1
+			pgrep -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+			RET=$?
+			if [ $RET -eq 0 ]; then
+				pkill -9 -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+			fi
+			sleep 1
+			pgrep -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+			RET=$?
+			if [ $RET -eq 0 ]; then
+				echo "Failed to kill $PID"
+			else
+				rm -f $plugin_dir/$plugin/daemon.pid
+			fi
+		fi
+	done
+}
+
+## setup_logging
+# Build the logging structure
+function setup_logging {
+	for plugin in $ACTIVE_PLUGINS; do
+		mkdir -p "$stard_plugin_log/$plugin-log"
+	done
+}
+
+## status
+# Get the status of all stard daemons
+# OUTPUT: 0 if running, 1 if not
+function status {
+	status=0
+	for daemon in $stard_daemons; do
+		
+		pgrep -U $USER --pidfile $stard_run/$daemon\.pid > /dev/null 2>&1 
+		RET=$?
+	
+		if [ $RET -eq 0 ]; then
+			echo "$daemon is running"
+		else
+			echo "$daemon is not running"
+			status=1
+		fi
+	done
+}
+
+## start
+# start all daemons that should be started
+# OUTPUT: 0 if success, nonzero if failure
+function start {
+	notRunning=`status | grep 'not running' | awk '{print \$1}'`
+	for daemon in $notRunning; do
+		echo "Starting $daemon"
+		nohup $stard_bin/$daemon > $stard_log/$daemon.log 2>&1 &
+		echo -n $! > $stard_run/$daemon.pid
+	done
+
+	return $status
+}
+
+## stop
+# stop all daemons
+# OUTPUT: 0 if success, not 0 if failure
+function stop {
+	for daemon in $stard_daemons; do
+		pkill -U $USER --pidfile $stard_run/$daemon\.pid > /dev/null 2>&1 
+		sleep 1 
+		pkill -9 -U $USER --pidfile $stard_run/$daemon\.pid > /dev/null 2>&1
+	done
+	return $status
+}
+
+
+case "$1" in
+	start)
+		start
+		start_plugins
+		status > /dev/null 2>&1
+		RET=$?
+		status=`expr $status + $RET`
+		exit $status
+		;;	
+	status)
+		status
+		plugin_status
+		RET=$?
+		status=`expr $status + $RET`
+		exit $status
+	;;	
+	stop)
+		stop
+		stop_plugins
+		status > /dev/null 2>&1
+		RET=$?
+		status=`expr $status + $RET`
+	;;
+	restart)
+		stop
+		start
+	;;		
+esac

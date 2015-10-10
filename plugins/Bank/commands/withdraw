@@ -1,0 +1,93 @@
+#!perl
+use strict;
+use warnings;
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+require "$stard_home/lib/stard_lib.pm";
+stard_setup_run_env($stard_home);
+require "./lib/bank_lib.pm";
+
+
+main(@ARGV);
+exit 0;
+#########################################################
+
+
+
+
+sub main {
+	my $player = $_[0];
+	my $amount = $_[1];
+	my $lock_fh;
+	my $in_bank;
+
+	if (!($amount) || ($amount =~/\D+/ && !($amount eq 'all' || $amount eq 'max'))) {
+		stard_pm($player, "You must provide the number to withdraw!");
+		exit 1;
+	}
+
+	## lock file so that we don't allow more than one of these to run at once.
+	$lock_fh = bank_lock_account($player);
+	$in_bank = bank_get_balance($player);
+	if (!$lock_fh) {
+		stard_pm($player, "COMMAND ERROR: failed to get lock on $player\'s account");
+		exit 1;
+	}
+
+
+	## Since starmade can only handle a certain amount for an individual 
+	#player's credits, we make sure we don't give the player more than that.
+	if ($amount eq 'all' || $amount eq 'max') {
+		if ($in_bank > 2000000000) {
+			my $player_credits = get_player_credits($player);
+			$amount = 2000000000 - $player_credits;
+		}
+		else {
+			$amount = $in_bank;
+		};
+	};
+
+
+	## don't withdraw if we don't have the money.
+	if ($in_bank < $amount) {
+		stard_pm($player, "You do not have that many credits in your bank to withdraw!");
+		exit 1;
+	};
+
+
+	## Perform transaction
+	if (!stard_give_credits($player, $amount)) {
+		stard_pm($player, "Withdrawl failed...");
+		exit 1;
+	};
+	if (!bank_add_amount($player, "-$amount")) {
+		stard_pm($player, "Withdrawl failed...");
+		exit 1;
+	};
+	stard_pm($player, "$amount has been withdrawn from your bank account");
+	bank_unlock_account($lock_fh);
+};
+
+
+## usage
+# Print help information
+# INPUT1: player to send help message to
+sub usage {
+	my $player = $_[0];
+	stard_pm($player, "Usage: withdraw <amount>");
+	stard_pm($player, "Description: Withdraw money from the bank");
+}

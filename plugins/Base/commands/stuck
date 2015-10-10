@@ -1,0 +1,98 @@
+#!perl
+use strict;
+use warnings;
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+our $base_home;
+{
+	my @tmp = split("/", $0);
+	# grab everything but the last entry
+	for (my $i = 0; $i < @tmp -1; $i++ ) {
+		$base_home .= "/$tmp[$i]";
+	}
+	$base_home =~s/^\///;
+	$base_home.="/..";
+}
+
+my $base_spool = "$base_home/spool";
+my $stard_home = "$base_home/../..";
+
+require "$stard_home/lib/stard_lib.pm";
+stard_setup_run_env($stard_home);
+
+
+
+main(@ARGV);
+exit 0;
+
+
+
+
+sub main {
+	my $player = $_[0];
+	my %player_info;
+
+
+	my $curTime = `date +%s`;
+	$curTime =~s/\D+//ig;
+	
+
+	## if player is in a ship, they are not stuck.
+	%player_info = %{stard_player_info($player)};
+	if ($player_info{control} && !($player_info{control}=~/PLAYERCHARACTER/)) {
+		stard_pm($player, "This command is only to be used in astronaut mode");
+		exit 0;
+	};
+
+
+	## lock file so that we don't get confused and get the last time we ran
+	my $lastTime = 0;
+	mkdir $base_spool;
+	system("touch '$base_spool/$player.stuck'");
+	my $read_fh;
+	if (open($read_fh, "<", "$base_spool/$player.stuck")) {
+		flock($read_fh, 2) or die "failed to get lock on '$base_spool/$player.stuck': $?";
+		$lastTime = join("", <$read_fh>);
+	}
+	$lastTime =~s/\D+//ig;
+	if (!($lastTime=~/\d/)) {
+		$lastTime = 0;
+	}
+
+	
+	# If player ran this command less than a minute ago. Tell them wait.
+	my $timeDiff = $curTime - $lastTime;
+	if (!($timeDiff >= 60)) {
+		my $remaining = 60 - $timeDiff;
+		stard_pm($player, "You must wait annother $remaining seconds before you can use that command again\n");
+		exit 0;
+	}
+	open(my $time_fh, ">", "$base_spool/$player.stuck") or die "failed to open file '$base_spool/$player.stuck': $!";
+	print $time_fh $curTime;
+	close($time_fh);
+	
+
+	# pick a direction and throw the player in it.
+	my $axis = int(rand(2));
+	my @sector = split(" ", $player_info{sector});
+	$sector[$axis] += 1;
+	my $newLoc = join(" ", @sector);
+	stard_change_sector_for($player, $newLoc);
+	stard_give_item($player, "Ship Core", 1);
+	stard_give_item($player, "Power Reactor", 1);
+	stard_give_item($player, "Thruster", 2);
+	stard_pm($player, "$player, You have been moved to a different sector, and given some equipment to make that not to terrible.");
+	close($read_fh);
+};

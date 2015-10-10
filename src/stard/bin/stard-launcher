@@ -1,0 +1,134 @@
+#!%BASH%
+
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#### stard-launcher
+# The primary launcher for stard. 
+# This launches all of the stard daemons (using 
+# stard_daemons), and starts the starmade server 
+# itself.
+
+## Setup Enrivonment
+
+STANDALONE=%STANDALONE%
+if [ $STANDALONE -eq 0 ]; then
+	source %SYSCONFDIR%/stard
+else
+	source "./stard-launcher.conf"
+	baseDir="../"
+	SERVER_DIR="$baseDir/StarMade"
+fi
+
+CWD=`pwd`
+if [ 'x' == "x$SERVER_DIR" ]; then
+	echo "SERVER_DIR undefined. exiting"
+	exit 1
+fi
+
+if [ 'x' == "x$baseDir" ]; then
+	echo "baseDir undefined. exiting"
+	exit 1
+fi
+
+if [ 'x' == "x$EXEC" ]; then
+	echo "EXEC undefined. exiting"
+	exit 1
+fi
+
+if [ ! -r "$baseDir/tools/StarMade-Starter.jar" ]; then
+	echo "StarMade-Starter.jar is missing..."
+	echo "Please download this from http://www.starmade.org/download and put it in $baseDir/tools/"
+	exit 1
+fi
+
+if [ ! -r "$baseDir/tools/StarNet.jar" ]; then
+	cd "$baseDir/tools/"
+	echo "$baseDir/tools/StarNet.jar not found... Pulling from star-made.org"
+	wget http://files.star-made.org/StarNet.jar || exit 1
+	cd "$CWD"
+fi
+
+
+stard_home="$baseDir/stard"
+spool="$baseDir/spool"
+plugin_dir="$stard_home/plugins"
+bin="$stard_home/bin"
+stard_log="$stard_home/log"
+#output="$spool/serverOut"
+error="$spool/serverErr"
+PLUGINS=`$stard_home/bin/stard_get_plugin_list`
+
+
+## Have starmade 'set itself up' if needbe
+if [ ! -e "$SERVER_DIR/version.txt" ]; then
+	cd "$baseDir"
+	java -jar ./tools/StarMade-Starter.jar -nogui -force &
+	PID=$!
+	while [ ! -e ./StarMade/version.txt ]; do
+	        sleep 1
+	done
+	sleep 5
+	kill $PID > /dev/null 2>&1
+	sleep 1
+	kill -9 $PID > /dev/null 2>&1
+	cd $CWD
+fi
+
+
+## if server isn't setup with keys, set it up
+grep -q "SUPER_ADMIN_PASSWORD_USE = true" $SERVER_DIR/server.cfg > /dev/null 2>&1
+RET=$?
+if [ $RET -ne 0 ]; then
+	cd "$SERVER_DIR"
+	$EXEC > /dev/null 2>&1 &
+	PID=$!
+	while [ ! -e "$SERVER_DIR/server.cfg" ]; do
+		sleep 1
+	done
+	kill $PID
+	cd "$CWD"
+	$stard_home/bin/stard_gen_passwd
+fi
+
+
+
+###################################
+#   Setup and start StarD 
+###################################
+
+
+
+## setup output files for the starmade server
+mkdir $spool > /dev/null 2>&1
+#mkfifo $output
+mkfifo $error > /dev/null 2>&1
+
+$bin/rotate_logs
+
+# Go through each plugin, if it has a daemon, use it
+$bin/stard_daemons start
+
+# Launch the starmade daemon.
+# haven't seen a use for stdout so we just throw it away.
+cd $SERVER_DIR
+echo "Starting Starmade"
+$EXEC > /dev/null 2> $error
+cd $CWD
+
+$bin/stard_daemons stop
+
+# Send a sigterm to all launched processes before exiting.
+kill 0
+
+exit 0

@@ -1,0 +1,63 @@
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##################################
+# stard README
+
+Thank you for trying stard. This collection of scripts is designed to provide a general manager for the starmade deamon. 
+
+
+####### Before you install ######
+Check to ensure you have the following dependancies installed:
+- perl >= 5
+- perl File::Basename module
+- perl File::Path module
+- perl Text::ParseWords module
+- perl Config::IniFiles module
+- bash
+- python
+- java (You need this to run starmade)
+- StarMade-Starter.jar (Get it at http://www.starmade.org/download)
+
+###### Installation Instructions ######
+#install with the following commands:
+
+
+tar -xzvf stard.tar.gz
+cd stard-0.0.1
+./configure
+make
+
+# root is required to install as it will be 
+# creating a starmade user to run everything 
+# under as well as putting the init script 
+# in place which must be done as root!
+
+sudo make install
+
+# put the StarMade-Starter.jar file you downloaded in /var/starmade/tools/
+# (get it at http://www.starmade.org/download)
+sudo cp StarMade-Starter.jar /var/starmade/tools/
+sudo chmod 644 /var/starmade/tools/StarMade-Starter.jar
+
+# This may take a long time to start, as it will use the StarMade-Starter to download starmade.
+# you can watch the install by looking at the /var/starmade/stard/log/launcher.log
+sudo service stard start
+
+# check to make sure everything looks ok:
+sudo service stard status
+
+# wait about a minute, it can take a minute before starmade to collect itself.
+sudo /var/starmade/stard/bin/stard_test
+
+# if both of those come back ok, you should be set :)
+# if not, it is now safe to begin crying :'(

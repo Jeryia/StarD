@@ -1,0 +1,1 @@
+!get <item> - gives the player the item. If called without an item it will list the available items

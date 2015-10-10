@@ -1,0 +1,5 @@
+#### stard 
+# Deamon configuration for the rool level scripts.
+
+# command that will be used to execute starmade
+EXEC="%JAVA% -Xms128m -Xmx4096m -jar StarMade.jar -server"

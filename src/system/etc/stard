@@ -1,0 +1,29 @@
+#### stard 
+# Deamon configuration for the rool level scripts.
+
+# primary directory that starmade will function out of. (one step down from Starmade)
+baseDir="%STARMADEDIR%"
+
+# command that will be used to execute starmade
+EXEC="%JAVA% -Xms128m -Xmx4096m -jar StarMade.jar -server"
+
+# user to run stard as
+USER="%USER%"
+
+# group to run stard as
+GROUP="%USER%"
+
+# Amount of warning to give users before shutdown
+SHUTDOWN_TIME="10"
+
+# Directory to run stard out of
+SERVER_DIR="$baseDir/StarMade"
+
+# Location to backup the server area
+BACKUP_DIR="$baseDir/StarMade-backup"
+
+# If set to 1, server will automatically restart on crash
+AUTO_RESTART=0
+
+# Hybridize (don't turn this on unless you know what your doing!)
+HYBRIDIZE=0

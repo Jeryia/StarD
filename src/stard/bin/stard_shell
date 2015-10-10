@@ -1,0 +1,82 @@
+#!%PERL%
+use strict;
+use warnings;
+use Cwd;
+
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+#### stard_shell
+# launches a shell for running commands against 
+# the starmade server.
+
+
+# determine where the stard home is
+# using our called path.
+our $stard_home;
+{
+	my @tmp = split("/", $0);
+	# grab everything but the last entry
+	for (my $i = 0; $i < @tmp -1; $i++ ) {
+		$stard_home .= "/$tmp[$i]";
+	}
+	$stard_home =~s/^\///;
+	$stard_home.="/..";
+}
+chdir($stard_home);
+$stard_home= getcwd();
+
+
+# load stard_lib.
+require "$stard_home/lib/stard_lib.pm";
+require "$stard_home/lib/stard_core.pm";
+setup_core_env($stard_home);
+stard_setup_run_env($stard_home);
+$| = 1;
+
+
+&main();
+sub main {
+	my $input = '';
+	print stard_cmd("/status");
+	print "########################################################\n";
+	print "Welcome to the stard shell!\n";
+	print "This offers a general shell interface to the starmade server\n";
+	print "You can run any normal starmade command in this shell\n";
+	print "You can quit this shell at any time with the quit command or by using ctrl-C\n";
+	print "########################################################\n";
+	print "stard\$ ";
+	$input = <STDIN>;
+	while ( $input ne "quit\n" ) {
+		my @args = split(" ", $input);
+		my $cmd = shift(@args);
+		if ($cmd =~/^\//) {
+			print stard_cmd($cmd, @args);
+		}
+		elsif ($cmd =~s/^!//) {
+			print plugin_command($cmd, @args);
+		}
+		elsif($cmd=~/\S/ && !($cmd eq 'quit')) {
+			print "Invalid command.\n";
+			print "to run a starmade command use /<command>\n";
+			print "to run a stard command use !<command>\n";
+			exit 1;
+		};
+
+		print "stard\$ ";
+		$input = <STDIN>;
+	}
+	print "Exiting stard shell...\n";
+		
+};

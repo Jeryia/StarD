@@ -1,0 +1,578 @@
+#!/bin/bash
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+SBINDIR="/usr/sbin"
+PREFIX=""
+LOCALSTATEDIR="/var"
+STARMADEDIR="/starmade"
+USER="starmade"
+#SYSTEMDSERVICEDIR="/usr/lib/systemd/system/"
+SYSCONFDIR="/etc/sysconfig"
+SYSTEMD=0
+INITV=1
+STANDALONE=0
+
+if [ -d $SYSCONFDIR ]; then
+	SYSCONFDIR="/etc/sysconfig"
+else 
+	SYSCONFDIR="/etc/default"
+fi
+
+
+
+
+while [[ $# > 0 ]]; do
+	arg="$1"
+
+	case $arg in
+		--sbindir)
+			SBINDIR="$2"
+			shift # past argument
+			shift # past argument
+		;;
+		--prefix)
+			PREFIX="$2"
+			shift # past argument
+			shift # past argument
+		;;
+		--standalone)
+			STANDALONE=1
+			INITV=0
+			SYSTEMD=0
+			shift # past argument
+		;;
+		--starmadedir)
+			STARMADEDIR=$2
+			shift # past argument
+			shift # past argument
+		;;
+		--sysconfdir)
+			SYSCONFDIR=$2
+			shift # past argument
+			shift # past argument
+		;;
+		--localstatedir)
+			LOCALSTATEDIR=$2
+			shift # past argument
+			shift # past argument
+		;;
+		--with-initv)
+			INITV=1
+			SYSTEMD=0
+			shift # past argument
+		;;
+		--without-initv)
+			INITV=0
+			shift # past argument
+		;;
+		#--with-systemd)
+		#	INITV=0
+		#	SYSTEMD=1
+		#	shift # past argument
+		#;;
+		#--without-systemd)
+		#	SYSTEMD=0
+		#	shift # past argument
+		#;;
+#		--systemd-service-dir)
+#			SYSTEMDSERVICEDIR=$2
+#			shift # past argument
+#			shift # past argument
+#		;;
+		--user)
+			USER=$2
+			shift # past argument
+			shift # past argument
+		;;
+		--help)
+			echo "./configure [options]"
+			echo
+			echo "OPTIONS:"
+			echo "  --prefix <dir> :Give a location to prefix all installs (everything but the init scripts will end up in thie directory (default /)"
+			echo
+			echo "  --sbindir <dir> :Give the loction to install privileged commands (default /usr/sbin)"
+			echo "  --sysconfdir <dir> :Give the loction of the the system configuration directory (default $SYSCONFDIR)"
+			echo "  --localstatedir <dir> :Give the loction of the the system state directory (default /var)"
+			echo "  --starmadedir <dir> :Give the loction of the installation in the localstatedir (default starmade)"
+			echo "  --starmadedir <dir> :Give the loction of the installation in the localstatedir (default starmade)"
+			echo
+			echo "  --with-initv  :Compile with initv scripts"
+			echo "  --without-initv  :Compile without initv scripts"
+			echo "  --standalone  :Compile standalone version. (WARNING EXPERIMENTAL)"
+			echo "  --user  :User that the daemons will run as. (This user will be created in the make install step)"
+			exit 0
+		;;
+		*)
+			echo "Error. unknown option given $1."
+			echo "see --help for a full list of options"
+			exit 1
+		;;
+	esac
+	#shift # past argument or value
+done
+
+
+
+
+echo "Checking Dependancies"
+echo -n "bash... "
+command -v bash > /dev/null 2>&1 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	BASH=$(command -v bash)
+else
+	echo "not ok"
+	echo "FAILED to locate bash installation... aborting."
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "wget... "
+command -v wget > /dev/null 2>&1 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate wget installation... aborting."
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "perl... "
+command -v perl > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	PERL=$(command -v perl)
+else
+	echo "not ok"
+	echo "FAILED to locate perl installation... aborting."
+	echo "If perl is installed, it is not in your current"
+	echo "path, you can specify a specific path to the perl"
+	echo "binary with the --perl option"
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "perl-strict... "
+$PERL -e "use strict" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module strict... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-warnings... "
+$PERL -e "use warnings" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module warnings... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-File::Basename... "
+$PERL -e "use File::Basename" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module File::Basename... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-File::Path... "
+$PERL -e "use File::Path" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module File::Path... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Text::ParseWords... "
+$PERL -e "use Text::ParseWords" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Text::ParseWords... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Config::IniFiles... "
+$PERL -e "use Config::IniFiles" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Config::IniFiles... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Proc::Daemon... "
+$PERL -e "use Proc::Daemon" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Proc::Daemon... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Carp... "
+$PERL -e "use Carp" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Carp... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Cwd... "
+$PERL -e "use Cwd" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Cwd... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-POSIX... "
+$PERL -e "use POSIX" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module POSIX... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "python... "
+command -v python > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	PYTHON=$(command -v python)
+else
+	echo "not ok"
+	echo "FAILED to locate python installation... aborting."
+	echo "If perl is installed, it is not in your current"
+	echo "path, you can specify a specific path to the perl"
+	echo "binary with the --perl option"
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "java... "
+command -v java > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	JAVA=$(command -v java)
+else
+	echo "not ok"
+	echo "FAILED to locate java installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+
+echo -n "pkill... "
+command -v pkill > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate pkill installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "pgrep... "
+command -v pgrep > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate pgrep installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+
+echo -n "sed... "
+command -v sed > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate sed installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "mkfifo... "
+command -v mkfifo > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate mkfifo installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "rsync... "
+command -v rsync > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate rsync installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+#if [ $SYSTEMD -eq 1 ]; then
+#	echo -n "systemd... "
+#	if [ -d $SYSTEMDSERVICEDIR ]; then
+#		echo "ok"
+#		INITV=0
+#	else
+#		echo "not ok"
+#		echo "Failed to locate where to place systems service script"
+#if [ $SYSTEMD -eq 1 ]; then
+#	echo -n "systemd... "
+#	if [ -d $SYSTEMDSERVICEDIR ]; then
+#		echo "ok"
+#		INITV=0
+#	else
+#		echo "not ok"
+#		echo "Failed to locate where to place systems service script"
+#		echo "You can specify a specific location with the argument"
+#		echo "--systemd-service-dir"
+#		echo "Systemd support will be disabled"
+#		SYSTEMD=0
+#		
+#	fi
+#fi
+
+
+if [ $INITV -eq 1 ]; then
+	echo -n "initv... "
+	if [ -d /etc/init.d ]; then
+		echo "ok"
+	else
+		echo "not ok"
+		echo "Failed to locate where to place init script!"
+		echo "/etc/init.d does not appear to exist!"
+		INITV=0
+	fi
+fi
+
+if [ $INITV -eq 0 ]; then
+	if [ $SYSTEMD -eq 0 ]; then
+		echo "################"
+		echo "    WARNING"
+		echo "################"
+		echo "All service options are disabled. $NAME will not use any OS service launching utilities"
+	fi
+fi
+
+function subs_strings {
+	
+	echo "	sed -i \"s,%BASH%,\$(BASH),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%PERL%,\$(PERL),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%PYTHON%,\$(PYTHON),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%JAVA%,\$(JAVA),g\" $1" >> ./Makefile
+
+	echo "	sed -i \"s,%SBINDIR%,\$(SBINDIR),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%SYSCONFDIR%,\$(SYSCONFDIR),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%LOCALSTATEDIR%,\$(LOCALSTATEDIR),g\" $1" >> ./Makefile
+
+	echo "	sed -i \"s,%STARMADEDIR%,\$(STARMADEDIR),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%SYSTEMDSERVICEDIR%,\$(SYSTEMDSERVICEDIR),g\" $1" >> ./Makefile
+
+	echo "	sed -i \"s,%USER%,\$(USER),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%STANDALONE%,\$(STANDALONE),g\" $1" >> ./Makefile
+	echo "" >> ./Makefile
+}
+
+echo -n "Writing New Makefile..."
+echo -n '' > ./Makefile
+
+echo "
+NAME			= stard
+VERSION			= 0.0.1
+STARMADE_SOURCE		= ./src/starmade/
+STARD_SOURCE		= ./src/stard/
+SYSTEM_SOURCE		= ./src/system/
+BUILD_DIR		= ./build
+STARMADE_BUILD		= \$(BUILD_DIR)/starmade
+STARD_BUILD		= \$(STARMADE_BUILD)/stard
+BASE_DIR		= \$(pwd)
+
+
+## location settings
+BASH 			= $BASH
+PERL 			= $PERL
+PYTHON 			= $PYTHON
+JAVA 			= $JAVA
+PREFIX			= $PREFIX
+SBINDIR			= \$(PREFIX)$SBINDIR
+SYSCONFDIR		= $SYSCONFDIR
+LOCALSTATEDIR		= $LOCALSTATEDIR
+STARMADEDIR		= \$(PREFIX)\$(LOCALSTATEDIR)/$STARMADEDIR
+SYSTEMDSERVICEDIR	= $SYSTEMDSERVICEDIR
+
+## general configs
+USER			= $USER
+STANDALONE		= $STANDALONE
+
+## environment
+USERID			= \$(shell id -u )
+
+all: clean mkbuild build_stard build_system
+
+mkbuild: 
+	mkdir -p \$(STARMADE_BUILD)/spool
+	mkdir \$(STARMADE_BUILD)/tools
+	ln -s ./StarMade \$(STARMADE_BUILD)/server
+build_stard:
+	cp -pfr \$(STARD_SOURCE) \$(STARD_BUILD)
+" >> ./Makefile
+for file in '$(STARD_BUILD)/stard.cfg'; do
+	subs_strings $file
+done
+
+if [ $STANDALONE -ne 1 ]; then
+	echo "	mv \$(STARD_BUILD)/stard.cfg \$(STARD_BUILD)/stard.cfg.newversion" >> ./Makefile
+fi
+
+
+for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '$(STARD_BUILD)/bin/stard_get_plugin_list' '$(STARD_BUILD)/bin/stard-multiplexer' '$(STARD_BUILD)/bin/stard_daemons' '$(STARD_BUILD)/bin/stard_gen_passwd' '$(STARD_BUILD)/bin/stard_shell' '$(STARD_BUILD)/bin/stard_test' '$(STARD_BUILD)/bin/exec_prefix' '$(STARD_BUILD)/lib/stard_lib.pm' '$(STARD_BUILD)/lib/stard_core.pm' '$(STARD_BUILD)/bin/rotate_logs'; do
+	subs_strings $file
+done
+
+echo "
+
+
+build_system:
+	cp -pfr \$(SYSTEM_SOURCE)/sbin/ \$(BUILD_DIR)/sbin
+	cp -pfr \$(SYSTEM_SOURCE)/etc/ \$(BUILD_DIR)/etc
+	cp -pf \$(SYSTEM_SOURCE)/stard.initv \$(BUILD_DIR)/
+
+"  >> ./Makefile
+
+
+
+for file in '$(BUILD_DIR)/sbin/stard' '$(BUILD_DIR)/sbin/stard-stop' '$(BUILD_DIR)/sbin/stard-backup' ; do
+	subs_strings $file
+done
+
+
+for file in '$(BUILD_DIR)/etc/stard' '$(BUILD_DIR)/etc/stard-launcher.conf.standalone'; do
+	subs_strings $file
+done
+
+if [ $STANDALONE -eq 1 ]; then
+	echo "	cp \$(BUILD_DIR)/etc/stard-launcher.conf.standalone \$(BUILD_DIR)/starmade/stard/stard-launcher.conf" >> ./Makefile
+fi
+
+for file in '$(BUILD_DIR)/stard.initv'; do
+	subs_strings $file
+done
+if [ $STANDALONE -ne 1 ]; then
+	echo "
+
+install:
+ifeq (\$(USERID), 0)
+	useradd -c 'Privilege-separated starmade server' -s /bin/bash -r -d \$(STARMADEDIR) \$(USER) 2> /dev/null || :
+	service stard stop || :
+endif
+	cp -pfr \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
+
+	cp -pf \$(BUILD_DIR)/sbin/stard \$(DESTDIR)\$(SBINDIR)/
+	cp -pf \$(BUILD_DIR)/sbin/stard-stop \$(DESTDIR)\$(SBINDIR)/
+	cp -pf \$(BUILD_DIR)/sbin/stard-backup \$(DESTDIR)\$(SBINDIR)/
+
+	mkdir -p \$(DESTDIR)\$(SYSCONFDIR)/
+	cp -pn \$(BUILD_DIR)/etc/stard \$(DESTDIR)\$(SYSCONFDIR)
+	cp -pfr \$(BUILD_DIR)/../plugins/* \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.sample/
+
+	mv -n \$(DESTDIR)\$(STARMADEDIR)/stard/stard.cfg.newversion \$(DESTDIR)\$(STARMADEDIR)/stard/stard.cfg
+	
+	chmod 775 \$(DESTDIR)\$(STARMADEDIR)
+	chmod 1770 \$(DESTDIR)\$(STARMADEDIR)/spool
+ifeq (\$(USERID), 0)
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/*
+	chown root:\$(USER) \$(DESTDIR)\$(STARMADEDIR)
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/spool
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/log
+endif
+
+" >> ./Makefile
+
+
+	if [ $INITV -eq 1 ]; then
+		echo "	cp -p \$(BUILD_DIR)/stard.initv \$(DESTDIR)/etc/init.d/stard" >> ./Makefile
+	fi
+	#if [ $SYSTEMD -eq 1 ]; then 
+	#	echo "	cp -p \$(BUILD_DIR)/stard.service \$(DESTDIR)\$(SYSTEMDSERVICEDIR)/" >> ./Makefile
+	#	echo "ifeq (\$(USERID), 0)" >> ./Makefile
+	#	echo "	systemctl daemon-reload" >> ./Makefile
+	#	echo "endif" >> ./Makefile
+	#fi
+fi
+echo "
+clean:
+	rm -rf ./build
+" >> ./Makefile
+
+echo 'Success!'

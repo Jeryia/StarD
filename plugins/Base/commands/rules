@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+## setup environment
+our $base_home;
+{
+	my @tmp = split("/", $0);
+	# grab everything but the last entry
+	for (my $i = 0; $i < @tmp -1; $i++ ) {
+		$base_home .= "/$tmp[$i]";
+	}
+	$base_home =~s/^\///;
+	$base_home.="/..";
+}
+
+my $base_spool = "$base_home/spool";
+my $stard_home = "$base_home/../..";
+
+require "$stard_home/lib/stard_lib.pm";
+stard_setup_run_env($stard_home);
+
+
+
+main(@ARGV);
+exit 0;
+##############################################
+
+
+
+sub main {
+	my $player = $_[0];
+	my @rules;
+	if (open(my $rules_fh, "<", "$base_home/rules.txt")) {
+		@rules = <$rules_fh>;
+		close($rules_fh);
+	}
+	else {
+		print "$base_home/../../../StarMade/rules.txt\n";
+		if (open(my $star_rules_fh, "<", "$base_home/../../../StarMade/rules.txt")) {
+			@rules = <$star_rules_fh>;
+			close($star_rules_fh);
+		};
+	};
+
+	if (@rules) {
+		stard_broadcast("Rules have been sent to you $player.");
+		foreach my $line (@rules) {
+			stard_pm($player, $line);
+		};
+	}
+	else {
+		stard_broadcast("No rules defined for this server");
+		stard_broadcast("Ask the admin to write a rules.txt file in the starmade directory");
+	}
+};	

@@ -1,0 +1,67 @@
+#!perl
+use strict;
+use warnings;
+#Copyright (c) 2015, Jeryia
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+require "$stard_home/lib/stard_lib.pm";
+stard_setup_run_env($stard_home);
+
+
+
+main(@ARGV);
+exit 0;
+
+#########################################################
+
+
+sub main {
+	my $player = $_[0];
+	my $item = $_[1];
+
+	my %config = %{stard_read_config("./freestuff.cfg")};
+
+	if (!$item) {
+		stard_pm($player, "Available items:" );
+		foreach my $item (sort(keys %config)) {
+			stard_pm($player, $item);
+		}
+		exit 0;
+	}
+
+	if ($config{$item}) {
+		if($config{$item}{cmd}) {
+			stard_cmd($config{$item}{cmd}, $player);
+		}
+		elsif ($config{$item}{itemID}) {
+			stard_give_item_id($player, $config{$item}{itemID}, 1);
+		}
+		elsif ($config{$item}{name}) {
+			stard_give_item($player, $config{$item}{name}, 1);
+		}
+		else {
+			stard_pm($player, "Sorry, that item is not available");
+			exit 0;
+		}
+		stard_pm($player, "You have been given a $item!");
+	}
+	else {
+		stard_pm($player, "Sorry, that item is not available");
+		exit 0;
+	}
+};
+
+

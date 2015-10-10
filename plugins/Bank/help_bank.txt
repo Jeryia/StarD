@@ -1,0 +1,4 @@
+!balance - Show your current bank balance
+!deposit <amount> - Put credits into your the bank
+!withdraw <amount> - Pull credits out of your bank
+!pay <player> <amount> - Give annother player money

@@ -1,0 +1,108 @@
+#!%BASH%
+
+
+# stard
+# chkconfig: 345 90 20
+# description: starmade deamon
+# processname: stard
+
+
+EXEC=%SBINDIR%/stard
+
+NAME=stard
+PIDFILE=/var/run/$NAME.pid
+
+if [ $UID -ne 0 ]; then
+	echo "Your must be root to run this command."
+	exit 1
+fi
+
+function status {
+	echo -n "Checking $NAME..."
+	if [ -f $PIDFILE ]; then
+		pgrep -U root -x $NAME --pidfile $PIDFILE > /dev/null 2>&1
+		RET=$?
+		if [ $RET -eq 0 ]; then
+			echo "Running"
+			return 0
+		else
+		echo
+			echo "Process dead but pidfile exists"
+			return 1
+		fi
+	else
+		echo
+		echo "$NAME not running"
+		return 1
+	fi
+	return 0
+}
+
+
+function start {
+	echo -n "Starting $NAME..."
+	nohup $EXEC > /dev/null 2>&1 &
+	PID=$!
+	if [ -z $PID ]; then
+		printf "%s\n" "Fail"
+		return 1
+	else
+		echo $PID > $PIDFILE
+		printf "%s\n" "Ok"
+		return 0
+	fi
+	
+}
+function stop {
+        echo -n "Stopping $NAME..."
+	if [ -f $PIDFILE ]; then
+		PID=`cat $PIDFILE`
+            	pkill -U root -x $NAME --pidfile $PIDFILE > /dev/null 2>&1
+
+		%SBINDIR%/stard-stop
+
+		sleep 10
+
+		pgrep -U root -x $NAME --pidfile $PIDFILE > /dev/null 2>&1
+		RET=$?
+		if [ $RET -ne 0 ]; then
+			echo "OK"
+			rm $PIDFILE
+			return 0
+		else 
+			echo "FAIL"
+			return 1
+		fi
+	fi
+	echo
+}
+
+
+
+case "$1" in
+start)
+	start
+	RET=$?
+	exit $RET
+;;
+status)
+	status
+	RET=$?
+	exit $RET
+;;
+stop)
+	stop
+	RET=$?
+	exit $RET
+;;
+
+restart)
+  	stop && start
+	RET=$?
+	exit $RET
+;;
+
+*)
+        echo "Usage: $0 {status|start|stop|restart}"
+        exit 1
+esac
