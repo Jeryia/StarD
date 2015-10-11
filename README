@@ -23,6 +23,7 @@ Check to ensure you have the following dependancies installed:
 - perl File::Path module
 - perl Text::ParseWords module
 - perl Config::IniFiles module
+- perl Proc::Daemon module
 - bash
 - python
 - java (You need this to run starmade)

@@ -34,7 +34,8 @@ $level_name[8] = "Debug2";
 
 
 ## set_loglevel
-# Set the logging level o
+# Set the logging level to trigger on
+# INPUT1: level to set logging
 sub set_loglevel {
 	my $level = $_[0];
 	$loglevel = $level;

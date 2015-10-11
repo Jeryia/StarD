@@ -137,7 +137,7 @@ sub stard_validate_env {
 
 ## stard_stdlib_set_debug
 # Set the debug level for this library
-# INPUT1: level to set dubugging. (1 will print out inputs and outputs to all 
+# INPUT1: level to set debugging. (1 will print out inputs and outputs to all 
 # functions except stard_cmd, bash_escape_chars, validate_env, and starmade_escape_chars). 
 # Setting this to 2 will get you all functions input and output.
 sub stard_stdlib_set_debug {
@@ -558,8 +558,8 @@ sub stard_faction_list_bid {
 
 ## stard_faction_list_bname
 # Get faction data in a hash table using the faction name as the key.
-# WARNING! the faction name is not neccissarily unique, but it can be 
-# usefull to search by faction name. this funcion is mostly for convenience, 
+# WARNING! the faction name is not necessarily unique, but it can be 
+# useful to search by faction name. this funcion is mostly for convenience, 
 # use it carefully.
 # OUTPUT: hash table in the format of %hash{factionName}{someField} = field data
 # All fields available and what they are:
@@ -708,10 +708,10 @@ sub stard_give_all_items {
 	return 1;
 };
 
-## despawn_sector
+## stard_despawn_sector
 # Despawns all entities in the given sector that start with the given name
 # INPUT1: pattern of entity to delete (give it '' if you want everything)
-# INPUT2: mode (used,unused, orall)
+# INPUT2: mode (used,unused, or all)
 # INPUT3: shipOnly (true or false)
 # INPUT4: sector (space delimited string)
 # OUTPUT: 1 if success, 0 if failure
@@ -720,6 +720,13 @@ sub stard_despawn_sector {
 	my $mode = $_[1];
 	my $ship_only = $_[2];
 	my $sector = $_[3];
+
+	if ($ship_only) {
+		$ship_only = 'true';
+	}
+	else {
+		$ship_only = 'false';
+	}
 
 	stard_if_debug(1, "stard_despawn_sector($pattern, $mode, $ship_only, $sector)");
 	stard_validate_env();
@@ -732,16 +739,23 @@ sub stard_despawn_sector {
 	return 0;
 };
 
-## despawn_all
+## stard_despawn_all
 # Despawns all entities in the given sector that start with the given name
 # INPUT1: pattern of entity to delete (give it '' if you want everything)
-# INPUT2: mode (used,unused, orall)
+# INPUT2: mode (used,unused, or all)
 # INPUT3: shipOnly (true or false)
 # OUTPUT: 1 if success, 0 if failure
 sub stard_despawn_all {
 	my $pattern = $_[0];
 	my $mode = $_[1];
 	my $ship_only = $_[2];
+
+	if ($ship_only) {
+		$ship_only = 'true';
+	}
+	else {
+		$ship_only = 'false';
+	}
 
 	stard_if_debug(1, "stard_despawn_sector($pattern, $mode, $ship_only)");
 	stard_validate_env();
@@ -758,7 +772,7 @@ sub stard_despawn_all {
 # Spawn the given blueprint with the given name
 # INPUT1: Blueprint to use
 # INPUT2: Name to give the entity (carefull, this needs to be unique in the game
-# INPUT3: Sector to spawn the entity in (space seperated list)
+# INPUT3: Sector to spawn the entity in (space separated list)
 # INPUT4: Faction id of the faction the entity is to belong to
 # INPUT5: true if ai is to be active, false if not.
 # OUTPUT: 1 if success, 0 if failure.
@@ -769,8 +783,12 @@ sub stard_spawn_entity {
 	my $faction = $_[3];
 	my $ai = $_[4];
 
-	$ai=~s/0/false/;
-	$ai=~s/1/true/;
+	if ($ai) {
+		$ai = 'true';
+	}
+	else {
+		$ai = 'false';
+	}
 
 	stard_if_debug(1, "stard_spawn_entity($blueprint, $name, $sector, $faction, $ai)");
 	stard_validate_env();
@@ -783,7 +801,7 @@ sub stard_spawn_entity {
 	return 1;
 };
 
-## stard_spawn_entity
+## stard_spawn_entity_pos
 # Spawn the given blueprint with the given name
 # INPUT1: Blueprint to use
 # INPUT2: Name to give the entity (carefull, this needs to be unique in the game
@@ -792,7 +810,7 @@ sub stard_spawn_entity {
 # INPUT5: Faction id of the faction the entity is to belong to
 # INPUT6: true if ai is to be active, false if not.
 # OUTPUT: 1 if success, 0 if failure.
-sub stard_spawn_entity_for {
+sub stard_spawn_entity_pos {
 	my $blueprint = $_[0];
 	my $name = $_[1];
 	my $sector = $_[2];
@@ -800,8 +818,12 @@ sub stard_spawn_entity_for {
 	my $faction = $_[4];
 	my $ai = $_[5];
 
-	$ai=~s/0/false/;
-	$ai=~s/1/true/;
+	if ($ai) {
+		$ai = 'true';
+	}
+	else {
+		$ai = 'false';
+	}
 
 	stard_if_debug(1, "stard_spawn_entity($blueprint, $name, $sector, $faction, $ai)");
 	stard_validate_env();
@@ -877,7 +899,7 @@ sub stard_faction_set_all_relations {
 	return 1;
 };
 
-## stard_facction_add_member
+## stard_faction_add_member
 # Add a player to a given faction.
 # INPUT1: name of the player to add to the faction
 # INPUT2: faction id of faction to join

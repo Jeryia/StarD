@@ -1,19 +1,19 @@
 #### stard 
 # Deamon configuration for the rool level scripts.
 
-# primary directory that starmade will function out of. (one step down from Starmade)
+# primary directory that starmade will function out of. (Don't mess with this unless you know what your doing!)
 baseDir="%STARMADEDIR%"
 
 # command that will be used to execute starmade
 EXEC="%JAVA% -Xms128m -Xmx4096m -jar StarMade.jar -server"
 
-# user to run stard as
+# user to run stard as (Don't mess with this unless you know what your doing!)
 USER="%USER%"
 
-# group to run stard as
+# group to run stard as (Don't mess with this unless you know what your doing!)
 GROUP="%USER%"
 
-# Amount of warning to give users before shutdown
+# Amount of warning to give users before the server shuts down or restarts
 SHUTDOWN_TIME="10"
 
 # Directory to run stard out of
