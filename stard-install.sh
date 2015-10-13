@@ -72,7 +72,7 @@ fi
 TMP=`mktemp -d /tmp/stard-XXXXXX`
 cd $TMP
 rm -f stard.tar.gz
-wget http://mini/stard.tar.gz || exit 1
+wget https://github.com/Jeryia/StarD/releases/download/0.0.10/stard.tar.gz || exit 1
 tar -xzvf stard.tar.gz || exit 1
 DIR=`ls -d stard-* | sort -V | tail -n 1`
 cd $DIR
