@@ -13,6 +13,9 @@
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
 #### stard
 # script sets up the stard environment and runs stard-launcher as the starmade user.
 # This script should be run as root. 
@@ -56,13 +59,6 @@ if [ ! -d $baseDir ]; then
 	mkdir -p $baseDir
 fi
 
-## Make sure perms are good
-chown root:$GROUP $baseDir
-chmod 775 $baseDir
-chown $USER:$GROUP $serverLoc
-chown -R $USER:$GROUP $baseDir/stard/plugins
-chown -R $USER:$GROUP $serverLoc/*
-chmod 700 $serverLoc
 
 
 ## create the starmade server dir if it doesn't exist.
@@ -75,6 +71,13 @@ if [ ! -d $serverLoc ]; then
 	fi
 fi
 
+## Make sure perms are good
+chown root:$GROUP $baseDir
+chmod 775 $baseDir
+chown $USER:$GROUP $serverLoc
+chown -R $USER:$GROUP $baseDir/stard/plugins
+chown -R $USER:$GROUP $serverLoc/*
+chmod 700 $serverLoc
 
 
 

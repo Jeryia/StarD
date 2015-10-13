@@ -1,3 +1,4 @@
+package stard_lib;
 use strict;
 #use warnings;
 use Carp;
@@ -16,6 +17,8 @@ use Config::IniFiles;
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
 #### stard_lib.pm
 # primary perl library provided to assist with 
@@ -26,25 +29,32 @@ use Config::IniFiles;
 #
 # NOTE the funtion stard_setup_run_env(PATH) needs to be called to use this library
 
+our (@ISA, @EXPORT);
+
+require Exporter;
+@ISA = qw(Exporter);
+@EXPORT= qw(stard_setup_run_env bash_escape_chars starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output);
+
 
 ## Global settings
 # Location of stard's home directory
-my $stard_home;
+our $stard_home;
 # Location of the starmade directory (usually /var/starmade)
-my $starmade_home;
+our $starmade_home;
 # Location of the starmade server directory
-my $starmade_server;
+our $starmade_server;
 # Hash of the stard config file
-my %stard_config;
+our %stard_config;
 # Hash of the starmade config file
-my %starmade_config;
+our %starmade_config;
 # Put the command we are to run together when running starmade commands.
-my $stard_cmd;
+our $stard_cmd;
 # Current level of debugging set
-my $debug_level = 0;
-my %blank_hash = ();
+our $debug_level = 0;
+our %blank_hash = ();
 # The output of the last command run (used for debugging)
-my $stard_last_output;
+our $stard_last_output;
+
 
 
 ## stard_setup_run_env
@@ -63,7 +73,7 @@ sub stard_setup_run_env {
 	%stard_config = %{stard_read_config("$stard_home/stard.cfg")};
 	%starmade_config = %{starmade_read_starmade_server_config()};
 
-	$stard_cmd = "$stard_config{General}{stard_connect_cmd} ";
+	$stard_cmd = "%JAVA% -jar $stard_home/$stard_config{General}{stard_connect_cmd} ";
 	$stard_cmd .= bash_escape_chars($stard_config{General}{server}) . " ";
 	if ($stard_config{General}{password} =~/\S/) {
 		$stard_cmd .= bash_escape_chars($stard_config{General}{password});
@@ -176,12 +186,20 @@ sub stard_read_config {
 	}
 
 
-	if ($debug_level >= 2) {
-		foreach my $key1 (keys %config) {
+	foreach my $key1 (keys %config) {
+		if ($debug_level >= 2) {
 			print "stard_read_config: return(multiline): [$key1]\n";
-			foreach my $key2 (keys %{$config{$key1}}) {
+		}
+		foreach my $key2 (keys %{$config{$key1}}) {
+			if ($debug_level >= 2) {
 				print "stard_read_config: return(multiline): $key2 = '$config{$key1}{$key2}'\n";
 			}
+			$config{$key1}{$key2}=~s/^\s+//g;
+			$config{$key1}{$key2}=~s/\s+$//g;
+			$config{$key1}{$key2}=~s/^'//;
+			$config{$key1}{$key2}=~s/'$//;
+			$config{$key1}{$key2}=~s/^"//;
+			$config{$key1}{$key2}=~s/"$//;
 		}
 	}
 	return \%config;
@@ -792,7 +810,7 @@ sub stard_spawn_entity {
 
 	stard_if_debug(1, "stard_spawn_entity($blueprint, $name, $sector, $faction, $ai)");
 	stard_validate_env();
-	my $output = join("", stard_cmd("/spawn_entity", $blueprint, $name, split(" ",$sector), $faction, $ai));
+	my $output = join("", stard_cmd("/spawn_entity", $blueprint, $name, split(" ", $sector), $faction, $ai));
 	if ($output =~/ERROR/i) {
 		stard_if_debug(1, "stard_spawn_entity: return: 0");
 		return 0;
@@ -825,9 +843,9 @@ sub stard_spawn_entity_pos {
 		$ai = 'false';
 	}
 
-	stard_if_debug(1, "stard_spawn_entity($blueprint, $name, $sector, $faction, $ai)");
+	stard_if_debug(1, "stard_spawn_entity_pos($blueprint, $name, $sector, $pos, $faction, $ai)");
 	stard_validate_env();
-	my $output = join("", stard_cmd("/spawn_entity", $blueprint, $name, split(" ",$sector), $faction, $ai));
+	my $output = join("", stard_cmd("/spawn_entity_pos", $blueprint, $name, split(" ",$sector), split(' ', $pos), $faction, $ai));
 	if ($output =~/ERROR/i) {
 		stard_if_debug(1, "stard_spawn_entity: return: 0");
 		return 0;
@@ -1006,7 +1024,11 @@ sub stard_sector_info {
 	my %sector_info;
 	foreach my $line (@output) {
 		#RETURN: [SERVER, LoadedEntity [uid=ENTITY_SHIP_TC Heavy Cruiser MKII_1441843270981rl40, type=Ship, seed=0, lastModifier=, spawner=Jeryia, realName=TC Heavy Cruiser MKII_1441843270981rl40, touched=true, faction=10045, pos=(2219.499, 13.506077, 1478.0774)
-		if ($line =~/RETURN: \[SERVER, \S+ \[uid=(.*), type=.*, seed=.*, lastModifier=.*, spawner=.*, realName=.*, touched=.*, faction=(-?\d+), pos=\((\S+), (\S+), (\S+)\)/) {
+		# RETURN: [SERVER, DatabaseEntry [uid=ENTITY_SPACESTATION_recycler_beta2_1444665460, sectorPos=(7, 8, 13), type=2, seed=0, lastModifier=, spawner=, realName=recycler_beta2_1444665460, touched=true, faction=-2, pos=(0.0, 0.0, 0.0), minPos=(-4, -6, -4), maxPos=(4, 2, 4), creatorID=1], 0]
+		if (
+			$line =~/RETURN: \[SERVER, \S+ \[uid=(.*), sectorPos=\(-?\d+, -?\d+, -?\d+\), type=.*, seed=.*, lastModifier=.*, spawner=.*, realName=.*, touched=.*, faction=(-?\d+), pos=\((\S+), (\S+), (\S+)\)/ ||
+			$line =~/RETURN: \[SERVER, \S+ \[uid=(.*), type=.*, seed=.*, lastModifier=.*, spawner=.*, realName=.*, touched=.*, faction=(-?\d+), pos=\((\S+), (\S+), (\S+)\)/
+		) {
 			my $name = $1;
 			my $faction_id = $2;
 			my $pos = "$3 $4 $5";

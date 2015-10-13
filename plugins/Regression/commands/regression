@@ -2,6 +2,12 @@
 use strict;
 use warnings;
 
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
+
+$| = 1;
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -14,7 +20,8 @@ use warnings;
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-$| = 1;
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
 ## regression
 # This script includes the primary regression testing code for stard.
@@ -22,17 +29,7 @@ $| = 1;
 # defects.
 
 ## setup environment
-our $debug_home;
-{
-	my @tmp = split("/", $0);
-	# grab everything but the last entry
-	for (my $i = 0; $i < @tmp -1; $i++ ) {
-		$debug_home .= "/$tmp[$i]";
-	}
-	$debug_home =~s/^\///;
-	$debug_home.="/..";
-}
-
+my $debug_home = '.';
 my $stard_home = "$debug_home/../..";
 require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);
@@ -290,8 +287,8 @@ sub sector_reg {
 	my $validate = keys %search;
 	test_result("stard_search/stard_spawn_entity", $validate >= 1);
 	%search = %{stard_sector_info($sector1)};
-	$validate = keys %{$search{entity}};
-	test_result("stard_sector_info/stard_spawn_entity", $validate >= 1);
+	$validate = join(" ", keys %{$search{entity}});
+	test_result("stard_sector_info/stard_spawn_entity", $search{entity}{"ENTITY_SHIP_$ship_name"}, $validate);
 	
 	test_result("stard_despawn_all", stard_despawn_all($ship_name, 'all', 'true'));
 	%search = %{stard_search($ship_name)};

@@ -4,8 +4,17 @@
 # primary directory that starmade will function out of. (Don't mess with this unless you know what your doing!)
 baseDir="%STARMADEDIR%"
 
+# Java initial RAM
+INITRAM=1024m
+
+# Java Maximum RAM
+MAXRAM=4096m
+
+# Port StarMade is to listen on
+PORT=4242
+
 # command that will be used to execute starmade
-EXEC="%JAVA% -Xms128m -Xmx4096m -jar StarMade.jar -server"
+EXEC="%JAVA% -Xms$INITRAM -Xmx$MAXRAM -jar StarMade.jar -server -port:$PORT"
 
 # user to run stard as (Don't mess with this unless you know what your doing!)
 USER="%USER%"

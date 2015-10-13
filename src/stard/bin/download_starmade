@@ -1,0 +1,26 @@
+#!%BASH%
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
+LASTFILE="./StarMade/version.txt"
+
+if [ "x$1" == "--update" ]; then
+        rm $LASTFILE
+fi
+
+
+java -jar ./tools/StarMade-Starter.jar -nogui &
+PID=$!
+
+
+
+while [ ! -e $LASTFILE ]; do
+       sleep 1
+done
+
+sleep 5
+kill $PID > /dev/null 2>&1
+sleep 1
+kill -9 $PID > /dev/null 2>&1
+
+

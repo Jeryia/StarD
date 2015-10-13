@@ -13,6 +13,9 @@
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
 #### stard-launcher
 # The primary launcher for stard. 
 # This launches all of the stard daemons (using 
@@ -20,13 +23,15 @@
 # itself.
 
 ## Setup Enrivonment
+DIR=`dirname $0`
+cd $DIR/../..
 
 STANDALONE=%STANDALONE%
 if [ $STANDALONE -eq 0 ]; then
 	source %SYSCONFDIR%/stard
 else
-	source "./stard-launcher.conf"
-	baseDir="../"
+	source "stard/stard-launcher.conf"
+	baseDir=`pwd`
 	SERVER_DIR="$baseDir/StarMade"
 fi
 
@@ -73,18 +78,13 @@ PLUGINS=`$stard_home/bin/stard_get_plugin_list`
 ## Have starmade 'set itself up' if needbe
 if [ ! -e "$SERVER_DIR/version.txt" ]; then
 	cd "$baseDir"
-	java -jar ./tools/StarMade-Starter.jar -nogui -force &
-	PID=$!
-	while [ ! -e ./StarMade/version.txt ]; do
-	        sleep 1
-	done
-	sleep 5
-	kill $PID > /dev/null 2>&1
-	sleep 1
-	kill -9 $PID > /dev/null 2>&1
+	stard/bin/download_starmade
 	cd $CWD
 fi
 
+# change perms of this so only root and the stard user can read this.
+# Since this contains the keys to the server.
+chmod 600 $SERVER_DIR/server.cfg
 
 ## if server isn't setup with keys, set it up
 grep -q "SUPER_ADMIN_PASSWORD_USE = true" $SERVER_DIR/server.cfg > /dev/null 2>&1

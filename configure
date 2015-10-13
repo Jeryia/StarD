@@ -12,6 +12,9 @@
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
 SBINDIR="/usr/sbin"
 PREFIX=""
 LOCALSTATEDIR="/var"
@@ -50,6 +53,8 @@ while [[ $# > 0 ]]; do
 			STANDALONE=1
 			INITV=0
 			SYSTEMD=0
+			STARMADEDIR='..'
+			LOCALSTATEDIR=""
 			shift # past argument
 		;;
 		--starmadedir)
@@ -466,7 +471,7 @@ PREFIX			= $PREFIX
 SBINDIR			= \$(PREFIX)$SBINDIR
 SYSCONFDIR		= $SYSCONFDIR
 LOCALSTATEDIR		= $LOCALSTATEDIR
-STARMADEDIR		= \$(PREFIX)\$(LOCALSTATEDIR)/$STARMADEDIR
+STARMADEDIR		= \$(PREFIX)\$(LOCALSTATEDIR)$STARMADEDIR
 SYSTEMDSERVICEDIR	= $SYSTEMDSERVICEDIR
 
 ## general configs
@@ -494,9 +499,13 @@ if [ $STANDALONE -ne 1 ]; then
 fi
 
 
-for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '$(STARD_BUILD)/bin/stard_get_plugin_list' '$(STARD_BUILD)/bin/stard-multiplexer' '$(STARD_BUILD)/bin/stard_daemons' '$(STARD_BUILD)/bin/stard_gen_passwd' '$(STARD_BUILD)/bin/stard_shell' '$(STARD_BUILD)/bin/stard_test' '$(STARD_BUILD)/bin/exec_prefix' '$(STARD_BUILD)/lib/stard_lib.pm' '$(STARD_BUILD)/lib/stard_core.pm' '$(STARD_BUILD)/bin/rotate_logs'; do
+for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '$(STARD_BUILD)/bin/stard_get_plugin_list' '$(STARD_BUILD)/bin/stard-multiplexer' '$(STARD_BUILD)/bin/stard_daemons' '$(STARD_BUILD)/bin/stard_gen_passwd' '$(STARD_BUILD)/bin/stard_shell' '$(STARD_BUILD)/bin/stard_test' '$(STARD_BUILD)/bin/exec_prefix' '$(STARD_BUILD)/lib/stard_lib.pm' '$(STARD_BUILD)/lib/stard_core.pm' '$(STARD_BUILD)/bin/rotate_logs' '$(STARD_BUILD)/bin/download_starmade'; do
 	subs_strings $file
 done
+echo "
+	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.sample
+	cp -pfr \$(BUILD_DIR)/../plugins/* \$(BUILD_DIR)/starmade/stard/plugins.sample/
+" >> ./Makefile
 
 echo "
 
@@ -542,7 +551,6 @@ endif
 
 	mkdir -p \$(DESTDIR)\$(SYSCONFDIR)/
 	cp -pn \$(BUILD_DIR)/etc/stard \$(DESTDIR)\$(SYSCONFDIR)
-	cp -pfr \$(BUILD_DIR)/../plugins/* \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.sample/
 
 	mv -n \$(DESTDIR)\$(STARMADEDIR)/stard/stard.cfg.newversion \$(DESTDIR)\$(STARMADEDIR)/stard/stard.cfg
 	

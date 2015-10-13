@@ -1,4 +1,11 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
 
 
 #All rights reserved.
@@ -19,7 +26,6 @@ my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 my $stard_plugins = "$stard_home/plugins";
 
-require "$stard_home/lib/stard_core.pm";
 setup_core_env($stard_home);
 
 

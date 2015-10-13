@@ -1,3 +1,4 @@
+package stard_log;
 use strict;
 use warnings;
 use POSIX;
@@ -18,6 +19,10 @@ use POSIX;
 ## Log libraries for stard.
 # This provides stdout loggin capabilities to stard
 
+our (@ISA, @EXPORT);
+
+require Exporter;
+@ISA = qw(Exporter);
 my $loglevel = 0;
 
 my @level_name;
@@ -32,6 +37,7 @@ $level_name[7] = "Debug1";
 $level_name[8] = "Debug2";
 
 
+@EXPORT = qw(set_loglevel stdout_log gen_logmessage);
 
 ## set_loglevel
 # Set the logging level to trigger on

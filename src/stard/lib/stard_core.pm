@@ -5,6 +5,10 @@ use Text::ParseWords;
 use Proc::Daemon;
 use POSIX;
 
+use lib("./lib");
+
+use stard_lib;
+use stard_log;
 
 #All rights reserved.
 #
@@ -18,10 +22,18 @@ use POSIX;
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
 ## Core libraries for stard.
 # This provides the primary functionality for stard to function.
 # NOTE: This library requires stard_lib.pm
+
+our (@ISA, @EXPORT);
+
+require Exporter;
+@ISA = qw(Exporter);
+@EXPORT = qw(setup_core_env stard_core_validate_env get_active_plugin_list validate_plugins get_exec_prefix plugin_server_event plugin_command server_messages chat_messages);
 
 my %exec_prefix_table;
 $exec_prefix_table{perl} = "%PERL%";
@@ -34,7 +46,7 @@ my $stard_plugins;
 my $stard_plugin_log;
 
 
-## setup_core_env
+## stard_setup_env
 # setup up basic variables for the stard core library.
 # This tells the library where stard's home 
 # folder is (by default /var/starmade/stard but 
@@ -44,8 +56,6 @@ my $stard_plugin_log;
 sub setup_core_env {
 	$stard_home = $_[0];
 
-	require "$stard_home/lib/stard_lib.pm";
-	require "$stard_home/lib/stard_log.pm";
 	stard_setup_run_env($stard_home);
 	$stard_plugins = "$stard_home/plugins";
 	$stard_log = "$stard_home/log";
@@ -305,7 +315,10 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 	};
 
 	# [SREVER] FACTION BLOCK REMOVED FROM SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]; resetting faction !!!!!!!!!!!!!!
-	if ($message =~/^\[SERVER\] FACTION BLOCK REMOVED FROM (\S+)\[ENTITY_(.+)\((\d+)\)\]; resetting faction/) {
+	if (
+		$message =~/^\[SERVER\] FACTION BLOCK REMOVED FROM (\S+)\[(.+)\((\d+)\)\]; resetting faction/ ||
+		$message =~/^\[SERVER\] FACTION BLOCK REMOVED FROM (\S+)\[(.+)\]\((\d+)\); resetting faction/
+	) {
 		my $type = $1;
 		my $entity = $2;
 		my $id = $3;
@@ -314,7 +327,10 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 	};
 
 	# [SERVER] received object faction change request 10038 for object SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]
-	if ($message =~/^\[SERVER\] received object faction change request (\d+) for object (\S+)\[ENTITY_(\S+)\((\d+)\)\]/) {
+	if (
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(\S+)\((\d+\))\]/ ||
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object \S+\[(\S+)\]\((\d+\))/
+	) {
 	 	my $faction_id = $1;
 		my $type = $2;
 		my $entity = $3;

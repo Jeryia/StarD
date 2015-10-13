@@ -1,6 +1,10 @@
 #!perl
 use strict;
 use warnings;
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
 
 #All rights reserved.
 #
@@ -20,21 +24,10 @@ use warnings;
 
 
 ## setup environment
-our $base_home;
-{
-	my @tmp = split("/", $0);
-	# grab everything but the last entry
-	for (my $i = 0; $i < @tmp -1; $i++ ) {
-		$base_home .= "/$tmp[$i]";
-	}
-	$base_home =~s/^\///;
-	$base_home.="/..";
-}
-
+my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);
 
 

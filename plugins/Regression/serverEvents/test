@@ -1,4 +1,11 @@
 #!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
 
 #All rights reserved.
 #
@@ -14,17 +21,7 @@
 $| = 1;
 
 ## setup environment
-our $debug_home;
-{
-	my @tmp = split("/", $0);
-	# grab everything but the last entry
-	for (my $i = 0; $i < @tmp -1; $i++ ) {
-		$debug_home .= "/$tmp[$i]";
-	}
-	$debug_home =~s/^\///;
-	$debug_home.="/..";
-}
-
+my $debug_home = '.';
 my $stard_home = "$debug_home/../..";
 require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);

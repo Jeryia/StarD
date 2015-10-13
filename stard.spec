@@ -1,19 +1,5 @@
-
-
-#All rights reserved.
-#
-#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-#
-#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-#
-#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-#
-#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-#
-#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 Name:		stard
-Version:	0.0.9
+Version:	0.0.10
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
@@ -99,13 +85,17 @@ fi
 
 %changelog
 
+* Tue Oct 13 2015 Jeryia <johndoe@gmail.com>
+- v0.0.10
+- Standalone version fully tested and ready for release
+- Modified libraries to be more like standard perl libraries
+- Fixed a bug where this would not catch entities unfactioning
 * Sat Sep 19 2015 Jeryia <johndoe@gmail.com>
 - v0.0.9
 - Standalone version now compiles and seems to run ok. Still considered experimental.
 - Pulled some self healing bits back into the script (now will download starmade for you, and set the keys if they are not set).
 - Added feature to set the current working directory of all called plugin actions to be the plugin's directory.
 - Daemon configuration is now stored in /etc/sysconfig (red hat) or /etc/default (debian)
-- Reccommending this version as alpha release 0.1.0.
 * Wed Sep 9 2015 Jeryia <johndoe@gmail.com>
 - v0.0.2
 - Regression testing fully added.
