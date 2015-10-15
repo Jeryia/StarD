@@ -504,6 +504,8 @@ for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '
 done
 echo "
 	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.sample
+	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins
+	mkdir -p \$(BUILD_DIR)/starmade/stard/log
 	cp -pfr \$(BUILD_DIR)/../plugins/* \$(BUILD_DIR)/starmade/stard/plugins.sample/
 " >> ./Makefile
 
