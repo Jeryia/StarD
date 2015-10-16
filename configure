@@ -506,6 +506,7 @@ echo "
 	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.sample
 	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins
 	mkdir -p \$(BUILD_DIR)/starmade/stard/log
+	mkdir -p \$(BUILD_DIR)/starmade/stard/spool
 	cp -pfr \$(BUILD_DIR)/../plugins/* \$(BUILD_DIR)/starmade/stard/plugins.sample/
 " >> ./Makefile
 
