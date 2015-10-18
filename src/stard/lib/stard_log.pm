@@ -72,7 +72,7 @@ sub gen_logmessage {
 	my $message = $_[0];
 	my $type = $_[1];
 	
-	my $log = '[' . strftime("%F %T", localtime $^T) . '] ';
+	my $log = '[' . strftime("%F %T", localtime time) . '] ';
 	$log .= "[$type] ";
 	$log .= $message . "\n";
 	return $log;
