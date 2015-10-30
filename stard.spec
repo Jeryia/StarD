@@ -1,5 +1,5 @@
 Name:		stard
-Version:	0.0.10
+Version:	0.0.13
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
@@ -8,6 +8,9 @@ License:	GPL
 #URL:		
 Source0:	stard.tar.gz
 
+Provides:	perl(stard_core)
+Provides:	perl(stard_lib)
+Provides:	perl(stard_log)
 BuildArch: 	noarch
 BuildRequires:	bash perl
 Requires:	bash perl wget rsync 
