@@ -73,6 +73,7 @@ fi
 %attr(1770,root,root) /var/starmade/stard/spool
 %attr(755,root,root) /var/starmade/stard/bin/*
 %attr(755,root,root) /var/starmade/stard/lib/*
+/var/starmade/stard/plugins/*
 %attr(755,starmade,starmade) /var/starmade/stard/plugins.sample
 
 
