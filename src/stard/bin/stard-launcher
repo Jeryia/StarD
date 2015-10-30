@@ -116,6 +116,9 @@ mkfifo $error > /dev/null 2>&1
 
 $bin/rotate_logs
 
+# make sure plugins are setup correctly
+$bin/fix_plugins
+
 # Go through each plugin, if it has a daemon, use it
 $bin/stard_daemons start
 

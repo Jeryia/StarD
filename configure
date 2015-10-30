@@ -489,7 +489,10 @@ mkbuild:
 	ln -s ./StarMade \$(STARMADE_BUILD)/server
 build_stard:
 	cp -pfr \$(STARD_SOURCE) \$(STARD_BUILD)
+	chmod 755 \$(STARD_BUILD)/bin/*
+	chmod 644 \$(STARD_BUILD)/lib/*
 " >> ./Makefile
+
 for file in '$(STARD_BUILD)/stard.cfg'; do
 	subs_strings $file
 done
@@ -499,7 +502,7 @@ if [ $STANDALONE -ne 1 ]; then
 fi
 
 
-for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '$(STARD_BUILD)/bin/stard_get_plugin_list' '$(STARD_BUILD)/bin/stard-multiplexer' '$(STARD_BUILD)/bin/stard_daemons' '$(STARD_BUILD)/bin/stard_gen_passwd' '$(STARD_BUILD)/bin/stard_shell' '$(STARD_BUILD)/bin/stard_test' '$(STARD_BUILD)/bin/exec_prefix' '$(STARD_BUILD)/lib/stard_lib.pm' '$(STARD_BUILD)/lib/stard_core.pm' '$(STARD_BUILD)/bin/rotate_logs' '$(STARD_BUILD)/bin/download_starmade'; do
+for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '$(STARD_BUILD)/bin/stard_get_plugin_list' '$(STARD_BUILD)/bin/stard-multiplexer' '$(STARD_BUILD)/bin/stard_daemons' '$(STARD_BUILD)/bin/stard_gen_passwd' '$(STARD_BUILD)/bin/stard_shell' '$(STARD_BUILD)/bin/stard_test' '$(STARD_BUILD)/bin/exec_prefix' '$(STARD_BUILD)/lib/stard_lib.pm' '$(STARD_BUILD)/lib/stard_core.pm' '$(STARD_BUILD)/bin/rotate_logs' '$(STARD_BUILD)/bin/download_starmade' '$(STARD_BUILD)/bin/fix_plugins'; do
 	subs_strings $file
 done
 echo "
