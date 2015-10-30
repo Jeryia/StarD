@@ -84,7 +84,17 @@ fi
 
 
 %changelog
-
+* Thu Oct 29 2015 Jeryia <johndoe@gmail.com>
+- v0.0.13
+- Permission setting is less strict in starmade server directory
+- Fixing Permissions on plugins who have them set incorrectly
+* Sun Oct 18 2015 Jeryia <johndoe@gmail.com>
+- v0.0.12
+- Logging has been fixed to report the real time of the event instead of the time the server started
+- The Base plugin is now loaded by default.
+* Fri Oct 16 2015 Jeryia <johndoe@gmail.com>
+- v0.0.11
+- Install scripts now create required directories, since git deletes them (as they are empty
 * Tue Oct 13 2015 Jeryia <johndoe@gmail.com>
 - v0.0.10
 - Standalone version fully tested and ready for release
