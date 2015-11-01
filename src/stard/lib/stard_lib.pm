@@ -375,7 +375,7 @@ sub stard_player_list {
 		};
 		if (
 			$line=~/RETURN: \[SERVER, \[PL\] CONTROLLING: \S+\[(.+)\]\(\d+\), \d+\]/ ||
-			$line=~/RETURN: \[SERVER, \[PL\] CONTROLLING: \S+\[\(\((.+)\)\)\(\d+\)\], \d+\]/
+			$line=~/RETURN: \[SERVER, \[PL\] CONTROLLING: \S+\[\((.+)\)\(-?\d+\)\], \d+\]/
 		) {
 
 			$control = $1;
