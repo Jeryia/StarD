@@ -373,7 +373,11 @@ sub stard_player_list {
 		if ($line=~/RETURN: \[SERVER, \[PL\] CONTROLLING-POS: \((\S+), (\S+), (\S+)\), \S+\]/) {
 			$pos = "$1 $2 $3";
 		};
-		if ($line=~/RETURN: \[SERVER, \[PL\] CONTROLLING: \S+\[(.+)\]\(\d+\), \d+\]/) {
+		if (
+			$line=~/RETURN: \[SERVER, \[PL\] CONTROLLING: \S+\[(.+)\]\(\d+\), \d+\]/ ||
+			$line=~/RETURN: \[SERVER, \[PL\] CONTROLLING: \S+\[\(\((.+)\)\)\(\d+\)\], \d+\]/
+		) {
+
 			$control = $1;
 		};
 		if ($line=~/RETURN: \[SERVER, \[PL\] SECTOR: \((.*)\), \d+\]/) {
