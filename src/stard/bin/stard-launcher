@@ -70,8 +70,9 @@ spool="$baseDir/spool"
 plugin_dir="$stard_home/plugins"
 bin="$stard_home/bin"
 stard_log="$stard_home/log"
-#output="$spool/serverOut"
+output="$spool/serverOut"
 error="$spool/serverErr"
+input="$spool/serverIn"
 PLUGINS=`$stard_home/bin/stard_get_plugin_list`
 
 
@@ -113,9 +114,10 @@ fi
 mkdir $spool > /dev/null 2>&1
 #mkfifo $output
 mkfifo $error > /dev/null 2>&1
+mkfifo $input > /dev/null 2>&1
+
 
 $bin/rotate_logs
-
 # make sure plugins are setup correctly
 $bin/fix_plugins
 
@@ -126,7 +128,9 @@ $bin/stard_daemons start
 # haven't seen a use for stdout so we just throw it away.
 cd $SERVER_DIR
 echo "Starting Starmade"
-$EXEC > /dev/null 2> $error
+# temporary fix for starmade bug (T69)
+tail -f /dev/null > $input &
+$EXEC > /dev/null 2> $error < $input
 cd $CWD
 
 $bin/stard_daemons stop
