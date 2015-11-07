@@ -64,9 +64,7 @@ sub main {
 	# print it out for the player.
 	if (@help) {
 		stard_broadcast("Server help have been sent to you $player.");
-		foreach my $line (@help) {
-			stard_pm($player, $line);
-		};
+		stard_pm($player, join("", @help));
 	}
 	else {
 		stard_broadcast("No help defined for that topic");

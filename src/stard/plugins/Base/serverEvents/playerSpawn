@@ -61,10 +61,7 @@ sub main {
 	};
 
 	if (@welcome) {
-		foreach my $line (@welcome) {
-			stard_broadcast($line);
-		};
+		stard_pm($player, join("", @welcome));
 		unlink("$base_spool/$player.login");
-	}
-		
+	}	
 };

@@ -73,7 +73,7 @@ sub stard_setup_run_env {
 	%stard_config = %{stard_read_config("$stard_home/stard.cfg")};
 	%starmade_config = %{starmade_read_starmade_server_config()};
 
-	$stard_cmd = "%JAVA% -jar $stard_home/$stard_config{General}{stard_connect_cmd} ";
+	$stard_cmd = "/usr/bin/java -jar $stard_home/$stard_config{General}{stard_connect_cmd} ";
 	$stard_cmd .= bash_escape_chars($stard_config{General}{server}) . " ";
 	if ($stard_config{General}{password} =~/\S/) {
 		$stard_cmd .= bash_escape_chars($stard_config{General}{password});
@@ -229,6 +229,27 @@ sub stard_cmd {
 	return @output;
 };
 
+## fix_newlines
+# As starmade does not recognize the new line character, we simulate it with 
+# spaces, as lines wrap in chat
+# INPUT1: message
+# OUTPUT: modified message
+sub fix_newlines {
+	my $message = $_[0];
+
+	# length of line required to cause it to wrap
+	my $line_len = 300;
+	my @lines = split("\n", $message);
+
+	# Iterate over all but the last one
+	for (my $line_num = 0; $line_num < $#lines; $line_num++) {
+		my $len = length($lines[$line_num]);
+		my $whitespace = " " x ($line_len - $len);
+		$lines[$line_num] .= $whitespace;
+	}
+	return join("", @lines);
+}
+
 ## stard_broadcast
 # Broadcast a server message to all players on the starmade server.
 # INPUT1: message to broadcast
@@ -239,6 +260,7 @@ sub stard_broadcast {
 	stard_if_debug(1, "stard_broadcast($message)");
 	stard_validate_env();
 
+	$message = fix_newlines($message);
 	my $out = join("",stard_cmd("/chat $message"));
 	if ($out =~/\Qbroadcasted as server message:\E/) {
 		stard_if_debug(2, "stard_broadcast: return: 1");
@@ -259,6 +281,7 @@ sub stard_pm {
 
 	stard_if_debug(1, "stard_pm($player, $message)");
 	stard_validate_env();
+	$message = fix_newlines($message);
 	if ($player =~/\S/) {
 		my $out = join("",stard_cmd("/pm $player $message"));
 		if ($out =~/\Qsend to $player as server message:\E/) {

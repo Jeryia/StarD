@@ -46,9 +46,7 @@ sub main {
 
 	if (@limits) {
 		stard_broadcast("Server motd have been sent to you $player.");
-		foreach my $line (@limits) {
-			stard_pm($player, $line);
-		};
+		stard_pm($player, join("", @limits));
 	}
 	else {
 		stard_broadcast("No motd defined for this server");

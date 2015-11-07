@@ -45,7 +45,6 @@ sub main {
 		close($rules_fh);
 	}
 	else {
-		print "$base_home/../../../StarMade/rules.txt\n";
 		if (open(my $star_rules_fh, "<", "$base_home/../../../StarMade/rules.txt")) {
 			@rules = <$star_rules_fh>;
 			close($star_rules_fh);
@@ -54,9 +53,7 @@ sub main {
 
 	if (@rules) {
 		stard_broadcast("Rules have been sent to you $player.");
-		foreach my $line (@rules) {
-			stard_pm($player, $line);
-		};
+		stard_pm($player, join("", @rules));
 	}
 	else {
 		stard_broadcast("No rules defined for this server");
