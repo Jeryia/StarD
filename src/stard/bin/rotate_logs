@@ -31,22 +31,30 @@ else
 	SERVER_DIR="$baseDir/StarMade"
 fi
 
+# number of logs to keep around
+LOGS_KEPT=20
 STARD_LOGS="$baseDir/stard/log/"
+LOGFILES="stard-multiplexer.log"
 
 DATE=`date +%Y-%m-%d-%H:%M:%S`
 
 cd $STARD_LOGS
-for file in *.log; do 
-	if [ -f $file ]; then
-		mv "$file" "$file-$DATE"
-	fi
+for file in $LOGFILES; do 
+	for i in `seq $LOGS_KEPT | sort -rn`; do
+		next=`expr $i + 1`
+		mv "$file.$i" "$file.$next" 2> /dev/null || :
+	done
+	mv "$file" "$file.1" || :
+	rm -f $file.$LOGS_KEPT 2> /dev/null || :
+	touch "$file"
 done
 
 mkdir -p plugins
-cd plugins
-for dir in *-log; do 
-	if [ -d "$dir" ]; then
-		mv "$dir" "$dir-$DATE"
-		mkdir -p "$dir"
-	fi
+for i in `seq $LOGS_KEPT | sort -rn`; do
+	next=`expr $i + 1`
+	mv "plugins.$i" "plugins.$next" 2> /dev/null || :
 done
+
+mv "plugins" "plugins.1" 2> /dev/null || :
+mkdir  -p plugins
+rm -rf "plugins.$LOGS_KEPT"
