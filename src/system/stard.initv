@@ -8,6 +8,7 @@
 
 
 EXEC=%SBINDIR%/stard
+EXEC_NAME=stard
 
 NAME=stard
 PIDFILE=/var/run/$NAME.pid
@@ -20,7 +21,7 @@ fi
 function status {
 	echo -n "Checking $NAME..."
 	if [ -f $PIDFILE ]; then
-		pgrep -U root -x $NAME --pidfile $PIDFILE > /dev/null 2>&1
+		pgrep -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 		RET=$?
 		if [ $RET -eq 0 ]; then
 			echo "Running"
@@ -57,13 +58,13 @@ function stop {
         echo -n "Stopping $NAME..."
 	if [ -f $PIDFILE ]; then
 		PID=`cat $PIDFILE`
-            	pkill -U root -x $NAME --pidfile $PIDFILE > /dev/null 2>&1
+            	pkill -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 
 		%SBINDIR%/stard-stop
 
 		sleep 10
 
-		pgrep -U root -x $NAME --pidfile $PIDFILE > /dev/null 2>&1
+		pgrep -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 		RET=$?
 		if [ $RET -ne 0 ]; then
 			echo "OK"

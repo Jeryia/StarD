@@ -33,7 +33,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(stard_setup_run_env bash_escape_chars starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output);
+@EXPORT= qw(stard_setup_run_env bash_escape_chars starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output stard_countdown);
 
 
 ## Global settings
@@ -299,6 +299,25 @@ sub stard_pm {
 	return 0;
 };
 
+## stard_countdown
+# start a countdown timer on the server
+# INPUT1: duration
+# INPUT2: message
+sub stard_countdown {
+	my $duration = $_[0];
+	my $message = $_[1];
+
+	
+	stard_if_debug(1, "stard_countdown($duration, $message)");
+	stard_validate_env();
+	my $output = join("",stard_cmd("/start_countdown $duration", $message));
+
+	if ($output =~/\[SUCCESS\]/) {
+		return 1;
+	}
+	return 0;
+}
+
 ## stard_run_if_admin
 # If the given player is not an admin, exit and send them a message
 # INPUT1: player name
@@ -527,18 +546,30 @@ sub stard_player_info {
 # Creates a faction with a given leader
 # INPUT1: faction name
 # INPUT2: the leader of said faction
+# INPUT3: (optional) faction id to create faction as.
 # OUTPUT: 1 if successful, 0 if not
 sub stard_faction_create {
 	my $name = $_[0];
 	my $leader = $_[1];
+	my $id = $_[2];
 
 	stard_if_debug(1, "stard_faction_create($name, $leader)");
 	stard_validate_env();
-	my $output = join("",stard_cmd("/faction_create", $name, $leader));
-	if ($output =~/\[SUCCESS\]/) {
-		stard_if_debug(1, "stard_faction_create: return: 1");
-		return 1;
-	};
+
+	if ($id) {
+		my $output = join("",stard_cmd("/faction_create_as", $id, $name, $leader));
+		if ($output =~/\[SUCCESS\]/) {
+			stard_if_debug(1, "stard_faction_create: return: 1");
+			return 1;
+		};
+	}
+	else {
+		my $output = join("",stard_cmd("/faction_create", $name, $leader));
+		if ($output =~/\[SUCCESS\]/) {
+			stard_if_debug(1, "stard_faction_create: return: 1");
+			return 1;
+		};
+	}
 	stard_if_debug(1, "stard_faction_create: return: 0");
 	return 0;
 };
