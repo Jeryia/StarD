@@ -53,7 +53,7 @@ plugin_dir="$stard_home/plugins"
 stard_log="$stard_home/log"
 stard_plugin_log="$stard_home/log/plugins/"
 ACTIVE_PLUGINS=`$stard_home/bin/stard_get_plugin_list`
-PLUGINS=$plugin_dir/*
+PLUGINS=`ls $plugin_dir`
 PROG=$0
 
 stard_bin="$stard_home/bin"
