@@ -1,10 +1,10 @@
 Name:		stard
-Version:	0.0.14
+Version:	0.1.0
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
 Group:		Applications/Games
-License:	GPL
+License:	MIT
 #URL:		
 Source0:	stard.tar.gz
 
@@ -40,7 +40,7 @@ make install DESTDIR=%{buildroot}
 rm %{buildroot}/etc/init.d
 
 %pre
-useradd -c "Privilege-separated starmade server" -s /bin/bash -r -d /var/starmade/starmade 2> /dev/null || :
+useradd -c "Privilege-separated starmade server" -s /bin/bash -r -d /var/starmade starmade 2> /dev/null || :
 service stard stop || :
 
 %post
@@ -88,6 +88,16 @@ fi
 
 
 %changelog
+
+* Sun Jan 24 2016 Jeryia <johndoe@gmail.com>
+- v0.1.0
+- Support for multi-line messages with chat commands
+- Update support for StarMade via service stard update-sm
+- Ability to backup and restore entire setup via service stard backup and service stard restore
+- Stuck now teleports a player 300m instead of to an ajacent sector.
+- Workaround so that StarMade no longer takes up an entire cpu at all times...
+- fixed up log rotation
+- added new action stard_countdown
 * Thu Oct 29 2015 Jeryia <johndoe@gmail.com>
 - v0.0.13
 - Permission setting is less strict in starmade server directory
