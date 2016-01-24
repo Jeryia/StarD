@@ -67,8 +67,8 @@ sub main {
 	
 	# If player ran this command less than a minute ago. Tell them wait.
 	my $timeDiff = $curTime - $lastTime;
-	if (!($timeDiff >= 60)) {
-		my $remaining = 60 - $timeDiff;
+	if (!($timeDiff >= 30)) {
+		my $remaining = 30 - $timeDiff;
 		stard_pm($player, "You must wait annother $remaining seconds before you can use that command again\n");
 		exit 0;
 	}
@@ -79,13 +79,10 @@ sub main {
 
 	# pick a direction and throw the player in it.
 	my $axis = int(rand(2));
-	my @sector = split(" ", $player_info{sector});
-	$sector[$axis] += 1;
-	my $newLoc = join(" ", @sector);
-	stard_change_sector_for($player, $newLoc);
-	stard_give_item($player, "Ship Core", 1);
-	stard_give_item($player, "Power Reactor", 1);
-	stard_give_item($player, "Thruster", 2);
-	stard_pm($player, "$player, You have been moved to a different sector, and given some equipment to make that not to terrible.");
+	my @pos = split(" ", $player_info{pos});
+	$pos[$axis] += 300;
+	my $newLoc = join(" ", @pos);
+	stard_teleport_to($player, $newLoc);
+	stard_pm($player, "$player, You have been moved 300m. Hopefully this will get you free");
 	close($read_fh);
 };

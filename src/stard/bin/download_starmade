@@ -4,12 +4,12 @@
 
 LASTFILE="./StarMade/version.txt"
 
-if [ "x$1" == "--update" ]; then
+if [ "x$1" == "x--update" ]; then
         rm $LASTFILE
 fi
 
 
-java -jar ./tools/StarMade-Starter.jar -nogui &
+java -jar ./tools/StarMade-Starter.jar -nogui -force &
 PID=$!
 
 

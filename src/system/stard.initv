@@ -6,7 +6,7 @@
 # description: starmade deamon
 # processname: stard
 
-
+source "%SYSCONFDIR%/stard"
 EXEC=%SBINDIR%/stard
 EXEC_NAME=stard
 
@@ -78,7 +78,31 @@ function stop {
 	echo
 }
 
+function update-sm {
+	echo "Performing update on StarMade"
+	cd "$baseDir"
+	su $USER -c "./stard/bin/download_starmade --update" || return 1
+}
 
+function backup {
+	echo "Performing backup of stard (including StarMade)"
+	cd "$baseDir"
+	rsync -arv --delete "$baseDir"/* "$baseDir.bak"
+}
+
+function restore {
+	echo "Are you sure you want to restore (The current server will be deleted and replaced with the latest backup):"
+	echo -n "Please Type Yes or No:"
+	read ANS
+
+	if [ "$ANS" == "Yes" ]; then
+		echo "Performing restore of stard (including StarMade)"
+		cd "$baseDir"
+		rsync -arv --delete "$baseDir.bak"/* "$baseDir"
+	else 
+		echo "Restore aborted!"
+	fi
+}
 
 case "$1" in
 start)
@@ -103,7 +127,29 @@ restart)
 	exit $RET
 ;;
 
+update-sm)
+  	stop && update-sm
+	RET=$?
+	start
+	exit $RET
+;;
+
+backup)
+  	stop && backup
+	RET=$?
+	start
+	exit $RET
+;;
+
+restore)
+  	stop && restore
+	RET=$?
+	start
+	exit $RET
+;;
+
+
 *)
-        echo "Usage: $0 {status|start|stop|restart}"
+        echo "Usage: $0 {status|start|stop|restart|update-sm|backup|restore}"
         exit 1
 esac
