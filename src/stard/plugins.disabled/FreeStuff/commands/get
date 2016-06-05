@@ -48,7 +48,14 @@ sub main {
 
 	if ($config{$item}) {
 		if($config{$item}{cmd}) {
-			stard_cmd($config{$item}{cmd}, $player);
+			if ($config{$item}{cmd}=~/%player%/) {
+				my $cmd = $config{$item}{cmd};
+				$cmd=~s/%player%/'$player'/g;
+				stard_cmd($cmd);
+			}
+			else {
+				stard_cmd($config{$item}{cmd}, $player);
+			}
 		}
 		elsif ($config{$item}{itemID}) {
 			stard_give_item_id($player, $config{$item}{itemID}, 1);
