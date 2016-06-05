@@ -33,7 +33,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(stard_setup_run_env bash_escape_chars starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output stard_countdown);
+@EXPORT= qw(stard_setup_run_env starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output stard_countdown);
 
 
 ## Global settings
@@ -48,7 +48,7 @@ our %stard_config;
 # Hash of the starmade config file
 our %starmade_config;
 # Put the command we are to run together when running starmade commands.
-our $stard_cmd;
+our @stard_cmd;
 # Current level of debugging set
 our $debug_level = 0;
 our %blank_hash = ();
@@ -73,43 +73,15 @@ sub stard_setup_run_env {
 	%stard_config = %{stard_read_config("$stard_home/stard.cfg")};
 	%starmade_config = %{starmade_read_starmade_server_config()};
 
-	$stard_cmd = "/usr/bin/java -jar $stard_home/$stard_config{General}{stard_connect_cmd} ";
-	$stard_cmd .= bash_escape_chars($stard_config{General}{server}) . " ";
+	@stard_cmd = ("/usr/bin/java", "-jar", "$stard_home/$stard_config{General}{stard_connect_cmd}");
+	push(@stard_cmd, $stard_config{General}{server});
 	if ($stard_config{General}{password} =~/\S/) {
-		$stard_cmd .= bash_escape_chars($stard_config{General}{password});
+		push(@stard_cmd, $stard_config{General}{password});
 	}
 	else {
-		$stard_cmd .= bash_escape_chars($starmade_config{SUPER_ADMIN_PASSWORD});
+		push(@stard_cmd, $starmade_config{SUPER_ADMIN_PASSWORD});
 	}	
 	stard_if_debug(2, "stard_setup_run_env: return:");
-};
-
-
-## bash_escape_chars
-# Cleans up the given string to ensure that bash handles it proporly. (no bobby tables :))
-# INPUT: string to clean
-# OUTPUT: cleaned up string.
-sub bash_escape_chars {
-	my $string = $_[0];
-
-	stard_if_debug(2, "bash_escape_chars($string)");
-	my @chars = split("",$string);
-
-	my $valid_chars = "abcdefghijklmnopqrstuvwxyz1234567890_/ \t@#%^&*()-+\[\].,<>?!':;\{\}=";
-	my $output;
-
-
-	foreach my $char (@chars) {
-		if ($valid_chars=~/\Q$char\E/i) {
-			$output .= $char;
-		}
-		else {
-			$output .= "\\$char";
-		};
-	};
-	$output = "\"$output\"";
-	stard_if_debug(2, "bash_escape_chars: return: $output");
-	return $output;
 };
 
 ## starmade_escape_chars
@@ -148,7 +120,7 @@ sub stard_validate_env {
 ## stard_stdlib_set_debug
 # Set the debug level for this library
 # INPUT1: level to set debugging. (1 will print out inputs and outputs to all 
-# functions except stard_cmd, bash_escape_chars, validate_env, and starmade_escape_chars). 
+# functions except stard_cmd, validate_env, and starmade_escape_chars). 
 # Setting this to 2 will get you all functions input and output.
 sub stard_stdlib_set_debug {
 	my $debug = $_[0];
@@ -213,16 +185,31 @@ sub stard_cmd {
 	my $cmd = shift(@_);
 	my @args = @_;
 
+	my @output;
+
 	stard_if_debug(2, "stard_cmd($cmd, " . join(", ", @args) . ")");
 	stard_validate_env();
+
 	foreach my $entry (@args) {
 		$entry = starmade_escape_chars($entry);
 	};
 
-	my $arg = join(" ", @args);
-	my $starmade_input = bash_escape_chars("$cmd $arg");
 
-	my @output = `timeout $stard_config{General}{connect_timeout} $stard_cmd $starmade_input 2>&1`;
+	# fork a subprocess to launch the starmade command
+	pipe(READ, WRITE);
+	my $child = fork();
+	if ($child) {
+		close(WRITE);
+		@output = <READ>;
+	}
+	else {
+		close(READ);
+		open(STDOUT, ">&", \*WRITE) or die "$!";
+		open(STDERR, ">&", \*WRITE) or die "$!";
+
+		exec("timeout", $stard_config{General}{connect_timeout}, @stard_cmd, $cmd, @args );
+	}
+	
 
 	stard_if_debug(2, "stard_cmd: return @output");
 	$stard_last_output = join("", @output);
@@ -350,7 +337,7 @@ sub stard_is_admin {
 
 	# if there isn't anyone in the admins.txt file starmade thinks everyone
 	# is an admin
-	if (!(@admins)) {
+	if (!(@admins) || $player eq '') {
 		return 1;
 	}
 
