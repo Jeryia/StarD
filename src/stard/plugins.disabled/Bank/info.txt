@@ -1,0 +1,1 @@
+Provides the players with a bank to store credits. Also provides the ability for players to pay eachother.

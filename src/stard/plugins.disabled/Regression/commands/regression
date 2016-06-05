@@ -49,6 +49,7 @@ sub main {
 	my $test = $_[1];
 
 	stard_broadcast("Regression requested...");
+	stard_cmd("/god_mode $player true");
 
 
 
@@ -74,6 +75,7 @@ sub main {
 	else {
 		stard_pm($player, "Error, requested regression suite not found: $test");
 	};
+	stard_cmd("/god_mode $player false");
 	stard_broadcast("All tests passed!");
 }
 
@@ -86,28 +88,14 @@ sub general_reg {
 	my $test;
 	my $string;
 	my $cmd_result;
+	my $input;
+	my $echo;
+
 
 	if (!stard_broadcast("###Running General tests###")) {
 		print "Failed to broadcast message :(\n";
 		exit 1;
 	}
-
-	$test = "bash_escape_chars - escape test";
-	my $input = "\"'";
-	$cmd_result = bash_escape_chars($input);
-	my $echo = `echo -n $cmd_result`;
-	test_result($test, $echo eq $input);
-
-	$test = "bash_escape_chars - escape test2";
-	$input = "\"";
-	$cmd_result = bash_escape_chars($input);
-	$echo = `echo -n "$cmd_result"`;
-	test_result($test, $echo eq "$input");
-
-	$test = "bash_escape_chars - special char";
-	$input = "!%\$";
-	$cmd_result = bash_escape_chars($input);
-	test_result($test, `echo -n "$cmd_result"` eq "$input", "$input outputs: $cmd_result");
 
 	$test = "starmade_escape_chars - escape test";
 	$input = "test\"'";

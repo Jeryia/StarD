@@ -135,6 +135,7 @@ function start_plugins {
 ## stop_plugins
 # stop all plugins
 function stop_plugins {
+	echo -n "Stopping Plugin daemons...";
 	for plugin in $PLUGINS; do
 		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
 			PID=`cat $plugin_dir/$plugin/daemon.pid`
@@ -161,6 +162,14 @@ function stop_plugins {
 			fi
 		fi
 	done
+	plugin_status > /dev/null 2>&1
+	RET=$?
+	if [ $RET -ne 0 ]; then
+		echo Success
+		return 0
+	fi
+	echo Failure
+	return 1
 }
 
 ## setup_logging
@@ -244,4 +253,17 @@ case "$1" in
 		stop
 		start
 	;;		
+	restart-plugins)
+		stop_plugins
+		start_plugins
+	;;		
+	stop-plugins)
+		stop_plugins
+	;;		
+	start-plugins)
+		start_plugins
+	;;
+	*) 
+		echo "usage: stard_daemons [start|stop|status|restart|stop-plugins|start-plugins|restart-plugins"
+	;;
 esac

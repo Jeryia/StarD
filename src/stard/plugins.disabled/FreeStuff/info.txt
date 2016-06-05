@@ -1,0 +1,1 @@
+Allows players to recieve cerain items for free with the !get command

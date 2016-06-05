@@ -38,18 +38,48 @@ exit 0;
 
 sub main {
 	my $player = $_[0];
-	my @limits;
-	if (open(my $star_limits_fh, "<", "$base_home/../../../StarMade/server-message.txt")) {
-		@limits = <$star_limits_fh>;
-		close($star_limits_fh);
-	};
+	my $command;
 
-	if (@limits) {
-		stard_broadcast("Server motd have been sent to you $player.");
-		stard_pm($player, join("", @limits));
+	stard_run_if_admin($player);
+	if ($_[1]) {
+		$command = $_[1];
 	}
 	else {
-		stard_broadcast("No motd defined for this server");
-		stard_broadcast("Ask the admin to write a server-message.txt file in the starmade directory");
+		help($player);
+		exit 1;
+	}
+
+
+	if ($command eq 'restart') {
+		stard_broadcast("Restarting stard backend. Commands may not function during this time!");
+		my @out = `../../bin/stard_daemons restart`;
+		print "backend restart requested by '$player'\n";
+		print "@out";
+		stard_pm($player, join("", @out));
+		
+		stard_broadcast("Restart Complete! Commands should again be functional");
+	}
+	elsif ( $command eq 'status') {
+		my @out = `../../bin/stard_daemons status`;
+		print "backend status requested by '$player'\n";
+		print "@out";
+		stard_pm($player, "Stard Status:\n" . join("", @out));
+		
+	}
+	else {
+		help($player);
+		exit 1;
 	}
 };	
+
+sub help {
+	my $player= $_[0];
+	my $output = '';
+	
+	$output .= "usage: !stard [command]\n";
+	$output .= "\n";
+	$output .= "Commands:\n";
+	$output .= "    status - get the current status of stard\n";
+	$output .= "    restart - restarts the stard backend. Reloading all mods. Note: commands will not work while restarting\n";
+	stard_pm($player, $output);
+}

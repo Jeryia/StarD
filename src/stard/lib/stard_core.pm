@@ -78,10 +78,15 @@ sub stard_core_validate_env {
 # OUTPUT: array of active plugins
 sub get_active_plugin_list {
 	stard_core_validate_env();
-	my $result =stard_get_main_conf_field("plugin_list");
-	$result=~s/,/\n/ig;
-	my @plugins = split(" ", $result);
+	my @plugins = ();
 
+	opendir(my $dh, $stard_plugins) or die "could not open '$stard_plugins': $!\n";
+	while (readdir $dh) {
+		my $plugin = $_;
+		if ($plugin ne '.' && $plugin ne '..') {
+			push(@plugins, $plugin);
+		}
+	}
 	return \@plugins;
 }
 

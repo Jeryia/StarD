@@ -1,0 +1,7 @@
+Provides basic functionality commands such as:
+!stard
+!plugins
+!stuck
+!limits
+!motd
+!core

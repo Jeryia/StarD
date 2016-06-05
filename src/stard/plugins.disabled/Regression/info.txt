@@ -1,0 +1,1 @@
+stard regression testing suite. DON'T RUN THIS ON A NORMAL SERVER! It may delete or otherwise destroy stuff on the server.

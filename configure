@@ -506,11 +506,10 @@ for file in '$(STARD_BUILD)/bin/stard-launcher' '$(STARD_BUILD)/bin/stard_cmd' '
 	subs_strings $file
 done
 echo "
-	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.sample
+	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.disabled
 	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins
 	mkdir -p \$(BUILD_DIR)/starmade/stard/log
 	mkdir -p \$(BUILD_DIR)/starmade/stard/spool
-	cp -pfr \$(BUILD_DIR)/../plugins/* \$(BUILD_DIR)/starmade/stard/plugins.sample/
 " >> ./Makefile
 
 echo "
@@ -568,12 +567,21 @@ ifeq (\$(USERID), 0)
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/spool
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/log
 endif
+" >> ./Makefile	
 
+	for plugin in ./src/stard/plugins.disabled/*; do 
+		name=$(basename $plugin)
+		echo "
+ifeq (\"\$(wildcard \$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name)\",\"\" )
+	cp -R \"\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name\" \"\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/\"; 
+	rm -rf \"\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name\"
+endif
 " >> ./Makefile
-
-
+	done
+	
 	if [ $INITV -eq 1 ]; then
 		echo "	cp -p \$(BUILD_DIR)/stard.initv \$(DESTDIR)/etc/init.d/stard" >> ./Makefile
 	fi
