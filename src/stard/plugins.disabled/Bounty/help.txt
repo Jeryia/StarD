@@ -1,0 +1,1 @@
+!bounty - Get information on the current bounties available, or place your own bounties on a player

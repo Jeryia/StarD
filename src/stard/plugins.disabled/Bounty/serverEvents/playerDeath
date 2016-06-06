@@ -1,0 +1,156 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
+use bounty_lib;
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+stard_setup_run_env($stard_home);
+
+
+main(@ARGV);
+exit 0;
+#########################################################
+
+
+
+
+sub main {
+	my $player = $_[0];
+	my $killed_by = convert_entity_name($_[1]);
+
+	my %player_info = %{stard_player_info($player)};
+	my $bounty = bounty_get_balance($player);
+	my @pay_players;
+
+	if (!$bounty || !$killed_by || $killed_by eq '') {
+		print "Player '$player' has no bounty or wasn't killed by anyone. print killed_by: '$killed_by'. Bounty: $bounty\n";
+		exit 0;
+	}
+
+	@pay_players = @{players_to_pay($killed_by, $player_info{loc})};
+	if (!@pay_players) { 
+		print "No players could be found that can take credit\n";
+		exit 0;
+	}
+
+
+	# lock to perform transaction 
+	my $lock_fh = bounty_lock_account($player);
+	if (!$lock_fh) {
+		exit 1;
+	};
+
+	# clear bounty
+	my $in_bounty = bounty_get_balance($player);
+	if(!bounty_add_amount($player, -$in_bounty)) {
+		exit 0;
+	};
+
+
+	# pay players
+	my $payment = $in_bounty/($#pay_players +1);
+	foreach my $pay_player (@pay_players) {
+		stard_give_credits($pay_player, $in_bounty);
+		stard_broadcast("$pay_player has been awarded $payment for the bounty on $player!\n");
+	}
+	bounty_unlock_account($lock_fh);
+};
+
+sub players_to_pay {
+	my $killed_by = $_[0];
+	my $bounty_loc = $_[1];
+
+	my @pay_players = ();
+
+	my $faction = get_faction_of_ship($killed_by);
+	my %player_list = %{stard_player_list()};
+
+	if ($faction && $faction > 0) {
+		my %ships = stard_search($killed_by);
+		
+		foreach my $player (keys %player_list) {
+			my $player_fac = $player_list{$player}{faction};
+			my $player_loc = $player_list{$player}{loc};
+			my $dist = stard_loc_distance($bounty_loc, $player_loc);
+			if (
+				$player_fac == $faction
+				&& $dist <= 1
+			) {
+				push(@pay_players, $player);
+			}
+		}
+	}
+	if(!@pay_players) {
+		Player: foreach my $player (keys %player_list) {
+			if ($player_list{$player}{control} && $player_list{$player}{control} eq $killed_by) {
+				push(@pay_players, $player);
+				last Player;
+			}
+		}
+	}
+	return \@pay_players;
+}
+
+
+## usage
+# Print help information
+# INPUT1: player to send help message to
+sub usage {
+	my $player = $_[0];
+	my %tmp = %{stard_player_list()};
+	my @players = keys(%tmp);
+
+	my $output = "Available Bounties:\n";
+	foreach my $player (@players) {
+		$output .= "$player: " . bounty_get_balance($player) . "\n";
+	}
+	$output .= "Kill the player to get the reward. The reward will be distributed to all nearby faction members.";
+
+	stard_pm($player, $output);
+	stard_pm($player, "Usage: !bounty <player> <amount>");
+	stard_pm($player, "Description: Put up credits toward a player's bounty.");
+}
+
+sub get_faction_of_ship {
+	my $ship = $_[0];
+	my %ships = %{stard_search($ship)};
+
+	my %sector_info;
+
+	if ($ships{$ship}) {
+		%sector_info = stard_sector_info($ships{$ship});
+	}
+	return $sector_info{entity}{$ship}{faction};
+}
+
+sub convert_entity_name {
+	my $entity = $_[0];
+
+	# Ship[Jeryia2_1465162199096](998)
+	if ($entity =~/Ship\[(\S+)\](\D+)/i) {
+		return $1;
+	}
+	if ($entity =~/SpaceStation\[(\S+)\](\D+)/i) {
+		return $1;
+	}
+	return $entity;
+}

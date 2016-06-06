@@ -1,0 +1,1 @@
+Allows players to put up bounties on other players.
