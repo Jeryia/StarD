@@ -33,7 +33,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(stard_setup_run_env starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output stard_countdown);
+@EXPORT= qw(stard_setup_run_env starmade_escape_chars stard_validate_env stard_stdlib_set_debug stard_if_debug stard_read_config stard_cmd stard_broadcast stard_pm stard_run_if_admin stard_is_admin stard_admin_list stard_player_list stard_player_info stard_faction_create stard_faction_delete stard_faction_list_bid stard_faction_list_bname stard_faction_list_members stard_give_credits stard_give_item stard_give_metaitem stard_give_item_id stard_give_all_items stard_despawn_sector stard_despawn_all stard_spawn_entity stard_spawn_entity_pos stard_search stard_faction_mod_relations stard_faction_set_all_relations stard_faction_add_member stard_faction_del_member stard_change_sector_for stard_sector_chmod stard_sector_info stard_set_spawn_player starmade_read_starmade_server_config stard_get_starmade_conf_field stard_get_main_conf_field stard_teleport_to stard_loc_distance stard_location_add stard_last_output stard_countdown stard_god_mode stard_invisibility_mode);
 
 
 ## Global settings
@@ -729,6 +729,26 @@ sub stard_give_item {
 	return 1;
 };
 
+## stard_give_metaitem
+# Give the player specified meta item 
+# INPUT1: Player to give the item to
+# INPUT2: Name of the meta item to give.
+# OUTPUT: 1 if success, 0 if failure
+sub stard_give_metaitem {
+	my $player = $_[0];
+	my $item = $_[1];
+
+	stard_if_debug(1, "stard_give_metaitem($player, $item)");
+	stard_validate_env();
+	my $output = join("", stard_cmd("/give_metaitem", $player, $item));
+	if ($output =~/ERROR/i) {
+		stard_if_debug(1, "stard_give_metaitem: return: 0");
+		return 0;
+	};
+	stard_if_debug(1, "stard_give_metaitem: return: 1");
+	return 1;
+};
+
 ## stard_give_item_id
 # Give the player specified item (name)
 # INPUT1: Player to give the item to
@@ -1237,6 +1257,62 @@ sub stard_location_add {
 	}
 	return join(" ", @return);
 };
+
+## stard_god_mode
+# Change the gode mode status of a player
+# INPUT1: player name
+# INPUT2; (boolean) true to activate god mode, false to deactivate
+# OUTPUT: (boolean) true if successfull
+sub stard_god_mode {
+	my $player = $_[0];
+	my $mode = $_[1];
+
+	if ($mode) {
+		my @tmp = stard_cmd("/god_mode '$player' true");
+		my $output = join("", @tmp);
+		if ($output=~/\[ADMIN COMMAND\] activated godmode for $player/) {
+			return 1;
+		}
+		return 0;
+		
+	}
+	else {
+		my @tmp = stard_cmd("/god_mode '$player' false");
+		my $output = join("", @tmp);
+		if ($output=~/\[ADMIN COMMAND\] deactivated godmode for $player/) {
+			return 1;
+		}
+		return 0;
+	}
+}
+
+## stard_invisibility_mode
+# Change the invisability mode status of a player
+# INPUT1: player name
+# INPUT2; (boolean) true to activate invisability mode, false to deactivate
+# OUTPUT: (boolean) true if successfull
+sub stard_invisibility_mode {
+	my $player = $_[0];
+	my $mode = $_[1];
+
+	if ($mode) {
+		my @tmp = stard_cmd("/invisibility_mode '$player' true");
+		my $output = join("", @tmp);
+		if ($output=~/\[ADMIN COMMAND\] activated invisibility for $player/) {
+			return 1;
+		}
+		return 0;
+		
+	}
+	else {
+		my @tmp = stard_cmd("/invisibility_mode '$player' false");
+		my $output = join("", @tmp);
+		if ($output=~/\[ADMIN COMMAND\] deactivated invisibility for $player/) {
+			return 1;
+		}
+		return 0;
+	}
+}
 
 ## stard_last_output
 # Get the last recorded output from starmade. Usefull if you don't know why 
