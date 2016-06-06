@@ -121,7 +121,11 @@ $bin/rotate_logs
 # make sure plugins are setup correctly
 $bin/fix_plugins
 
-# Go through each plugin, if it has a daemon, use it
+
+# make sure we have a clean state before we start launching things
+$bin/stard_daemons stop
+
+# Start all deamons
 $bin/stard_daemons start
 
 # Launch the starmade daemon.
