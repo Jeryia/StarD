@@ -60,43 +60,10 @@ sub main {
 	}
 
 	if ($command eq 'load') {
-		if (!$plugin) {
-			help($player);
-			exit 1;
-		}
-		my %disabled_plugins = %{get_disabled_plugins_hash()};
-		if (!$disabled_plugins{$plugin}) {
-			stard_pm($player, "'$plugin' is already loaded or not available.");
-			help($player);
-			exit 1;
-		}
-		move("$plugins_disabled_dir/$plugin", "$plugins_dir/$plugin") or die "Failed to move '$plugins_disabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
-		start_plugin_deamons($player);
-		stard_broadcast("Plugin: '$plugin' has been loaded");
+		load_plugin($plugin, $player);
 	}
 	elsif ($command eq 'unload') {
-		if (!$plugin) {
-			help($player);
-			exit 1;
-		}
-		if ($plugin eq 'Base') {
-			stard_pm($player, "Cannot remove 'Base' plugin, this would remove the !plugin command!");
-			exit 1;
-		}
-
-		my %active_plugins = %{get_active_plugins_hash()};
-		if (!$active_plugins{$plugin}) {
-			stard_pm($player, "Plugin: '$plugin' is not loaded.");
-			help($player);
-			exit 1;
-		}
-		stard_broadcast("Restarting Plugin Deamons. Standby...");
-		stop_plugin_deamons($player);
-		move("$plugins_dir/$plugin", "$plugins_disabled_dir/$plugin") or die "Failed to move '$plugins_dir/$plugin' to '$plugins_disabled_dir/$plugin'\n";
-		start_plugin_deamons($player);
-		stard_broadcast("Plugin deamon restart complete!");
-		
-		stard_broadcast("Plugin: '$plugin' has been unloaded");
+		unload_plugin($plugin, $player);
 	}
 	elsif ($command eq 'info') {
 		if (!$plugin) {
@@ -115,6 +82,63 @@ sub main {
 	}
 };	
 
+## load_plugin
+# loads the given plugin
+# INPUT1: plugin to load
+# INPUT2: player to display loading information to
+sub load_plugin {
+	my $plugin = $_[0];
+	my $player = $_[1];
+
+	if (!$plugin) {
+		help($player);
+		exit 1;
+	}
+	my %disabled_plugins = %{get_disabled_plugins_hash()};
+	if (!$disabled_plugins{$plugin}) {
+		stard_pm($player, "'$plugin' is already loaded or not available.");
+		help($player);
+		exit 1;
+	}
+	move("$plugins_disabled_dir/$plugin", "$plugins_dir/$plugin") or die "Failed to move '$plugins_disabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
+	start_plugin_deamons($player);
+	stard_broadcast("Plugin: '$plugin' has been loaded");
+}
+
+## unload_plugin
+# unloads the given plugin
+# INPUT1: plugin unload
+# INPUT2: player to display info to
+sub unload_plugin {
+	my $plugin = $_[0];
+	my $player = $_[1];
+
+	if (!$plugin) {
+		help($player);
+		exit 1;
+	}
+	if ($plugin eq 'Base') {
+		stard_pm($player, "Cannot remove 'Base' plugin, this would remove the !plugin command!");
+		exit 1;
+	}
+	my %active_plugins = %{get_active_plugins_hash()};
+	if (!$active_plugins{$plugin}) {
+		stard_pm($player, "Plugin: '$plugin' is not loaded.");
+		help($player);
+		exit 1;
+	}
+	stard_broadcast("Restarting Plugin Deamons. Standby...");
+	stop_stard_deamons($player);
+	move("$plugins_dir/$plugin", "$plugins_disabled_dir/$plugin") or die "Failed to move '$plugins_dir/$plugin' to '$plugins_disabled_dir/$plugin'\n";
+	start_stard_deamons($player);
+	stard_broadcast("Plugin deamon restart complete!");
+		
+	stard_broadcast("Plugin: '$plugin' has been unloaded");
+}
+
+## help
+# disbale help information
+# INPUT1: player to display info to
 sub help {
 	my $player= $_[0];
 	my $output = '';
@@ -130,20 +154,31 @@ sub help {
 	
 }
 
-sub start_plugin_deamons {
+## start_stard_deamons
+# starts the stard daemons (this includes the plugin daemons).
+sub start_stard_deamons {
 	my $player = $_[0];
 	my @out = `../../bin/stard_daemons start`;
 	print "@out";
 	stard_pm($player, join("", @out));
 }
 
-sub stop_plugin_deamons {
+## stop_stard_deamons
+# Stops all stard daemons(including plugin daemons). 
+# This is done to prevent a commend from being executed from a plugin that is 
+# being disabled, and allowing any plugin deamons to write out their state 
+# before they exit.
+sub stop_stard_deamons {
 	my $player = $_[0];
 	my @out = `../../bin/stard_daemons stop`;
 	print "@out";
 	stard_pm($player, join("", @out));
 	
 }
+
+## display_active_plugins
+# prints the active plugins for the given player
+# INPUT1: player to display the info to
 sub display_active_plugins {
 	my $player = $_[0];
 
@@ -153,6 +188,9 @@ sub display_active_plugins {
 	stard_pm($player, $output);
 }
 
+## display_disabled_plugins
+# prints the disabled plugins for the given player
+# INPUT1: player to display the info to
 sub display_disabled_plugins {
 	my $player = $_[0];
 
@@ -162,10 +200,16 @@ sub display_disabled_plugins {
 	stard_pm($player, $output);
 }
 
+## get_disabled_plugins_hash
+# puts disabled the plugins into a hash table for easy lookup
+# OUTPUT: hash table of plugins
 sub get_disabled_plugins_hash {
 	return get_dir_contents_hash($plugins_disabled_dir);
 }
 
+## get_active_plugins_hash
+# puts the active plugins into a hash table for easy lookup
+# OUTPUT: hash table of plugins
 sub get_active_plugins_hash {
 	my @plugins = @{get_active_plugin_list()};
 	my %plugin_hash = ();
@@ -175,6 +219,10 @@ sub get_active_plugins_hash {
 	return \%plugin_hash;
 }
 
+## get_dir_contents_hash
+# gets the contents of a directory and stores they in a hash for easy lookup
+# INPUT1: directory path
+# OUTPUT: hash of contents of directory
 sub get_dir_contents_hash {
 	my $dir = $_[0];
 	my %dir_contents = ();
@@ -189,6 +237,11 @@ sub get_dir_contents_hash {
 	return \%dir_contents;
 }
 
+## display_plugin_info
+# Prints out the 'info.txt' file from the selected plugin.
+# This is intended to give the admin an idea of what a plugin does before loading it.
+# INPUT1: player to send to display info to
+# INPUT2: plugin name
 sub display_plugin_info {
 	my $player = $_[0];
 	my $plugin = $_[1];

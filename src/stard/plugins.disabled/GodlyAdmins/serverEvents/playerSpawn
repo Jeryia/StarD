@@ -4,7 +4,6 @@ use warnings;
 use lib("./lib");
 use lib("../../lib");
 use stard_lib;
-use stard_core;
 
 #All rights reserved.
 #
@@ -44,9 +43,8 @@ sub main {
 	my $player = $_[0];
 
 	if (stard_is_admin($player)) {
-		print "is an admin!\n";
-		stard_cmd("/god_mode $player true");
-		stard_cmd("/invisibility_mode $player true");
+		stard_god_mode($player, 1);
+		stard_invisibility_mode($player, 1);
 		stard_pm($player, "God mode and invisibility active");
 		exit 0;
 	}

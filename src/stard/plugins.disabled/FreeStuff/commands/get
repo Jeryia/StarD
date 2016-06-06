@@ -48,14 +48,10 @@ sub main {
 
 	if ($config{$item}) {
 		if($config{$item}{cmd}) {
-			if ($config{$item}{cmd}=~/%player%/) {
-				my $cmd = $config{$item}{cmd};
-				$cmd=~s/%player%/'$player'/g;
-				stard_cmd($cmd);
-			}
-			else {
-				stard_cmd($config{$item}{cmd}, $player);
-			}
+			stard_cmd($config{$item}{cmd}, $player);
+		}
+		elsif ($config{$item}{metaItem}) {
+			stard_give_metaitem($player, $config{$item}{metaItem});
 		}
 		elsif ($config{$item}{itemID}) {
 			stard_give_item_id($player, $config{$item}{itemID}, 1);

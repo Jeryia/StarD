@@ -148,6 +148,14 @@ sub player_reg {
 		exit 1;
 	}
 
+	test_result("god_mode active", stard_god_mode($player, 1));
+	test_result("god_mode inactive", stard_god_mode($player, 0));
+	test_result("god_mode invalid", !stard_god_mode('msbr', 1));
+	
+	test_result("invisibility_mode active", stard_invisibility_mode($player, 1));
+	test_result("invisibility_mode inactive", stard_invisibility_mode($player, 0));
+	test_result("invisibility_mode invalid", !stard_invisibility_mode('msbr', 1));
+
 	my %player_list = %{stard_player_list()};
 	my %player_info1 = %{$player_list{$player}};
 	test_result(

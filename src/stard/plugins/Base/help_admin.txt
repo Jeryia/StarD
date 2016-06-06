@@ -1,0 +1,4 @@
+Admin Commands:
+!stard - restart or check the status of the stard background processes
+!plugin - load or unload stard plugins.
+
