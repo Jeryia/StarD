@@ -6,6 +6,7 @@ use lib("./lib");
 use lib("../../lib");
 use stard_lib;
 use stard_core;
+use stard_map;
 
 $| = 1;
 #All rights reserved.
@@ -33,7 +34,7 @@ my $debug_home = '.';
 my $stard_home = "$debug_home/../..";
 require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);
-stard_stdlib_set_debug(1);
+stard_stdlib_set_debug(2);
 
 
 my $player = $ARGV[0];
@@ -49,7 +50,6 @@ sub main {
 	my $test = $_[1];
 
 	stard_broadcast("Regression requested...");
-	stard_cmd("/god_mode $player true");
 
 
 
@@ -59,6 +59,7 @@ sub main {
 		player_reg($player);
 		faction_reg($player);
 		sector_reg($player);
+		map_reg($player);
 	}
 	elsif ($test eq "general") {
 		general_reg($player);
@@ -72,10 +73,12 @@ sub main {
 	elsif ($test eq "sector") {
 		sector_reg($player);
 	}
+	elsif ($test eq "map") {
+		map_reg($player);
+	}
 	else {
 		stard_pm($player, "Error, requested regression suite not found: $test");
 	};
-	stard_cmd("/god_mode $player false");
 	stard_broadcast("All tests passed!");
 }
 
@@ -267,6 +270,11 @@ sub sector_reg {
 	my $spawn = "2 2 2";
 	my $sector1 = "5 5 5";
 
+	if (!stard_broadcast("###Running Sector tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
 	stard_change_sector_for($player, $spawn);
 	%player_info = %{stard_player_info($player)};
 	test_result("stard_change_sector_for - spawn", $player_info{sector} eq $spawn);
@@ -320,6 +328,41 @@ sub sector_reg {
 	print "\n\n";
 
 };
+
+## map_reg
+# Perform tests for the stard_map library
+# INPUT1: name of the player who requested the testing.
+sub map_reg {
+	my $player = $_[0];
+
+	my $map = "./Maps/test.map";
+	my %map_config = %{stard_read_config($map)};
+	my $blueprint = "Isanth Type-Zero Mc";
+	my $sector = "8 0 8";
+	
+	my %sector_info;
+	my @validate;
+
+	if (!stard_broadcast("###Running Map tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
+
+	stard_spawn_entity($blueprint, "itsz", $sector, -1, 0 );
+	test_result("stard_clean_map_area - full clean return ok", stard_clean_map_area(\%map_config, "full"));
+	%sector_info = %{stard_sector_info($sector)};
+	@validate = keys %{$sector_info{entity}};
+	test_result("stard_clean_map_area - successfull clean", !@validate);
+
+	test_result("stard_setup_map - return ok", stard_setup_map(\%map_config));
+	%sector_info = %{stard_sector_info($sector)};
+	test_result("stard_setup_map - object spawn", $sector_info{entity}{ENTITY_SHIP_test_station});
+	test_result("stard_setup_map - defender spawn", %{stard_search("Isanth Type-Zero Bm")});
+
+	test_result("stard_clean_map_area - full clean return ok 2", stard_clean_map_area(\%map_config, "full"));
+
+}
 
 ## test_result
 # Process the result of the test and report on it. Also wait .25 seconds to not 

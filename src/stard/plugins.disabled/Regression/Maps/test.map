@@ -1,0 +1,22 @@
+# Sample map config showing all available options and hopefully explaining them
+
+
+[test_station]
+# sector the station/object is to be spawned in
+sector = '8 0 8'
+# blueprint of the object to spawn
+blueprint = 'Isanth Type-Zero Bc'
+# owner of the station. -2 is trading guild, -1 is pirates, 0 is unowned, 1 is 
+# team 1, 2 is team 2.
+owner = -2
+# blueprints of pirate ships to spawn at the beginning of the game to guard the
+# object.
+pirates = Isanth Type-Zero Bm,Isanth Type-Zero Bm
+# Positions of the spawned pirate ships (comma seperated list, the first one 
+# corresponds with the first blueprint, and so on)
+pirate_pos = 100 100 0,-200 -10 -20,-50 20 50
+# When a faction captures this station, spawn these defenders that are allied with those who captured it.
+defenders = Isanth Type-Zero Cm,Isanth Type-Zero Cm
+# positions of the defender ships when they spawn. (comma seperated list, the 
+# first one corresponds with the first blueprint, and so on)
+defender_pos = 100 100 0,-200 -10 -20
