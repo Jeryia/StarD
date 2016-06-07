@@ -1,0 +1,85 @@
+#!perl
+use strict;
+use warnings;
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
+## setup environment
+my $lastlogin_home = '.';
+my $lastlogin_data = "$lastlogin_home/data";
+my $stard_home = "$lastlogin_home/../..";
+
+stard_setup_run_env($stard_home);
+
+
+
+main(@ARGV);
+exit 0;
+##############################################
+
+
+
+sub main {
+	my $requester = $_[0];
+	my $player;
+	
+	if ($_[1]) {
+		$player = $_[1];
+	}
+	else {
+		usage($requester);
+		exit 1;
+	}
+
+	my $time;
+
+	if (open(my $player_fh, "<", "$lastlogin_data/$player")) {
+		flock($player_fh, 2);
+		my @tmp = <$player_fh>;
+		close($player_fh);
+		$time = join("", @tmp);
+		$time =~s/\D+//g;
+		if ($time =~/\d/) {
+			my $curtime = time;
+			my $timediff = $curtime - $time;
+			# convert to days
+			my $timediff_days = int($timediff / 60 / 60 / 24);
+
+			if ($timediff_days == 0) {
+				stard_pm($requester, "$player was last online less than a day ago");
+			}
+			else {
+				stard_pm($requester, "$player was last online $timediff_days days ago");
+			}
+		}
+		else {
+			stard_pm($requester, "Error, malformed data file. Please report this to an admin!");
+		}
+	}
+	else {
+		stard_pm($requester, "$player has never logged into this server.");
+	}
+
+};
+
+sub usage {
+	my $player = $_[0];
+	stard_pm($player, "usage: !lastlogin <player name>");
+	stard_pm($player, "description: Gives you how long ago a player last logged in");
+}

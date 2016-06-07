@@ -1,0 +1,1 @@
+Provides a utility for players to check when a given player last logged in.
