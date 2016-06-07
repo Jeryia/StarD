@@ -101,7 +101,7 @@ sub load_plugin {
 		exit 1;
 	}
 	move("$plugins_disabled_dir/$plugin", "$plugins_dir/$plugin") or die "Failed to move '$plugins_disabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
-	start_plugin_deamons($player);
+	start_stard_deamons($player);
 	stard_broadcast("Plugin: '$plugin' has been loaded");
 }
 
