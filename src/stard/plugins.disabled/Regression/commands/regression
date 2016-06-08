@@ -32,8 +32,12 @@ $| = 1;
 ## setup environment
 my $debug_home = '.';
 my $stard_home = "$debug_home/../..";
+my $stard_plugins = "$stard_home/plugins";
+
+
 require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);
+setup_core_env($stard_home);
 stard_stdlib_set_debug(2);
 
 
@@ -60,6 +64,7 @@ sub main {
 		faction_reg($player);
 		sector_reg($player);
 		map_reg($player);
+		plugin_reg($player);
 	}
 	elsif ($test eq "general") {
 		general_reg($player);
@@ -75,6 +80,9 @@ sub main {
 	}
 	elsif ($test eq "map") {
 		map_reg($player);
+	}
+	elsif ($test eq "plugin") {
+		plugin_reg($player);
 	}
 	else {
 		stard_pm($player, "Error, requested regression suite not found: $test");
@@ -95,7 +103,7 @@ sub general_reg {
 	my $echo;
 
 
-	if (!stard_broadcast("###Running General tests###")) {
+	if (!stard_broadcast("###Running General Tests###")) {
 		print "Failed to broadcast message :(\n";
 		exit 1;
 	}
@@ -146,7 +154,7 @@ sub general_reg {
 # INPUT1: name of the player who requested the testing.
 sub player_reg {
 	my $player = $_[0];
-	if (!stard_broadcast("###Running Player tests###")) {
+	if (!stard_broadcast("###Running Player Tests###")) {
 		print "failed to broadcast message :(\n";
 		exit 1;
 	}
@@ -206,7 +214,7 @@ sub faction_reg {
 	my %factions_bname;
 	my %player_info;
 	my $faction = "Test Faction";
-	if (!stard_broadcast("###Running Factions tests###")) {
+	if (!stard_broadcast("###Running Factions Tests###")) {
 		print "failed to broadcast message :(\n";
 		exit 1;
 	}
@@ -270,7 +278,7 @@ sub sector_reg {
 	my $spawn = "2 2 2";
 	my $sector1 = "5 5 5";
 
-	if (!stard_broadcast("###Running Sector tests###")) {
+	if (!stard_broadcast("###Running Sector Tests###")) {
 		print "failed to broadcast message :(\n";
 		exit 1;
 	}
@@ -343,7 +351,7 @@ sub map_reg {
 	my %sector_info;
 	my @validate;
 
-	if (!stard_broadcast("###Running Map tests###")) {
+	if (!stard_broadcast("###Running Map Tests###")) {
 		print "failed to broadcast message :(\n";
 		exit 1;
 	}
@@ -362,6 +370,170 @@ sub map_reg {
 
 	test_result("stard_clean_map_area - full clean return ok 2", stard_clean_map_area(\%map_config, "full"));
 
+}
+
+## plugin_reg
+# Perform tests for the stard_map library
+# INPUT1: name of the player who requested the testing.
+sub plugin_reg {
+	my $player = $_[0];
+	my $result;
+	if (!stard_broadcast("###Running Plugin Tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
+	
+	stard_broadcast("Setting up test environment. Please wait...");
+	plugin_command("plugin", '', "unload", "Test");
+	sleep 20;
+
+	plugin_command("plugin", $player, "load", "Test");
+	sleep 20;
+	test_result("Base - plugin load:", -d "$stard_plugins/Test");
+	$result = `../../bin/stard_daemons status | grep -q 'Test is running'; echo \$?`;
+	test_result("Base - plugin unload daemon:", $result == 0);
+
+	plugin_command("plugin", $player, "unload", "Test");
+	sleep 20;
+	test_result("Base - plugin unload:", ! -d "$stard_plugins/Test");
+	$result = `../../bin/stard_daemons status | grep -q 'Test is'; echo \$?`;
+	test_result("Base - plugin unload daemon:", $result != 0);
+
+
+	plugin_bank_reg($player);
+
+	plugin_bounty_reg($player);
+
+	plugin_lastlogin_reg($player);
+}
+
+
+## plugin_bank_reg
+# Perform tests for the Bank plugin
+# INPUT1: name of the player who requested the testing.
+sub plugin_bank_reg {
+	my $player = $_[0];
+
+	my %player_info;
+	my $last_credits;
+
+	if (!stard_broadcast("###Running Bank Plugin Tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
+	# Setup load bank and clear player bank
+	plugin_command("plugin", '', "load", "Bank");
+	sleep 20;
+	system("rm", "-f", "$stard_plugins/Bank/Data/$player");
+	my $bank_credits = 1000;
+
+
+
+	%player_info = %{stard_player_info($player)};
+	my $last_credits = $player_info{credits};
+	plugin_command("deposit", $player, $bank_credits);
+	sleep 2;
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-Bank - deposit", $last_credits - $player_info{credits} == $bank_credits);
+
+	
+	%player_info = %{stard_player_info($player)};
+	my $last_credits = $player_info{credits};
+	plugin_command("deposit", $player, 100000000000);
+	sleep 2;
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-Bank - over deposit", $last_credits == $player_info{credits});
+
+
+	%player_info = %{stard_player_info($player)};
+	my $last_credits = $player_info{credits};
+	plugin_command("withdraw", $player, $bank_credits);
+	sleep 2;
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-Bank - withdraw", $player_info{credits} - $last_credits == $bank_credits);
+
+
+	%player_info = %{stard_player_info($player)};
+	my $last_credits = $player_info{credits};
+	plugin_command("withdraw", $player, $bank_credits);
+	sleep 2;
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-Bank - overdraw", $player_info{credits} == $last_credits);
+}
+
+
+## plugin_bounty_reg
+# Perform tests for the Bounty plugin
+# INPUT1: name of the player who requested the testing.
+sub plugin_bounty_reg {
+	my $player = $_[0];
+
+	my %player_info;
+	my $last_credits;
+
+	if (!stard_broadcast("###Running Bounty Plugin Tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
+	# setup environment (this is a bit of a cludge)
+	plugin_command("plugin", '', "load", "Bounty");
+	sleep 20;
+	my $bounty_player = 'asdf';
+	my $bounty_credits = 20000;
+	system("echo $bounty_credits > $stard_plugins/Bounty/data/$bounty_player");
+	
+
+	%player_info = %{stard_player_info($player)};
+	my $last_credits = $player_info{credits};
+	plugin_server_event("playerDeath", $bounty_player, $player_info{control});
+	sleep 2;
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-Bounty - awarded", $player_info{credits} - $last_credits == $bounty_credits);
+
+
+	%player_info = %{stard_player_info($player)};
+	my $last_credits = $player_info{credits};
+	plugin_command("bounty", $player, $player, $bounty_credits);
+	sleep 2;
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-Bounty - bounty", $last_credits - $player_info{credits} == $bounty_credits);
+
+}
+
+## plugin_bounty_reg
+# Perform tests for the Bounty plugin
+# INPUT1: name of the player who requested the testing.
+sub plugin_lastlogin_reg {
+	my $player = $_[0];
+
+	if (!stard_broadcast("###Running LastLogin Plugin Tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
+	# setup environment (this is a bit of a cludge)
+	plugin_command("plugin", '', "load", "LastLogin");
+	sleep 20;
+	my $lastlogin_player = "asdf";
+	my $lastlogin_player_data = "$stard_plugins/LastLogin/data/$lastlogin_player";
+	
+
+	unlink($lastlogin_player_data);
+	plugin_server_event("playerLogin", $lastlogin_player);
+	sleep 2;
+	test_result("plugin-LastLogin - playerLogin", -e $lastlogin_player_data);
+
+
+	unlink($lastlogin_player_data);
+	plugin_server_event("playerLogout", $lastlogin_player);
+	sleep 2;
+	test_result("plugin-LastLogin - playerLogout", -e $lastlogin_player_data);
+	unlink($lastlogin_player_data);
+
+	
 }
 
 ## test_result
