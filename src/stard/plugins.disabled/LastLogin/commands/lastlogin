@@ -48,6 +48,11 @@ sub main {
 	}
 
 	my $time;
+	my %player_list = %{stard_player_list()};
+	if ($player_list{$player}) {
+		stard_pm($requester, "$player is online right now!");
+		exit 0;
+	}
 
 	if (open(my $player_fh, "<", "$lastlogin_data/$player")) {
 		flock($player_fh, 2);
@@ -60,9 +65,11 @@ sub main {
 			my $timediff = $curtime - $time;
 			# convert to days
 			my $timediff_days = int($timediff / 60 / 60 / 24);
+			my $timediff_hours = int($timediff / 60 / 60);
+
 
 			if ($timediff_days == 0) {
-				stard_pm($requester, "$player was last online less than a day ago");
+				stard_pm($requester, "$player was last online $timediff_hours hours ago");
 			}
 			else {
 				stard_pm($requester, "$player was last online $timediff_days days ago");
