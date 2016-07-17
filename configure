@@ -524,7 +524,7 @@ build_system:
 
 
 
-for file in '$(BUILD_DIR)/sbin/stard' '$(BUILD_DIR)/sbin/stard-stop' '$(BUILD_DIR)/sbin/stard-backup' ; do
+for file in '$(BUILD_DIR)/sbin/stard' '$(BUILD_DIR)/sbin/stard-backup' ; do
 	subs_strings $file
 done
 
@@ -551,7 +551,6 @@ endif
 	cp -pfr \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
 
 	cp -pf \$(BUILD_DIR)/sbin/stard \$(DESTDIR)\$(SBINDIR)/
-	cp -pf \$(BUILD_DIR)/sbin/stard-stop \$(DESTDIR)\$(SBINDIR)/
 	cp -pf \$(BUILD_DIR)/sbin/stard-backup \$(DESTDIR)\$(SBINDIR)/
 
 	mkdir -p \$(DESTDIR)\$(SYSCONFDIR)/

@@ -13,10 +13,54 @@ EXEC_NAME=stard
 NAME=stard
 PIDFILE=/var/run/$NAME.pid
 
+if [ "x" == "x$TERMTIME" ]; then
+        TERMTIME=$SHUTDOWN_TIME
+fi
+
+if [ "x" == "x$KILLTIME" ]; then
+        KILLTIME=`expr $SHUTDOWN_TIME \* 2`
+fi
+
 if [ $UID -ne 0 ]; then
 	echo "Your must be root to run this command."
 	exit 1
 fi
+
+
+
+# If things are still running start using a bigger hammer
+## kill_procs
+# tries increasingly harder hammers until the process dies.
+# INPUT1: process name match
+# INPUT2: owner of process
+# INPUT3-*: any arguments to give to pgrep/pkill
+function kill_procs {
+	proc=$1
+	shift
+	user=$1
+	shift
+	args=$@
+
+	running=`pgrep $args $proc -U $USER | wc -l`
+	timer=0
+	while [ $running -gt 0 ]; do
+		timer=`expr $timer + 1`
+		if [ $timer -eq $TERMTIME ]; then
+			echo
+			echo "Normal Shutdown of $proc failed:"
+			pgrep $args $proc -U $user
+			echo "Sending SIGTERM..."
+			pkill -U $user $args $proc
+		fi
+		
+		if [ $timer -gt $KILLTIME ]; then
+			echo "SIGTERM failed sending SIGKILL"
+			pkill -9 -U $user $args $proc
+		fi
+		sleep 1
+		running=`pgrep -U $user $args $proc | wc -l`
+	done
+}
 
 function status {
 	echo -n "Checking $NAME..."
@@ -60,9 +104,20 @@ function stop {
 		PID=`cat $PIDFILE`
             	pkill -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 
-		%SBINDIR%/stard-stop
+		# issue the starmade shutdown command
+		pgrep -x java -U $USER > /dev/null 2>&1
+		RET=$?
+		if [ $RET -eq 0 ]; then
+			su $USER -c "%STARMADEDIR%/stard/bin/stard_cmd \"/shutdown $SHUTDOWN_TIME\"" > /dev/null 2>&1
+			# wait a minute for starmade to clean up
+			sleep $SHUTDOWN_TIME
+			sleep 10
+		fi
 
-		sleep 10
+
+		kill_procs java $USER -x
+		kill_procs stard-multiplexer $USER
+		kill_procs stard-launcher $USER
 
 		pgrep -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 		RET=$?

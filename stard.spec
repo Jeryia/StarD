@@ -1,5 +1,5 @@
 Name:		stard
-Version:	0.1.0
+Version:	0.2.0
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
@@ -66,13 +66,11 @@ fi
 %defattr(644,starmade,starmade, 0755)
 %attr(0555,root,root) /usr/sbin/stard
 %attr(0555,root,root) /usr/sbin/stard-backup
-%attr(0555,root,root) /usr/sbin/stard-stop
 %config(noreplace) /etc/sysconfig/stard
 %attr(755,root,root) /etc/rc.d/init.d/stard
 
 
 %attr(1777,root,root) /var/starmade/spool
-%attr(-,root,root) /var/starmade/server
 
 %defattr(644,root,root, 0755)
 %dir /var/starmade/stard/bin
@@ -81,13 +79,15 @@ fi
 %attr(755,root,root) /var/starmade/stard/bin/*
 %attr(755,root,root) /var/starmade/stard/lib/*
 /var/starmade/stard/plugins/*
+/var/starmade/server
 %attr(755,starmade,starmade) /var/starmade/stard/plugins.disabled
 
 
 %defattr(644,starmade,starmade, 0755)
 %dir /var/starmade/stard/plugins
-%dir /var/starmade/stard
 %dir /var/starmade/stard/log
+%dir /var/starmade/stard
+
 
 %config(noreplace) /var/starmade/stard/stard.cfg
 
@@ -96,6 +96,21 @@ fi
 
 
 %changelog
+
+* Wed Jun 7 2016 Jeryia <johndoe@gmail.com>
+- v0.2.0
+- Moved to new plugin loading model:
+  - plugins only need to be in the plugins directory to be loaded
+  - plugins can now be loaded and unloaded via the in game command !plugin
+  - unloaded plugins go in plugins.disabled
+  - all plugins now start in plugins.disabled except for the Base plugin as it provides the !plugin command
+  - Plugins now can have a info.txt file associated with them that contains information that !plugin can query for admins to know what a plugin is before loading it
+- Add new plugins(these are all disabled by default):
+  - GodlyAdmins - admins get god mode and invisability on login
+  - Bounty - allows players to put up and collect on bounties on other player's heads.
+  - LastLogin - allows players to check ho long ago a player last logged in.
+- Added the stard_map library. This library allows spawning of stations/ships at specific coordinates from an ini file.
+- General polishing of code. (see github commits for details)
 
 * Sun Jan 24 2016 Jeryia <johndoe@gmail.com>
 - v0.1.0

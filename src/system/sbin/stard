@@ -45,16 +45,6 @@ if [ 'x' == "x$baseDir" ]; then
 	exit 1
 fi
 
-## on_die
-# if this script is killed, gracefully stop stard
-on_die() {
-	%SBINDIR%/stard-stop
-	exit 0
-}
-
-
-
-
 if [ ! -d $baseDir ]; then
 	mkdir -p $baseDir
 fi
