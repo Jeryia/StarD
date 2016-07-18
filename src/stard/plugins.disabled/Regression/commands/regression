@@ -7,6 +7,7 @@ use lib("../../lib");
 use stard_lib;
 use stard_core;
 use stard_map;
+use stard_regression;
 
 $| = 1;
 #All rights reserved.
@@ -35,7 +36,6 @@ my $stard_home = "$debug_home/../..";
 my $stard_plugins = "$stard_home/plugins";
 
 
-require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);
 setup_core_env($stard_home);
 stard_stdlib_set_debug(2);
@@ -54,8 +54,6 @@ sub main {
 	my $test = $_[1];
 
 	stard_broadcast("Regression requested...");
-
-
 
 	if (!$test || $test eq 'full') {
 		stard_broadcast("Running full suite");
@@ -373,190 +371,47 @@ sub map_reg {
 }
 
 ## plugin_reg
-# Perform tests for the stard_map library
-# INPUT1: name of the player who requested the testing.
+# run tests on all active plugins (who have a regression test)
+# INPUT1: player name
 sub plugin_reg {
-	my $player = $_[0];
-	my $result;
-	if (!stard_broadcast("###Running Plugin Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
+	my $player = shift(@_);
+
+	my @plugins = @{get_active_plugin_list()};
+	foreach my $plugin (@plugins) {
+		test_result("Plugin $plugin - Final Result", plugin_reg_launch($plugin, $player));
 	}
-
-	
-	stard_broadcast("Setting up test environment. Please wait...");
-	plugin_command("plugin", '', "unload", "Test");
-	sleep 20;
-
-	plugin_command("plugin", $player, "load", "Test");
-	sleep 20;
-	test_result("Base - plugin load:", -d "$stard_plugins/Test");
-	$result = `../../bin/stard_daemons status | grep -q 'Test is running'; echo \$?`;
-	test_result("Base - plugin unload daemon:", $result == 0);
-
-	plugin_command("plugin", $player, "unload", "Test");
-	sleep 20;
-	test_result("Base - plugin unload:", ! -d "$stard_plugins/Test");
-	$result = `../../bin/stard_daemons status | grep -q 'Test is'; echo \$?`;
-	test_result("Base - plugin unload daemon:", $result != 0);
-
-
-	plugin_bank_reg($player);
-
-	plugin_bounty_reg($player);
-
-	plugin_lastlogin_reg($player);
 }
 
+## plugin_reg_launch
+# Spawns off the regression tests for the given plugin (if it has one)
+# INPUT1: plugin name
+# OUTPUT: (boolean) sucess if plugin's regression came back ok
+sub plugin_reg_launch {
+	my $plugin = shift(@_);
+	my $player = shift(@_);
 
-## plugin_bank_reg
-# Perform tests for the Bank plugin
-# INPUT1: name of the player who requested the testing.
-sub plugin_bank_reg {
-	my $player = $_[0];
-
-	my %player_info;
-	my $last_credits;
-
-	if (!stard_broadcast("###Running Bank Plugin Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
+	if ( ! -x "../$plugin/.regression") {
+		return 1; 
 	}
 
-	# Setup load bank and clear player bank
-	plugin_command("plugin", '', "load", "Bank");
-	sleep 20;
-	system("rm", "-f", "$stard_plugins/Bank/Data/$player");
-	my $bank_credits = 1000;
+	stard_broadcast("###Running $plugin Plugin Tests###");
 
-
-
-	%player_info = %{stard_player_info($player)};
-	my $last_credits = $player_info{credits};
-	plugin_command("deposit", $player, $bank_credits);
-	sleep 2;
-	%player_info = %{stard_player_info($player)};
-	test_result("plugin-Bank - deposit", $last_credits - $player_info{credits} == $bank_credits);
-
-	
-	%player_info = %{stard_player_info($player)};
-	my $last_credits = $player_info{credits};
-	plugin_command("deposit", $player, 100000000000);
-	sleep 2;
-	%player_info = %{stard_player_info($player)};
-	test_result("plugin-Bank - over deposit", $last_credits == $player_info{credits});
-
-
-	%player_info = %{stard_player_info($player)};
-	my $last_credits = $player_info{credits};
-	plugin_command("withdraw", $player, $bank_credits);
-	sleep 2;
-	%player_info = %{stard_player_info($player)};
-	test_result("plugin-Bank - withdraw", $player_info{credits} - $last_credits == $bank_credits);
-
-
-	%player_info = %{stard_player_info($player)};
-	my $last_credits = $player_info{credits};
-	plugin_command("withdraw", $player, $bank_credits);
-	sleep 2;
-	%player_info = %{stard_player_info($player)};
-	test_result("plugin-Bank - overdraw", $player_info{credits} == $last_credits);
-}
-
-
-## plugin_bounty_reg
-# Perform tests for the Bounty plugin
-# INPUT1: name of the player who requested the testing.
-sub plugin_bounty_reg {
-	my $player = $_[0];
-
-	my %player_info;
-	my $last_credits;
-
-	if (!stard_broadcast("###Running Bounty Plugin Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
-
-	# setup environment (this is a bit of a cludge)
-	plugin_command("plugin", '', "load", "Bounty");
-	sleep 20;
-	my $bounty_player = 'asdf';
-	my $bounty_credits = 20000;
-	system("echo $bounty_credits > $stard_plugins/Bounty/data/$bounty_player");
-	
-
-	%player_info = %{stard_player_info($player)};
-	my $last_credits = $player_info{credits};
-	plugin_server_event("playerDeath", $bounty_player, $player_info{control});
-	sleep 2;
-	%player_info = %{stard_player_info($player)};
-	test_result("plugin-Bounty - awarded", $player_info{credits} - $last_credits == $bounty_credits);
-
-
-	%player_info = %{stard_player_info($player)};
-	my $last_credits = $player_info{credits};
-	plugin_command("bounty", $player, $player, $bounty_credits);
-	sleep 2;
-	%player_info = %{stard_player_info($player)};
-	test_result("plugin-Bounty - bounty", $last_credits - $player_info{credits} == $bounty_credits);
-
-}
-
-## plugin_bounty_reg
-# Perform tests for the Bounty plugin
-# INPUT1: name of the player who requested the testing.
-sub plugin_lastlogin_reg {
-	my $player = $_[0];
-
-	if (!stard_broadcast("###Running LastLogin Plugin Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
-
-	# setup environment (this is a bit of a cludge)
-	plugin_command("plugin", '', "load", "LastLogin");
-	sleep 20;
-	my $lastlogin_player = "asdf";
-	my $lastlogin_player_data = "$stard_plugins/LastLogin/data/$lastlogin_player";
-	
-
-	unlink($lastlogin_player_data);
-	plugin_server_event("playerLogin", $lastlogin_player);
-	sleep 2;
-	test_result("plugin-LastLogin - playerLogin", -e $lastlogin_player_data);
-
-
-	unlink($lastlogin_player_data);
-	plugin_server_event("playerLogout", $lastlogin_player);
-	sleep 2;
-	test_result("plugin-LastLogin - playerLogout", -e $lastlogin_player_data);
-	unlink($lastlogin_player_data);
-
-	
-}
-
-## test_result
-# Process the result of the test and report on it. Also wait .25 seconds to not 
-# slam the starmade server.
-# INPUT1: test being run
-# INPUT2: (boolean) 0 if failure, nonzero if success
-# INPUT3: Optional message to include with failure results
-sub test_result {
-	my $test = $_[0];
-	my $result = $_[1];
-	my $message = $_[2];
-	select(undef, undef, undef, 0.25);
-	if ($result) {
-		stard_broadcast("$test - PASS");
-		return 1;
+	my $pid = fork();
+	if ($pid) {
+		waitpid($pid, 0);
+		if ( $? == 0) {
+			return 1;
+		}
+		return 0;
 	}
 	else {
-		stard_broadcast("$test - FAIL");
-		if ($message) {
-			stard_broadcast($message);
-		};
-		exit 1;
-	};
-	return 0;
-};
+		# other plugins will always be one 
+		# directory down from this one
+		chdir("../$plugin") or die "could not chdir to '../$plugin'\n";
+		my $exec = get_exec_prefix("./.regression");
+		exec("$exec", "./.regression", $player);
+		die "Failed to run ./regression for $plugin!\n";
+	}
+}
+
+

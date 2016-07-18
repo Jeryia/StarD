@@ -24,6 +24,7 @@
 
 ## Setup Enrivonment
 DIR=`dirname $0`
+STARD_HOME="$DIR/../"
 cd $DIR/../../
 
 
@@ -204,11 +205,14 @@ function status {
 # OUTPUT: 0 if success, nonzero if failure
 function start {
 	notRunning=`status | grep 'not running' | awk '{print \$1}'`
+	CWD=`pwd`
+	cd "$STARD_HOME"
 	for daemon in $notRunning; do
 		echo "Starting $daemon"
 		nohup $stard_bin/$daemon > $stard_log/$daemon.log 2>&1 &
 		echo -n $! > $stard_run/$daemon.pid
 	done
+	cd $CWD
 
 	return $status
 }

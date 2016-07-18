@@ -1,0 +1,112 @@
+#!%PERL%
+use strict;
+use warnings;
+use Cwd;
+
+use lib("./lib");
+use stard_lib;
+use stard_core;
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
+#### stard_gen_passwd
+# Generates and sets a password in the 
+# SUPER_ADMIN_PASSWORD field in the server 
+# configuration. This also enables 
+# SUPER_ADMIN_PASSWORD_USE as this sort of 
+# authentication is required to run stard.
+
+# determine where the stard home is
+# using our called path.
+my $stard_home= "./";
+my $starmade_home = "$stard_home/..";
+my $starmade_server = "$starmade_home/StarMade";
+my $stard_plugins = "$stard_home/plugins";
+my $prog = $0;
+
+#load stard libraries
+stard_setup_run_env($stard_home);
+
+main();
+
+exit 0;
+#################################################
+
+
+sub main {
+	my $password = gen_passwd(50);
+
+	if (-r "$starmade_server/server.cfg") {
+		starmade_write_config_entry("SUPER_ADMIN_PASSWORD_USE", "true");
+		starmade_write_config_entry("SUPER_ADMIN_PASSWORD", $password);
+	}
+	else {
+		my $write = '';
+		$write .= "SUPER_ADMIN_PASSWORD_USE = true\n";
+		$write .= "SUPER_ADMIN_PASSWORD = $password\n";
+		open(my $starmade_fh, ">", "$starmade_server/server.cfg") or die "failed to write '$starmade_server/server.cfg': $!\n";
+		flock($starmade_fh, 2);
+		print $starmade_fh $write;
+		close($starmade_fh);
+	}
+}
+
+## gen_passwd
+# Generate a password.
+# INPUT1: length of password
+# OUTPUT: generated password
+sub gen_passwd {
+	my $totalLen = $_[0];
+	my $string = '';
+	
+	my @chars = split('', 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890');
+	for (my $len =0; $len < $totalLen; $len++) {
+		my $char = int(rand($#chars));
+		$string .= $chars[$char];
+	}
+	return $string;
+}
+
+## starmade_write_config_entry
+# Set a specific config file field to a specific value
+# INPUT1: field to set
+# INPUT2: value to set the field to
+sub starmade_write_config_entry {
+	my $field = $_[0];
+	my $value = $_[1];
+
+	my $starmade_fh;
+	open($starmade_fh, "<", "$starmade_server/server.cfg") or die "failed to open '$starmade_server/server.cfg': $!\n";
+	my @config = <$starmade_fh>;
+	close($starmade_fh);
+
+	my $write = '';
+	foreach my $line (@config) {
+		if( $line =~/^$field = \S+ \/\/(.*)/) {
+			my $comment = $1;
+			$line = "$field = $value // $comment\n";
+		}
+		$write .= $line;
+	}
+	
+	open($starmade_fh, ">", "$starmade_server/server.cfg") or die "failed to open '$starmade_server/server.cfg': $!\n";
+	flock($starmade_fh, 2);
+	print $starmade_fh $write;
+	close($starmade_fh);
+	
+}
+
+

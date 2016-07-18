@@ -1,0 +1,50 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
+use stard_regression;
+
+
+my $stard_home = "../../";
+stard_setup_run_env($stard_home);
+setup_core_env($stard_home);
+stard_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+
+	my $plugin = "LastLogin";
+
+
+	# setup environment (this is a bit of a cludge)
+	my $lastlogin_player = "asdf";
+	my $lastlogin_player_data = "./data/$lastlogin_player";
+
+
+	unlink($lastlogin_player_data);
+	test_event("playerLogin", $lastlogin_player);
+	test_result("plugin-$plugin - playerLogin", -e $lastlogin_player_data);
+
+
+	unlink($lastlogin_player_data);
+	test_event("playerLogout", $lastlogin_player);
+	test_result("plugin-$plugin - playerLogout", -e $lastlogin_player_data);
+	unlink($lastlogin_player_data);
+
+
+	test_result(
+		"plugin-$plugin - !lastlogin online player",
+		test_command("lastlogin", $player, $player) == 0
+	);
+
+	test_result(
+		"plugin-$plugin - !lastlogin non-existant player",
+		test_command("lastlogin", $player, "kfhrb") == 0
+	);
+}

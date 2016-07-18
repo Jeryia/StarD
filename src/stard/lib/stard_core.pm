@@ -1,3 +1,4 @@
+package stard_core;
 use strict;
 use warnings;
 use Cwd;
@@ -115,7 +116,6 @@ sub validate_plugins {
 sub get_exec_prefix {
 	my $exec = $_[0];
 
-	stard_core_validate_env();
 	# grab first line of the file (the exec prefix)
 	open(my $fh, "<", $exec);
 	my $prefix = <$fh>;

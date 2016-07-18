@@ -1,0 +1,61 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
+use stard_regression;
+
+my $stard_home = "../../";
+stard_setup_run_env($stard_home);
+setup_core_env($stard_home);
+stard_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+
+	my $plugin = "Bank";
+
+
+	my %player_info;
+	my $last_credits;
+
+
+	# Setup load bank and clear player bank
+	system("rm", "-f", "./Data/$player");
+	my $bank_credits = 1000;
+
+
+
+	%player_info = %{stard_player_info($player)};
+	$last_credits = $player_info{credits};
+	test_command("deposit", $player, $bank_credits);
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - deposit", $last_credits - $player_info{credits} == $bank_credits);
+
+	
+	%player_info = %{stard_player_info($player)};
+	$last_credits = $player_info{credits};
+	test_command("deposit", $player, 100000000000);
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - over deposit", $last_credits == $player_info{credits});
+
+
+	%player_info = %{stard_player_info($player)};
+	$last_credits = $player_info{credits};
+	test_command("withdraw", $player, $bank_credits);
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - withdraw", $player_info{credits} - $last_credits == $bank_credits);
+
+
+	%player_info = %{stard_player_info($player)};
+	$last_credits = $player_info{credits};
+	test_command("withdraw", $player, $bank_credits);
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - overdraw", $player_info{credits} == $last_credits);
+}
+

@@ -1,0 +1,53 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
+use stard_regression;
+
+
+my $stard_home = "../../";
+my $stard_plugins = "$stard_home/plugins";
+stard_setup_run_env($stard_home);
+setup_core_env($stard_home);
+stard_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+	my $plugin = "Bounty";
+
+
+	my $ret;
+	my $bounty_player = 'asdf';
+	my $bounty_credits = 20000;
+	my $last_credits;
+	my %player_info;
+
+	system("echo $bounty_credits > $stard_plugins/$plugin/data/$bounty_player");
+	
+
+	%player_info = %{stard_player_info($player)};
+	if (!$player_info{control}) {
+		stard_broadcast("player must be conntrolling an object in order for this test to succeed!");
+		exit 1;
+	}
+
+	$last_credits = $player_info{credits};
+	test_event("playerDeath", $bounty_player, $player_info{control});
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - awarded", $player_info{credits} - $last_credits == $bounty_credits);
+
+
+	%player_info = %{stard_player_info($player)};
+	$last_credits = $player_info{credits};
+	test_command("bounty", $player, $player, $bounty_credits);
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - bounty", $last_credits - $player_info{credits} == $bounty_credits);
+
+	test_result("plugin-$plugin - bounty non-existant player", test_command("bounty", $player, $bounty_player, $bounty_credits) == 0);
+}

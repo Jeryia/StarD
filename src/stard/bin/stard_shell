@@ -1,8 +1,7 @@
-#!%PERL%
+#!/usr/bin/perl
 use strict;
 use warnings;
 use Cwd;
-
 
 #All rights reserved.
 #
@@ -19,9 +18,8 @@ use Cwd;
 # StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
 # The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
-#### stard_shell
-# launches a shell for running commands against 
-# the starmade server.
+#### stard_cmd
+# Run the given command on the statmade server. This is a raw interface.
 
 
 # determine where the stard home is
@@ -39,46 +37,7 @@ our $stard_home;
 chdir($stard_home);
 $stard_home= getcwd();
 
+my $exec = $0;
+$exec =~s/(.*)bin/$1libexec/;
 
-# load stard_lib.
-require "$stard_home/lib/stard_lib.pm";
-require "$stard_home/lib/stard_core.pm";
-setup_core_env($stard_home);
-stard_setup_run_env($stard_home);
-$| = 1;
-
-
-&main();
-sub main {
-	my $input = '';
-	print stard_cmd("/status");
-	print "########################################################\n";
-	print "Welcome to the stard shell!\n";
-	print "This offers a general shell interface to the starmade server\n";
-	print "You can run any normal starmade command in this shell\n";
-	print "You can quit this shell at any time with the quit command or by using ctrl-C\n";
-	print "########################################################\n";
-	print "stard\$ ";
-	$input = <STDIN>;
-	while ( $input ne "quit\n" ) {
-		my @args = split(" ", $input);
-		my $cmd = shift(@args);
-		if ($cmd =~/^\//) {
-			print stard_cmd($cmd, @args);
-		}
-		elsif ($cmd =~s/^!//) {
-			print plugin_command($cmd, @args);
-		}
-		elsif($cmd=~/\S/ && !($cmd eq 'quit')) {
-			print "Invalid command.\n";
-			print "to run a starmade command use /<command>\n";
-			print "to run a stard command use !<command>\n";
-			exit 1;
-		};
-
-		print "stard\$ ";
-		$input = <STDIN>;
-	}
-	print "Exiting stard shell...\n";
-		
-};
+exec($exec, @ARGV);

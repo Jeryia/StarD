@@ -6,7 +6,6 @@ use Cwd;
 use lib("./lib");
 use stard_lib;
 use stard_core;
-use stard_log;
 
 #All rights reserved.
 #
@@ -23,73 +22,35 @@ use stard_log;
 # StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
 # The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
-#### stard-multiplexer
-# This program monitors the starmade daemon's 
-# output for specific 'events' and sends those 
-# events to the correct plugin.
+#### stard_cmd
+# Run the given command on the statmade server. This is a raw interface.
 
-# disabled buffering. Needed because for some reason writing the log doesn't 
-# work well without this.
-$| =1;
 
-# determine where the stard home is
-# using our called path.
 my $stard_home= "./";
-my $prog = $0;
-
-
-#load stard libraries
 setup_core_env($stard_home);
 stard_setup_run_env($stard_home);
-set_loglevel(6);
 
 
-
-main();
+&main(@ARGV);
 
 exit 0;
+
 #################################################
 
 
-
-
-
-## main
-# Real work starts here!
 sub main {
-	## setup environment
-	my $starmade_home = "$stard_home/..";
-	my $spool = "$starmade_home/spool";
+	my $cmd = shift(@_);
 
-	# read config file
-	my $serverOutFile = "$spool/serverErr";
-	my $serverOUT_fh;
-
-	# Check if plugins look ok
-	validate_plugins();
-
-	## start parsing output
-	if (!open($serverOUT_fh, "<", $serverOutFile)) {
-		stdout_log("failed to open '$serverOutFile': $!", 0);
-		exit 1;
+	if ($cmd =~/^\//) {
+		print stard_cmd($cmd, @_);
 	}
-
-
-	stdout_log("$prog has started successfully!", 5);
-	while( <$serverOUT_fh> ) {
-		my $message = $_;
-
-		# temp fix in the starmade output, some entries spell server wrong :P	
-		$message=~s/^\[SREVER\]/\[SERVER\]/ig;
-
-		
-		if ($message =~/^\[SERVER\]/) {
-			server_messages($message);
-		}
-		elsif ($message =~/\[CHANNELROUTER\]/) {
-			chat_messages($message);
-		};
-
+	elsif ($cmd =~s/^!//) {
+		print plugin_command($cmd, @_);
+	}
+	else {
+		print "Invalid command.\n";
+		print "to run a starmade command use /<command>\n";
+		print "to run a stard command use !<command>\n";
+		exit 1;
 	};
-	close($serverOUT_fh);
 };

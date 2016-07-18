@@ -50,8 +50,8 @@ sub main {
 		exit 1;
 	};
 
-	if (!%{stard_player_info($player)}) {
-		print "test1\n";
+	my %player_list = %{stard_player_list()};
+	if (!$player_list{$player}) {
 		stard_pm($requester, "$player is not logged in or does not exist.\n You can only place bounties on players that are online!");
 		exit 0;
 	}

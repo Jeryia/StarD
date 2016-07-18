@@ -1,8 +1,7 @@
-#!%PERL%
+#!/usr/bin/perl
 use strict;
 use warnings;
 use Cwd;
-
 
 #All rights reserved.
 #
@@ -38,34 +37,7 @@ our $stard_home;
 chdir($stard_home);
 $stard_home= getcwd();
 
+my $exec = $0;
+$exec =~s/(.*)bin/$1libexec/;
 
-# load stard_lib.
-require "$stard_home/lib/stard_lib.pm";
-require "$stard_home/lib/stard_core.pm";
-setup_core_env($stard_home);
-stard_setup_run_env($stard_home);
-
-
-&main(@ARGV);
-
-exit 0;
-
-#################################################
-
-
-sub main {
-	my $cmd = shift(@_);
-
-	if ($cmd =~/^\//) {
-		print stard_cmd($cmd, @_);
-	}
-	elsif ($cmd =~s/^!//) {
-		print plugin_command($cmd, @_);
-	}
-	else {
-		print "Invalid command.\n";
-		print "to run a starmade command use /<command>\n";
-		print "to run a stard command use !<command>\n";
-		exit 1;
-	};
-};
+exec($exec, @ARGV);

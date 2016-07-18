@@ -1,0 +1,42 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib");
+use stard_lib;
+use stard_core;
+use stard_regression;
+
+
+my $stard_home = "../../";
+stard_setup_run_env($stard_home);
+setup_core_env($stard_home);
+stard_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+	my $plugin = "Base";
+
+
+	my %player_info;
+	my $last_credits;
+
+	stard_broadcast("Setting up test environment. Please wait...");
+	test_command("plugin", '', "unload", "Test");
+
+
+	test_command("plugin", $player, "load", "Test");
+	test_result("$plugin - plugin load:", -d "$stard_plugins/Test");
+	$result = `../../bin/stard_daemons status | grep -q 'Test is running'; echo \$?`;
+	test_result("$plugin - plugin unload daemon:", $result == 0);
+
+	test_command("plugin", $player, "unload", "Test");
+	test_result("$plugin - plugin unload:", ! -d "$stard_plugins/Test");
+	$result = `../../bin/stard_daemons status | grep -q 'Test is'; echo \$?`;
+	test_result("$plugin - plugin unload daemon:", $result != 0);
+
+}
+

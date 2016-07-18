@@ -6,7 +6,6 @@ use Cwd;
 use lib("./lib");
 use stard_lib;
 use stard_core;
-use stard_log;
 
 #All rights reserved.
 #
@@ -23,73 +22,53 @@ use stard_log;
 # StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
 # The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
-#### stard-multiplexer
-# This program monitors the starmade daemon's 
-# output for specific 'events' and sends those 
-# events to the correct plugin.
+#### stard_shell
+# launches a shell for running commands against 
+# the starmade server.
 
-# disabled buffering. Needed because for some reason writing the log doesn't 
-# work well without this.
-$| =1;
 
 # determine where the stard home is
 # using our called path.
 my $stard_home= "./";
-my $prog = $0;
 
 
-#load stard libraries
+# load stard_lib.
 setup_core_env($stard_home);
 stard_setup_run_env($stard_home);
-set_loglevel(6);
+$| = 1;
 
 
-
-main();
-
-exit 0;
-#################################################
-
-
-
-
-
-## main
-# Real work starts here!
+&main();
 sub main {
-	## setup environment
-	my $starmade_home = "$stard_home/..";
-	my $spool = "$starmade_home/spool";
-
-	# read config file
-	my $serverOutFile = "$spool/serverErr";
-	my $serverOUT_fh;
-
-	# Check if plugins look ok
-	validate_plugins();
-
-	## start parsing output
-	if (!open($serverOUT_fh, "<", $serverOutFile)) {
-		stdout_log("failed to open '$serverOutFile': $!", 0);
-		exit 1;
-	}
-
-
-	stdout_log("$prog has started successfully!", 5);
-	while( <$serverOUT_fh> ) {
-		my $message = $_;
-
-		# temp fix in the starmade output, some entries spell server wrong :P	
-		$message=~s/^\[SREVER\]/\[SERVER\]/ig;
-
-		
-		if ($message =~/^\[SERVER\]/) {
-			server_messages($message);
+	my $input = '';
+	print stard_cmd("/status");
+	print "########################################################\n";
+	print "Welcome to the stard shell!\n";
+	print "This offers a general shell interface to the starmade server\n";
+	print "You can run any normal starmade command in this shell\n";
+	print "You can quit this shell at any time with the quit command or by using ctrl-C\n";
+	print "########################################################\n";
+	print "stard\$ ";
+	$input = <STDIN>;
+	while ( $input ne "quit\n" ) {
+		my @args = split(" ", $input);
+		my $cmd = shift(@args);
+		if ($cmd =~/^\//) {
+			print stard_cmd($cmd, @args);
 		}
-		elsif ($message =~/\[CHANNELROUTER\]/) {
-			chat_messages($message);
+		elsif ($cmd =~s/^!//) {
+			print plugin_command($cmd, @args);
+		}
+		elsif($cmd=~/\S/ && !($cmd eq 'quit')) {
+			print "Invalid command.\n";
+			print "to run a starmade command use /<command>\n";
+			print "to run a stard command use !<command>\n";
+			exit 1;
 		};
 
-	};
-	close($serverOUT_fh);
+		print "stard\$ ";
+		$input = <STDIN>;
+	}
+	print "Exiting stard shell...\n";
+		
 };

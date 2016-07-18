@@ -4,9 +4,8 @@ use warnings;
 use Cwd;
 
 use lib("./lib");
-use stard_lib;
 use stard_core;
-use stard_log;
+use stard_lib;
 
 #All rights reserved.
 #
@@ -20,76 +19,30 @@ use stard_log;
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
-# The makers of stard make no claim of ownership or relationship with the owners of StarMade
-
-#### stard-multiplexer
-# This program monitors the starmade daemon's 
-# output for specific 'events' and sends those 
-# events to the correct plugin.
-
-# disabled buffering. Needed because for some reason writing the log doesn't 
-# work well without this.
-$| =1;
+#### stard_get_plugin_list
+# List out all of the plugins being used by 
+# stard.
 
 # determine where the stard home is
 # using our called path.
 my $stard_home= "./";
-my $prog = $0;
-
 
 #load stard libraries
 setup_core_env($stard_home);
 stard_setup_run_env($stard_home);
-set_loglevel(6);
 
 
-
+## Actual Work
 main();
 
 exit 0;
 #################################################
 
 
-
-
-
-## main
-# Real work starts here!
 sub main {
-	## setup environment
-	my $starmade_home = "$stard_home/..";
-	my $spool = "$starmade_home/spool";
-
-	# read config file
-	my $serverOutFile = "$spool/serverErr";
-	my $serverOUT_fh;
-
-	# Check if plugins look ok
-	validate_plugins();
-
-	## start parsing output
-	if (!open($serverOUT_fh, "<", $serverOutFile)) {
-		stdout_log("failed to open '$serverOutFile': $!", 0);
-		exit 1;
-	}
+	my @plugins = @{get_active_plugin_list()};
+	print join(" ", @plugins);
+}
 
 
-	stdout_log("$prog has started successfully!", 5);
-	while( <$serverOUT_fh> ) {
-		my $message = $_;
 
-		# temp fix in the starmade output, some entries spell server wrong :P	
-		$message=~s/^\[SREVER\]/\[SERVER\]/ig;
-
-		
-		if ($message =~/^\[SERVER\]/) {
-			server_messages($message);
-		}
-		elsif ($message =~/\[CHANNELROUTER\]/) {
-			chat_messages($message);
-		};
-
-	};
-	close($serverOUT_fh);
-};
