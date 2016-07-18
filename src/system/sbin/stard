@@ -33,6 +33,12 @@ serverBackup="$BACKUP_DIR"
 # HYBRODIZE is enabled.
 last_version_file="$serverLoc/.lastver"
 
+# on_die
+# if this script is killed, gracefully stop stard
+on_die() {
+	kill 0
+	exit 0
+}
 
 
 if [ 'x' == "x$SERVER_DIR" ]; then
@@ -62,7 +68,7 @@ if [ ! -d $serverLoc ]; then
 fi
 
 ## Make sure perms are good
-chown root:$GROUP $baseDir
+chown $USER:$GROUP $baseDir
 chmod u+w $baseDir
 chmod u+r $baseDir
 chmod u+x $baseDir

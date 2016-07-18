@@ -83,6 +83,12 @@ if [ ! -e "$SERVER_DIR/version.txt" ]; then
 	cd $CWD
 fi
 
+function ondie() {
+	$bin/stard_daemons stop
+	exit 0
+}
+
+
 # change perms of this so only root and the stard user can read this.
 # Since this contains the keys to the server.
 chmod 600 $SERVER_DIR/server.cfg
@@ -125,6 +131,11 @@ $bin/fix_plugins
 # make sure we have a clean state before we start launching things
 $bin/stard_daemons stop
 
+trap "on_die" SIGINT
+trap "on_die" SIGTERM
+
+
+## Actual program launch
 # Start all deamons
 $bin/stard_daemons start
 
