@@ -31,6 +31,8 @@ my $stard_home = "$base_home/../..";
 my $plugins_dir = "$stard_home/plugins";
 my $plugins_disabled_dir = "$stard_home/plugins.disabled";
 
+my $prog = $0;
+
 stard_setup_run_env($stard_home);
 setup_core_env($stard_home);
 
@@ -45,6 +47,9 @@ sub main {
 	my $player = $_[0];
 	my $command;
 	my $plugin;
+
+	open(my $lock_fh, "<", $prog) or die "Could not open '$prog': $!\n";
+	flock($lock_fh, 2) or die "Failed to lock '$prog':$!\n";
 
 	stard_run_if_admin($player);
 	if ($_[1]) {
@@ -80,6 +85,7 @@ sub main {
 		help($player);
 		exit 1;
 	}
+	close($lock_fh);
 };	
 
 ## load_plugin
