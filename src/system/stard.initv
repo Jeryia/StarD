@@ -65,19 +65,37 @@ function kill_procs {
 function status {
 	echo -n "Checking $NAME..."
 	if [ -f $PIDFILE ]; then
+		STATUS=0
 		pgrep -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 		RET=$?
 		if [ $RET -eq 0 ]; then
 			echo "Running"
-			return 0
 		else
 		echo
 			echo "Process dead but pidfile exists"
-			return 1
+			STATUS=$RET
 		fi
+
+		echo
+		echo "Daemon Status:"
+		su $USER -c "/var/starmade/stard/bin/stard_daemons status"
+		RET=$?
+		if [ $RET -ne 0 ]; then
+			STATUS=$RET
+		fi
+
+		return $STATUS
+
 	else
 		echo
-		echo "$NAME not running"
+		echo "$NAME is not running"
+		echo
+		echo "Daemon Status:"
+		su $USER -c "/var/starmade/stard/bin/stard_daemons status"
+		RET=$?
+		if [ $RET -ne 0 ]; then
+			STATUS=$RET
+		fi
 		return 1
 	fi
 	return 0
@@ -102,7 +120,7 @@ function stop {
         echo -n "Stopping $NAME..."
 	if [ -f $PIDFILE ]; then
 		PID=`cat $PIDFILE`
-            	pkill -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
+            	pkill -9 -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 
 		# issue the starmade shutdown command
 		pgrep -x java -U $USER > /dev/null 2>&1
