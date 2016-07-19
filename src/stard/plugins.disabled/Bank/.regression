@@ -30,14 +30,15 @@ sub main {
 	my $bank_credits = 1000;
 
 
-
+	# check if deposit removed money from the player's account
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("deposit", $player, $bank_credits);
 	%player_info = %{stard_player_info($player)};
 	test_result("plugin-$plugin - deposit", $last_credits - $player_info{credits} == $bank_credits);
 
-	
+
+	# Make sure the deposit command will not allow the player to deposit more than they have
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("deposit", $player, 100000000000);
@@ -45,6 +46,7 @@ sub main {
 	test_result("plugin-$plugin - over deposit", $last_credits == $player_info{credits});
 
 
+	# Make sure the withdraw command will give the player money
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("withdraw", $player, $bank_credits);
@@ -52,6 +54,7 @@ sub main {
 	test_result("plugin-$plugin - withdraw", $player_info{credits} - $last_credits == $bank_credits);
 
 
+	# Make sure the withdraw command will not allow the player to withdraw more than they have banked.
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("withdraw", $player, $bank_credits);

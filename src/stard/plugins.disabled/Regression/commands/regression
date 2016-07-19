@@ -106,6 +106,8 @@ sub general_reg {
 		exit 1;
 	}
 
+	# Check to make sure the stard_escape_chars function correctly escapes 
+	# the given characters
 	$test = "starmade_escape_chars - escape test";
 	$input = "test\"'";
 	$cmd_result = starmade_escape_chars($input);
@@ -113,27 +115,45 @@ sub general_reg {
 	$echo = `echo -n $cmd_result`;
 	test_result($test, $echo eq "test\"");
 
+
+	# Check to see if the stard_cmd function will correctly launch a command
 	$test = "stard_cmd - basic command";
 	$input = "/status";
 	$cmd_result = stard_cmd($input);
 	test_result($test, $cmd_result =~/SERVER, Players/, "'$input' outputs: '$cmd_result'");
+
 	
+	# Check to see if the stard_pm function returns ok with a normal pm.
 	$test = "stard_pm - general";
 	$input = "pm test";
 	test_result($test, stard_pm($player, $input));
 
+
+	# Check to see if the stard_pm command returns failure for a non-existant player.
 	$test = "stard_pm - missing_player";
 	$input = "pm test";
 	test_result($test, !stard_pm('dWtaUw', $input));
+
 	
+	# Check to see if there are admins in the admins.txt file
 	my @admins = @{stard_admin_list()};
 	test_result($test, @admins, "no admins appear in admins.txt");
 
+
+	# Check to see if the function stard_is_admin returns trueif given the name of 
+	# an admin
 	$test = "stard_admin_list - realAdmin";
 	test_result($test, stard_is_admin($admins[0]), "admin_list:" . join(",", @admins));
 
+
+	# Check to see if the function stard_is_admin returns false if given the name 
+	# of a non-admin
 	$test = "stard_admin_list - fakeAdmin";
 	test_result($test, !stard_is_admin('dWtaUw'));
+
+
+	# Check to see if the stard_location_add, and stard_loc_distance 
+	# functions can do the math correctly.
 	test_result("stard_location_add", stard_location_add("1 1 1", "1 1 1") eq "2 2 2", stard_location_add("1 1 1", "1 1 1") . "!= '2 2 2'");
 	test_result("stard_loc_distance:1", stard_loc_distance("0 0 0", "0 0 1") == 1);
 	test_result("stard_loc_distance:2", stard_loc_distance("0 0 0", "0 1 0") == 1);
@@ -157,26 +177,44 @@ sub player_reg {
 		exit 1;
 	}
 
+
+	# Check to see if the stard_god_mode function returns true when used 
+	# against a player that exists.
 	test_result("god_mode active", stard_god_mode($player, 1));
 	test_result("god_mode inactive", stard_god_mode($player, 0));
+
+	# Check to see if the stard_god_mode function returns false when used
+	# against a player that does not exist
 	test_result("god_mode invalid", !stard_god_mode('msbr', 1));
+
 	
+	
+	# Check to see if the stard_inviability_mode function returns true when 
+	# used against a player that exists.
 	test_result("invisibility_mode active", stard_invisibility_mode($player, 1));
 	test_result("invisibility_mode inactive", stard_invisibility_mode($player, 0));
+
+
+	# Check to see if the stard_inviability_mode function returns false when 
+	# used against a player that exists.
 	test_result("invisibility_mode invalid", !stard_invisibility_mode('msbr', 1));
 
+
+	# Check to see that the function player_list returns results
 	my %player_list = %{stard_player_list()};
 	my %player_info1 = %{$player_list{$player}};
 	test_result(
 		"player_list",
 		keys %player_info1
 	);
-
 	stard_broadcast("$player\'s data:");
 	for my $field (keys %player_info1) {
 		stard_broadcast("$field: $player_info1{$field}");
 	};
 
+
+	# Check to see that the function stard_player_info returns the same results 
+	# about the player as stard_player_list
 	my %player_info2 = %{stard_player_info($player)};
 	test_result("stard_player_info", keys %player_info2);
 	my $consistancy = 1;
@@ -191,15 +229,23 @@ sub player_reg {
 	stard_broadcast("\n\n");
 
 
+	# Check to see that the given functions return true when used against a player
+	# that exists.
 	test_result("stard_give_credits", stard_give_credits($player, 100));
-	test_result("stard_give_credits: unknown player", !stard_give_credits('adfaddreh', 100));
 	test_result("stard_give_item", stard_give_item($player, "Thruster", 1));
-	test_result("stard_give_item: unknown item", !stard_give_item($player, "Thrusterz", 1));
-	test_result("stard_give_item: unknown player", !stard_give_item('adfaddreh', "Thruster", 1));
 	test_result("stard_give_all_items", stard_give_all_items($player, -1));
-	test_result("stard_give_all_items: unknown player", !stard_give_credits('adfaddreh', -1));
 	test_result("stard_set_spawn_player", stard_set_spawn_player($player));
+
+	# Check to see that the given functions return false when used against a
+	# player that does not exist.
+	test_result("stard_give_credits: unknown player", !stard_give_credits('adfaddreh', 100));
+	test_result("stard_give_item: unknown player", !stard_give_item('adfaddreh', "Thruster", 1));
 	test_result("stard_set_spawn_player:unknown player", !stard_set_spawn_player('adfaddreh'));
+	test_result("stard_give_all_items: unknown player", !stard_give_credits('adfaddreh', -1));
+
+	# Check to see that if given an invalid item, stard_give_item returns 
+	# false
+	test_result("stard_give_item: unknown item", !stard_give_item($player, "Thrusterz", 1));
 	print "\n\n";	
 }
 
@@ -218,13 +264,17 @@ sub faction_reg {
 	}
 
 	
+	# Clear out all factions (so we are sure to have no conflicts
 	%factions_bname = %{stard_faction_list_bname()};
 	while ($factions_bname{$faction}) {
-		stard_faction_delete($factions_bname{$faction}{id});
-		%factions_bname = %{stard_faction_list_bname()};
+		if ($factions_bname{$faction}{id} > 0) {
+			stard_faction_delete($factions_bname{$faction}{id});
+			%factions_bname = %{stard_faction_list_bname()};
+		}
 	}
 
 
+	# Check that stard_faction_list_bid() returns information on the pirate faction
 	%factions_bid = %{stard_faction_list_bid()};
 	test_result("stard_faction_list_bid", defined $factions_bid{'-1'}, "faction_ids:" . join(",", keys %factions_bid));
 	test_result("stard_faction_list_bid - name", defined $factions_bid{'-1'}{name});
@@ -233,6 +283,7 @@ sub faction_reg {
 	test_result("stard_faction_list_bid - points", defined $factions_bid{'-1'}{points});
 
 
+	# Check that stard_faction_list_bname() returns information on the pirate faction
 	%factions_bname = %{stard_faction_list_bname()};
 	test_result("stard_faction_list_bname", defined $factions_bname{Pirates});
 	test_result("stard_faction_list_bname - id", defined $factions_bname{Pirates}{id});
@@ -240,25 +291,37 @@ sub faction_reg {
 	test_result("stard_faction_list_bname - size", defined $factions_bname{Pirates}{size});
 	test_result("stard_faction_list_bname - points", defined $factions_bname{Pirates}{points});
 
+
+	# Check that stard_faction_list_bname and stard_faction_list_bid are giving the same information
 	test_result("stard_faction_list_bname - consistancy", $factions_bname{Pirates}{id} == -1);
 	test_result("stard_faction_list_bid - consistancy", $factions_bid{-1}{name} eq "Pirates");
 
+
+	# Check that stard_faction_create creates a faction
 	test_result("stard_faction_create", stard_faction_create($faction, ''));
 	%factions_bname = %{stard_faction_list_bname()};
 	test_result("stard_faction_create - validate", defined $factions_bname{$faction});
 
+
+	# Check that stard_faction_add_member adds a player to that faction
 	my $faction_id = $factions_bname{$faction}{id};
 	test_result("stard_faction_add_member", stard_faction_add_member($player, $faction_id));
 	%player_info = %{stard_player_info($player)};
 	test_result("stard_faction_add_member - validate", $player_info{faction} == $faction_id);
 
+
+	# Check that stard_faction_list_members mentions the player we just added
 	my %members = %{stard_faction_list_members($faction_id)};
 	test_result("stard_faction_list_members", defined $members{$player});
 
+
+	# Check to see if faction_del_member removes the player from the faction
 	test_result("stard_faction_del_member", stard_faction_del_member($player, $faction_id));
 	%player_info = %{stard_player_info($player)};
 	test_result("stard_faction_del_member - validate", ! defined $player_info{faction});
 
+
+	# Check if stard_faction_delete deletes the faction
 	test_result("stard_faction_delete", stard_faction_delete($faction_id));
 	%factions_bname = %{stard_faction_list_bname()};
 	test_result("stard_faction_delete - validate", !(defined $factions_bname{$faction}));
@@ -281,15 +344,21 @@ sub sector_reg {
 		exit 1;
 	}
 
+	# Check that stard_change_section_for moves the player too the spawn sector
 	stard_change_sector_for($player, $spawn);
 	%player_info = %{stard_player_info($player)};
 	test_result("stard_change_sector_for - spawn", $player_info{sector} eq $spawn);
-
+	# we sleep as StarMade will not allow the player to be moved too often
 	sleep 5;
+
+
+	# Check that we could move the player to annother sector with stard_change_sector_for
 	test_result("stard_change_sector", stard_change_sector_for($player, $sector1));
 	%player_info = %{stard_player_info($player)};
 	test_result("stard_change_sector_for - validate", $player_info{sector} eq $sector1);
 
+
+	# Check that we can spawn a mob with stard_spawn_entity
 	my $ship_name = "spawn_test";
 	my $blueprint = "Isanth Type-Zero Mc";
 	test_result("stard_spawn_entity", stard_spawn_entity($blueprint, $ship_name, $sector1, -1, 'false' ));
@@ -299,36 +368,45 @@ sub sector_reg {
 	%search = %{stard_sector_info($sector1)};
 	$validate = join(" ", keys %{$search{entity}});
 	test_result("stard_sector_info/stard_spawn_entity", $search{entity}{"ENTITY_SHIP_$ship_name"}, $validate);
+
 	
+	# Check that we can despawn the mob with stard_despawn_all
 	test_result("stard_despawn_all", stard_despawn_all($ship_name, 'all', 'true'));
 	%search = %{stard_search($ship_name)};
 	$validate = keys %search;
 	test_result("stard_despawn_all - validate", $validate <= 0);
 
+
+	# Check that we can spawn annother mob
 	$ship_name = "spawn_test2";
 	stard_spawn_entity($blueprint, $ship_name, $sector1, -1, 'false');
 
 
+	# Check that we can despawn the mod with stard_despawn_sector 
 	test_result("stard_despawn_sector", stard_despawn_sector($ship_name, 'all', 'true', $sector1));
 	%search = %{stard_search($ship_name)};
 	$validate = keys %search;
 	test_result("stard_despawn_all - validate", $validate <= 0);
 
 	
+	# Check that running stard_spawn_entity with an invalid blueprint returns false
 	$ship_name = "spawn_test3";
 	$blueprint = "goblygook";
 	test_result("stard_spawn_entity - invalid blueprint", !stard_spawn_entity($blueprint, $ship_name, $sector1, -1, 'false'));
 
 
+	# Check that stard_sector_chmod can set a sector to protected
 	test_result("stard_sector_chmod - set protected", stard_sector_chmod($sector1, "add", "protected"));
 	my %sector_info = %{stard_sector_info($sector1)};
 	test_result("stard_sector_chmod/stard_sector_info validation", $sector_info{general}{info}{protected});
-	
 	sleep 5;	
 
+
+	# Check that we can remove the sector protection with stard_sector_chmod
 	test_result("stard_sector_chmod - unset protected", stard_sector_chmod($sector1, "remove", "protected"));
 	%sector_info = %{stard_sector_info($sector1)};
 	test_result("stard_sector_chmod/stard_sector_info validation", !$sector_info{general}{info}{protected});
+
 
 	stard_broadcast("\n\n");
 	print "\n\n";
@@ -355,17 +433,22 @@ sub map_reg {
 	}
 
 
+	# Check that we can clear the map locations of unite with stard_clean_map_area
 	stard_spawn_entity($blueprint, "itsz", $sector, -1, 0 );
 	test_result("stard_clean_map_area - full clean return ok", stard_clean_map_area(\%map_config, "full"));
 	%sector_info = %{stard_sector_info($sector)};
 	@validate = keys %{$sector_info{entity}};
 	test_result("stard_clean_map_area - successfull clean", !@validate);
 
+
+	# Check that we can deploy a map configuration
 	test_result("stard_setup_map - return ok", stard_setup_map(\%map_config));
 	%sector_info = %{stard_sector_info($sector)};
 	test_result("stard_setup_map - object spawn", $sector_info{entity}{ENTITY_SHIP_test_station});
 	test_result("stard_setup_map - defender spawn", %{stard_search("Isanth Type-Zero Bm")});
 
+
+	# check that we can clean things back up.
 	test_result("stard_clean_map_area - full clean return ok 2", stard_clean_map_area(\%map_config, "full"));
 
 }
@@ -393,6 +476,7 @@ sub plugin_reg_launch {
 	if ( ! -x "../$plugin/.regression") {
 		return 1; 
 	}
+
 
 	stard_broadcast("###Running $plugin Plugin Tests###");
 

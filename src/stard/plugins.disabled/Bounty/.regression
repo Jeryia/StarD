@@ -28,7 +28,6 @@ sub main {
 	my $last_credits;
 	my %player_info;
 
-	system("echo $bounty_credits > $stard_plugins/$plugin/data/$bounty_player");
 	
 
 	%player_info = %{stard_player_info($player)};
@@ -37,17 +36,24 @@ sub main {
 		exit 1;
 	}
 
+
+	# In the event a player with a bounty dies, make sure the killer gets rewarded
+	system("echo $bounty_credits > $stard_plugins/$plugin/data/$bounty_player");
 	$last_credits = $player_info{credits};
 	test_event("playerDeath", $bounty_player, $player_info{control});
 	%player_info = %{stard_player_info($player)};
 	test_result("plugin-$plugin - awarded", $player_info{credits} - $last_credits == $bounty_credits);
 
 
+	# Check to see that when a player places a bounty that they get the correct 
+	# amount of credits taken from them.
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("bounty", $player, $player, $bounty_credits);
 	%player_info = %{stard_player_info($player)};
 	test_result("plugin-$plugin - bounty", $last_credits - $player_info{credits} == $bounty_credits);
 
+	# Check to make sure that if the bounty command is run against a player that 
+	# is not online that it will still function.
 	test_result("plugin-$plugin - bounty non-existant player", test_command("bounty", $player, $bounty_player, $bounty_credits) == 0);
 }

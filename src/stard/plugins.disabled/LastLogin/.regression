@@ -27,22 +27,26 @@ sub main {
 	my $lastlogin_player_data = "./data/$lastlogin_player";
 
 
+	# Check if a player logs in that it is logged.
 	unlink($lastlogin_player_data);
 	test_event("playerLogin", $lastlogin_player);
 	test_result("plugin-$plugin - playerLogin", -e $lastlogin_player_data);
 
 
+	# Check if a player logs out that it is logged.
 	unlink($lastlogin_player_data);
 	test_event("playerLogout", $lastlogin_player);
 	test_result("plugin-$plugin - playerLogout", -e $lastlogin_player_data);
 	unlink($lastlogin_player_data);
 
 
+	# Check that the lastlogin command returns ok when looking up the player
 	test_result(
 		"plugin-$plugin - !lastlogin online player",
 		test_command("lastlogin", $player, $player) == 0
 	);
 
+	# Check that the lastlogin command returns ok when looking a non existant player
 	test_result(
 		"plugin-$plugin - !lastlogin non-existant player",
 		test_command("lastlogin", $player, "kfhrb") == 0

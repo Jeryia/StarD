@@ -24,15 +24,21 @@ sub main {
 	my %player_info;
 	my $last_credits;
 
+	# unload the Test plugin before we start
 	stard_broadcast("Setting up test environment. Please wait...");
 	test_command("plugin", '', "unload", "Test");
 
 
+	# Check to see if loading the test plugin via the plugin command loads the 
+	# plugin.
 	test_command("plugin", $player, "load", "Test");
 	test_result("$plugin - plugin load:", -d "$stard_plugins/Test");
 	$result = `../../bin/stard_daemons status | grep -q 'Test is running'; echo \$?`;
 	test_result("$plugin - plugin unload daemon:", $result == 0);
 
+
+	# Check to see if unloading the Test plugin via the plugin command 
+	# actually unloads the test plugin.
 	test_command("plugin", $player, "unload", "Test");
 	test_result("$plugin - plugin unload:", ! -d "$stard_plugins/Test");
 	$result = `../../bin/stard_daemons status | grep -q 'Test is'; echo \$?`;
