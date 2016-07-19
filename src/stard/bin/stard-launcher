@@ -83,7 +83,7 @@ if [ ! -e "$SERVER_DIR/version.txt" ]; then
 	cd $CWD
 fi
 
-function ondie() {
+function on_die() {
 	$bin/stard_daemons stop
 	kill 0
 	exit 0
