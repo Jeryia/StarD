@@ -86,6 +86,8 @@ sub stard_clean_map_area {
 
 ## stard_setup_map
 # Create whatever objects are needed by the given map
+# INPUT1: map config (hash)
+# OUTPUT: (boolean) true if successfull false if not.
 sub stard_setup_map {
 	my %map_config = %{$_[0]};
 
