@@ -85,6 +85,8 @@ fi
 
 function on_die() {
 	$bin/stard_daemons stop
+	trap "exit 0" SIGINT
+	trap "exit 0" SIGTERM
 	kill 0
 	exit 0
 }

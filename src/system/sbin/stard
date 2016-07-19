@@ -36,6 +36,8 @@ last_version_file="$serverLoc/.lastver"
 # on_die
 # if this script is killed, gracefully stop stard
 function on_die() {
+	trap "exit 0" SIGINT
+	trap "exit 0" SIGTERM
 	kill 0
 	exit 0
 }
