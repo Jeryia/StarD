@@ -65,24 +65,20 @@ function kill_procs {
 function status {
 	echo -n "Checking $NAME..."
 	if [ -f $PIDFILE ]; then
-		STATUS=0
+		STATUS=1
 		pgrep -U root -x $EXEC_NAME --pidfile $PIDFILE > /dev/null 2>&1
 		RET=$?
 		if [ $RET -eq 0 ]; then
 			echo "Running"
+			STATUS=$RET
 		else
 		echo
 			echo "Process dead but pidfile exists"
-			STATUS=$RET
 		fi
 
 		echo
 		echo "Daemon Status:"
 		su $USER -c "/var/starmade/stard/bin/stard_daemons status"
-		RET=$?
-		if [ $RET -ne 0 ]; then
-			STATUS=$RET
-		fi
 
 		return $STATUS
 
@@ -179,6 +175,13 @@ function restore {
 
 case "$1" in
 start)
+	status > /dev/null 2>&1
+	RET=$?
+	if [ $RET -eq 0 ]; then
+		echo "$NAME is already running"
+		exit 0
+	fi
+
 	start
 	RET=$?
 	exit $RET
