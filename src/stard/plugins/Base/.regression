@@ -10,6 +10,7 @@ use stard_regression;
 
 
 my $stard_home = "../../";
+my $stard_plugins = "$stard_home/plugins";
 stard_setup_run_env($stard_home);
 setup_core_env($stard_home);
 stard_stdlib_set_debug(1);
@@ -21,6 +22,7 @@ sub main {
 	my $plugin = "Base";
 
 
+	my $result;
 	my %player_info;
 	my $last_credits;
 
