@@ -1,8 +1,7 @@
-#!%PERL%
+#!/usr/bin/perl
 use strict;
 use warnings;
 use Cwd;
-
 
 #All rights reserved.
 #
@@ -19,9 +18,9 @@ use Cwd;
 # StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
 # The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
-#### stard_test
-# Checks the current stard setup to see if 
-# anything look wrong.
+#### stard_cmd
+# Run the given command on the statmade server. This is a raw interface.
+
 
 # determine where the stard home is
 # using our called path.
@@ -38,150 +37,7 @@ our $stard_home;
 chdir($stard_home);
 $stard_home= getcwd();
 
+my $exec = $0;
+$exec =~s/(.*)bin/$1libexec/;
 
-
-my $starmade_home = "$stard_home/..";
-my $starmade_server = "$starmade_home/StarMade";
-my $stard_plugins = "$stard_home/plugins";
-my $prog = $0;
-
-# load stard_lib.
-require "$stard_home/lib/stard_lib.pm";
-require "$stard_home/lib/stard_core.pm";
-
-stard_setup_run_env($stard_home);
-
-&main();
-
-
-exit 0;
-#################################################
-
-
-
-sub main {
-	check_starmade();
-	check_stard_cmd_interface();
-};
-
-## check_starmade
-# Make sure the starmade install looks ok, and report if it doesn't.
-sub check_starmade {
-	print "## Checking Starmade Install ##\n";
-	print "Checking StarMade.jar...";
-	if ( -r "$starmade_server/StarMade.jar" ) {
-		print "Ok!\n";
-	}
-	else {
-		print "Not Ok!\n";
-		starmade_not_ok();
-		exit 1;
-	}
-
-	
-	print "Checking StarMade data dir...";
-	if (-d "$starmade_server/data" && -x "$starmade_server/data") {
-		print "Ok!\n"
-	}
-	else {
-		print "Not Ok!\n";
-		starmade_not_ok();
-		exit 1;
-	}
-
-	print "Checking StarNet.jar...";
-	if (-r "$starmade_home/tools/StarNet.jar") {
-		print "Ok!\n";
-	}
-	else {
-		print "Not Ok!\n";
-		print "Looks like StarNet.jar is not accessible or not in place!\n";
-		print "Get the StarNet.jar file from http://files.star-made.org/StarNet.jar\n";
-		if ( %STANDALONE% != 1 ) {
-			print "Put it in %STARMADEDIR%/tools/.\n";
-		}
-		else {
-			print "Put it in $starmade_home/tools/.\n";
-		}
-		exit 1;
-	}
-	
-	if (
-		stard_get_starmade_conf_field("SUPER_ADMIN_PASSWORD_USE") ne 'true' ||
-		! stard_get_starmade_conf_field("SUPER_ADMIN_PASSWORD") =~/\S/
-	) {
-		print "Not Ok!\n";
-		starmade_configs_not_ok();
-		exit 1;
-	}
-}
-
-## starmade_not_ok
-# Tell user what to do about starmade not looking ok.
-sub starmade_not_ok {
-	print "StarMade is either not installed or the installation is corrupted\n";
-	print "Reccommendation:\n";
-	if ( %STANDALONE% != 1 ) {
-		print "Get the StarMade-Starter.jar file, and put it in %STARMADEDIR%/tools/ and run the following commands:\n";
-		print "sudo su - %USER%\n";
-		print "cd %STARMADEDIR%\n";
-		print "java -jar %STARMADEDIR%/tools/StarMade-Starter.jar\n";
-	}
-	else {
-		print "Get the StarMade-Starter.jar file from http://www.starmade.org/download\n";
-		print "Put it in $starmade_home/tools/ and run the following commands:\n";
-		print "cd $starmade_home\n";
-		print "java -jar $starmade_home/tools/StarMade-Starter.jar\n";
-	}
-	print "Note that that there is a bug in starmade that will cause the \n";
-	print "StarMade-Starter.jar to hang after the last file is downloaded.\n";
-	print "Ctrl-C to get out of it.\n";
-}
-
-## starmade_configs_not_ok
-# Tell user what to do about starmade configs not looking ok.
-sub starmade_configs_not_ok {
-	print "Starmade is not correctly configured to use stard!\n";
-	print "Reccommendation:\n";
-	if (%STANDALONE% != 1) {
-		print "1. Run the commands:\n";
-		print "sudo service stard stop\n";
-		print "%STARMADEDIR%/stard/bin/stard_gen_passwd\n";
-		print "service stard stop\n";
-	}
-	else {
-		print "1. Stop the starmade server.\n";
-		print "2. Run the command:\n";
-		print "$starmade_home/stard/bin/stard_gen_passwd\n";
-		print "3. Start the starmade server.\n";
-	}
-}
-
-## check_stard_cmd_interface
-# Check to see if the interface between stard and starmade look reasonable
-# and report if it is not.
-sub check_stard_cmd_interface {
-	print "##Checking stard to starmade interface ##\n";
-	print "Checking stard_cmd...\n";
-	my $output = join("", stard_cmd("/status"));
-	print "Server Status: $output\n";
-	if ($output=~/Players/) {
-		print "Ok!\n";
-	}
-	else {
-		print "Not Ok!\n";
-		print "Perhaps stard isn't running?\n";
-		print "Reccommendation:\n";
-		if ( %STANDALONE% != 1 ) {
-			print "Try the following commands:\n";
-			print "sudo service stard restart\n";
-		}
-		else {
-			print "Try the following commands:\n";
-			print "cd $starmade_home/StarMade\n";
-			print "../stard/bin/stard-launcher\n";
-		};
-		exit 1;
-	};
-};
-
+exec($exec, @ARGV);
