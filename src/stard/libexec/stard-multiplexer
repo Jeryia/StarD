@@ -1,7 +1,12 @@
-#!/usr/bin/perl
+#!%PERL%
 use strict;
 use warnings;
 use Cwd;
+
+use lib("./lib");
+use stard_lib;
+use stard_core;
+use stard_log;
 
 #All rights reserved.
 #
@@ -18,26 +23,73 @@ use Cwd;
 # StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
 # The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
-#### stard_cmd
-# Run the given command on the statmade server. This is a raw interface.
+#### stard-multiplexer
+# This program monitors the starmade daemon's 
+# output for specific 'events' and sends those 
+# events to the correct plugin.
 
+# disabled buffering. Needed because for some reason writing the log doesn't 
+# work well without this.
+$| =1;
 
 # determine where the stard home is
 # using our called path.
-our $stard_home;
-{
-	my @tmp = split("/", $0);
-	# grab everything but the last entry
-	for (my $i = 0; $i < @tmp -1; $i++ ) {
-		$stard_home .= "/$tmp[$i]";
+my $stard_home= "./";
+my $prog = $0;
+
+
+#load stard libraries
+setup_core_env($stard_home);
+stard_setup_run_env($stard_home);
+set_loglevel(6);
+
+
+
+main();
+
+exit 0;
+#################################################
+
+
+
+
+
+## main
+# Real work starts here!
+sub main {
+	## setup environment
+	my $starmade_home = "$stard_home/..";
+	my $spool = "$starmade_home/spool";
+
+	# read config file
+	my $serverOutFile = "$spool/serverErr";
+	my $serverOUT_fh;
+
+	# Check if plugins look ok
+	validate_plugins();
+
+	## start parsing output
+	if (!open($serverOUT_fh, "<", $serverOutFile)) {
+		stdout_log("failed to open '$serverOutFile': $!", 0);
+		exit 1;
 	}
-	$stard_home =~s/^\///;
-	$stard_home.="/..";
-}
-chdir($stard_home);
-$stard_home= getcwd();
 
-my $exec = $0;
-$exec =~s/(.*)bin/$1libexec/;
 
-exec($exec, @ARGV);
+	stdout_log("$prog has started successfully!", 5);
+	while( <$serverOUT_fh> ) {
+		my $message = $_;
+
+		# temp fix in the starmade output, some entries spell server wrong :P	
+		$message=~s/^\[SREVER\]/\[SERVER\]/ig;
+
+		
+		if ($message =~/^\[SERVER\]/) {
+			server_messages($message);
+		}
+		elsif ($message =~/\[CHANNELROUTER\]/) {
+			chat_messages($message);
+		};
+
+	};
+	close($serverOUT_fh);
+};
