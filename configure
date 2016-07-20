@@ -577,7 +577,8 @@ endif
 	for plugin in ./src/stard/plugins.disabled/*; do 
 		name=$(basename $plugin)
 		echo "
-	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && cp -R '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name' '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/'; rm -rf '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name'\"
+	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && cp -R '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name' '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/'\" || :
+	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && rm -rf '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name'\" || :
 " >> ./Makefile
 	done
 	
