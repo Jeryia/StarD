@@ -78,6 +78,7 @@ fi
 %attr(1770,root,root) /var/starmade/stard/spool
 %attr(755,root,root) /var/starmade/stard/bin/*
 %attr(755,root,root) /var/starmade/stard/lib/*
+%attr(755,root,root) /var/starmade/stard/libexec/*
 /var/starmade/stard/plugins/*
 /var/starmade/server
 %attr(755,starmade,starmade) /var/starmade/stard/plugins.disabled
@@ -111,6 +112,7 @@ fi
   - LastLogin - allows players to check ho long ago a player last logged in.
 - Added the stard_map library. This library allows spawning of stations/ships at specific coordinates from an ini file.
 - General polishing of code. (see github commits for details)
+- Fixed an issue with updating to newer versions of starmade
 
 * Sun Jan 24 2016 Jeryia <johndoe@gmail.com>
 - v0.1.0
