@@ -137,7 +137,7 @@ sub get_faction_of_ship {
 	my %sector_info;
 
 	if ($ships{$ship}) {
-		%sector_info = stard_sector_info($ships{$ship});
+		%sector_info = %{stard_sector_info($ships{$ship})};
 	}
 	return $sector_info{entity}{$ship}{faction};
 }
