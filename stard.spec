@@ -1,5 +1,5 @@
 Name:		stard
-Version:	0.2.0
+Version:	0.2.1
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
@@ -98,7 +98,13 @@ fi
 
 %changelog
 
-* Wed Jun 7 2016 Jeryia <johndoe@gmail.com>
+* Fri Jul 22 2016 Jeryia <johndoe@gmail.com>
+- v0.2.1
+- Fixed issues with stard-multiplexer being unable to launch serverEvents correctly
+- Fixed logging issues with the plugin commands.
+- Allow the loading and unloading of multiple plugins at once.
+- !plugin list now lists plugins in alphabetical order.
+* Wed Jul 20 2016 Jeryia <johndoe@gmail.com>
 - v0.2.0
 - Moved to new plugin loading model:
   - plugins only need to be in the plugins directory to be loaded
