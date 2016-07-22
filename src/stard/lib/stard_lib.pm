@@ -247,6 +247,8 @@ sub stard_broadcast {
 	stard_if_debug(1, "stard_broadcast($message)");
 	stard_validate_env();
 
+	print $message;
+	print "\n";
 	$message = fix_newlines($message);
 	my $out = join("",stard_cmd("/chat $message"));
 	if ($out =~/\Qbroadcasted as server message:\E/) {
@@ -268,8 +270,8 @@ sub stard_pm {
 
 	stard_if_debug(1, "stard_pm($player, $message)");
 	stard_validate_env();
-	$message = fix_newlines($message);
 	if ($player =~/\S/) {
+		$message = fix_newlines($message);
 		my $out = join("",stard_cmd("/pm $player $message"));
 		if ($out =~/\Qsend to $player as server message:\E/) {
 			stard_if_debug(1, "stard_pm: return: 1");
