@@ -26,7 +26,7 @@ use stard_core;
 # Run the given command on the statmade server. This is a raw interface.
 
 
-my $stard_home= "./";
+my $stard_home= getcwd();
 setup_core_env($stard_home);
 stard_setup_run_env($stard_home);
 

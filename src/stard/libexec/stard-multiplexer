@@ -34,7 +34,7 @@ $| =1;
 
 # determine where the stard home is
 # using our called path.
-my $stard_home= "./";
+my $stard_home= getcwd();
 my $prog = $0;
 
 

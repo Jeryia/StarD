@@ -25,7 +25,7 @@ use stard_lib;
 
 # determine where the stard home is
 # using our called path.
-my $stard_home= "./";
+my $stard_home= getcwd();
 
 #load stard libraries
 setup_core_env($stard_home);

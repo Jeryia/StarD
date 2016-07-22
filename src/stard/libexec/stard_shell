@@ -29,7 +29,7 @@ use stard_core;
 
 # determine where the stard home is
 # using our called path.
-my $stard_home= "./";
+my $stard_home= getcwd();
 
 
 # load stard_lib.

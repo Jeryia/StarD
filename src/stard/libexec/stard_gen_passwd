@@ -31,7 +31,7 @@ use stard_core;
 
 # determine where the stard home is
 # using our called path.
-my $stard_home= "./";
+my $stard_home= getcwd();
 my $starmade_home = "$stard_home/..";
 my $starmade_server = "$starmade_home/StarMade";
 my $stard_plugins = "$stard_home/plugins";
