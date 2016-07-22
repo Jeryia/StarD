@@ -5,4 +5,5 @@ General Commands:
 !motd - Prints out the server message of the day.
 !rules - Prints the server rules.
 !stuck - (Astronaut Only) teleport 1 sector away.
+!help admin - Display Admin only commands
 
