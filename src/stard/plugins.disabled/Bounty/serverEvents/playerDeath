@@ -81,9 +81,12 @@ sub players_to_pay {
 
 	my @pay_players = ();
 
+
 	my $faction = get_faction_of_ship($killed_by);
 	my %player_list = %{stard_player_list()};
 
+
+	
 	if ($faction && $faction > 0) {
 		my %ships = stard_search($killed_by);
 		
@@ -102,6 +105,10 @@ sub players_to_pay {
 	if(!@pay_players) {
 		Player: foreach my $player (keys %player_list) {
 			if ($player_list{$player}{control} && $player_list{$player}{control} eq $killed_by) {
+				push(@pay_players, $player);
+				last Player;
+			}
+			if ($player_list{$killed_by}) {
 				push(@pay_players, $player);
 				last Player;
 			}
@@ -138,18 +145,32 @@ sub get_faction_of_ship {
 
 	if ($ships{$ship}) {
 		%sector_info = %{stard_sector_info($ships{$ship})};
+		return $sector_info{entity}{$ship}{faction};
 	}
-	return $sector_info{entity}{$ship}{faction};
+	else {
+		my %player_list = %{stard_player_list()};
+		if ($player_list{$ship}) {
+			return $player_list{$ship}{faction};
+		}
+	}
+	return 0;
+
 }
 
 sub convert_entity_name {
 	my $entity = $_[0];
 
 	# Ship[Jeryia2_1465162199096](998)
-	if ($entity =~/Ship\[(\S+)\](\D+)/i) {
+	if ($entity =~/Ship\[(.+)\]\(\d+\)/i) {
 		return $1;
 	}
-	if ($entity =~/SpaceStation\[(\S+)\](\D+)/i) {
+
+	# PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia2)(436)]
+	if ($entity =~/PlayerCharacter\[\(ENTITY_PLAYERCHARACTER_(.+)\)\(\d+\)\]/) {
+		return $1;
+	}
+
+	if ($entity =~/SpaceStation\[(.+)\]\(\d+\)/i) {
 		return $1;
 	}
 	return $entity;
