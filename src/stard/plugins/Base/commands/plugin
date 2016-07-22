@@ -44,38 +44,35 @@ exit 0;
 
 
 sub main {
-	my $player = $_[0];
-	my $command;
-	my $plugin;
+	my $player = shift(@_);
+	my $command = shift(@_);
+	my @plugins = @_;
 
-	open(my $lock_fh, "<", $prog) or die "Could not open '$prog': $!\n";
-	flock($lock_fh, 2) or die "Failed to lock '$prog':$!\n";
 
 	stard_run_if_admin($player);
-	if ($_[1]) {
-		$command = $_[1];
-	}
-	else {
+	if (!$command) {
 		help($player);
 		exit 1;
 	}
 
-	if ($_[2]) {
-		$plugin = $_[2];
-	}
-
+	open(my $lock_fh, "<", $prog) or die "Could not open '$prog': $!\n";
+	flock($lock_fh, 2) or die "Failed to lock '$prog':$!\n";
 	if ($command eq 'load') {
-		load_plugin($plugin, $player);
+		foreach my $plugin (@plugins) {
+			load_plugin($plugin, $player);
+		}
 	}
 	elsif ($command eq 'unload') {
-		unload_plugin($plugin, $player);
+		foreach my $plugin (@plugins) {
+			unload_plugin($plugin, $player);
+		}
 	}
 	elsif ($command eq 'info') {
-		if (!$plugin) {
+		if (!@plugins) {
 			help($player);
 			exit 1;
 		}
-		display_plugin_info($player, $plugin);
+		display_plugin_info($player, $plugins[0]);
 	}	
 	elsif ( $command eq 'list') {
 		display_active_plugins($player);
