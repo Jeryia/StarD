@@ -190,7 +190,9 @@ sub display_active_plugins {
 
 	my %plugins = %{get_active_plugins_hash()};
 	my $output = "Active Plugins:\n";
-	$output .= join("\n", keys %plugins);
+	my @plugin_list = keys %plugins;
+	@plugin_list = sort(@plugin_list);
+	$output .= join("\n", @plugin_list);
 	stard_pm($player, $output);
 }
 
@@ -202,7 +204,9 @@ sub display_disabled_plugins {
 
 	my %plugins = %{get_disabled_plugins_hash()};
 	my $output = "Disabled Plugins:\n";
-	$output .= join("\n", keys %plugins);
+	my @plugin_list = keys %plugins;
+	@plugin_list = sort(@plugin_list);
+	$output .= join("\n", @plugin_list);
 	stard_pm($player, $output);
 }
 
