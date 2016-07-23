@@ -254,7 +254,7 @@ sub server_messages {
 	};
 	
 	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia; id(3)(2)f(0)]
-	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+) .*\]/) {
+	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+); .*\]/) {
 		my $player = $1;
 		plugin_server_event("playerSpawn", $player);
 		return;
@@ -333,8 +333,8 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 
 	# [SERVER] received object faction change request 10038 for object SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]
 	if (
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(\S+)\((\d+\))\]/ ||
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object \S+\[(\S+)\]\((\d+\))/
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\((\d+\))\]/ ||
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\]\((\d+\))/
 	) {
 	 	my $faction_id = $1;
 		my $type = $2;
