@@ -28,3 +28,10 @@ my $player = $ARGV[0];
 
 stard_broadcast("Broadcast test");
 stard_pm($player, "pm test");
+mkdir("./tmp/");
+mkdir("./tmp/commands/");
+open(my $fh, ">", "./tmp/commands/test");
+print $fh "test '". join("' '",@ARGV) . "'\n";
+close($fh);
+
+

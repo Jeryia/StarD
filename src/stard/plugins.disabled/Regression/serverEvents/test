@@ -1,6 +1,7 @@
 #!perl
 use strict;
 use warnings;
+use File::Basename;
 
 use lib("./lib");
 use lib("../../lib");
@@ -23,9 +24,14 @@ $| = 1;
 ## setup environment
 my $debug_home = '.';
 my $stard_home = "$debug_home/../..";
-require "$stard_home/lib/stard_lib.pm";
 stard_setup_run_env($stard_home);
 
 my $prog = $0;
+my $basename = basename($prog);
 
-stard_broadcast("stard event trigger: $prog @ARGV");
+stard_broadcast("stard event trigger: $basename @ARGV");
+mkdir("./tmp");
+mkdir("./tmp/serverEvents");
+open(my $fh, ">>", "./tmp/serverEvents/$basename");
+print $fh "$basename '" . join("' '", @ARGV) . "'\n";
+close($fh);
