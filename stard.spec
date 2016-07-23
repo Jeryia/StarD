@@ -44,11 +44,10 @@ useradd -c "Privilege-separated starmade server" -s /bin/bash -r -d /var/starmad
 service stard stop || :
 
 %post
-for plugin in %{prefix}/var/starmade/stard/plugins.disabled/*; do
-	NAME=$(basename $plugin) 
-	if [ -e %{prefix}/var/starmade/stard/plugins/$NAME ];then
-		cp -R "%{prefix}/var/starmade/stard/plugins.disabled/$NAME" "%{prefix}/var/starmade/stard/plugins/"
-		rm -rf "%{prefix}/var/starmade/stard/plugins.disabled/$NAME"
+for plugin in `ls /var/starmade/stard/plugins.disabled/`; do
+	if [ -e /var/starmade/stard/plugins/$plugin ];then
+		cp -R "/var/starmade/stard/plugins.disabled/$plugin" "/var/starmade/stard/plugins/"
+		rm -rf "/var/starmade/stard/plugins.disabled/$plugin"
 	fi
 done
 /usr/bin/systemctl --system daemon-reload
