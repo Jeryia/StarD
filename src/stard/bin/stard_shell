@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Cwd;
+use File::Basename;
 
 #All rights reserved.
 #
@@ -37,7 +38,6 @@ our $stard_home;
 chdir($stard_home);
 $stard_home= getcwd();
 
-my $exec = $0;
-$exec =~s/(.*)bin/$1libexec/;
+my $exec =$stard_home ."/libexec/" . basename($0);
 
 exec($exec, @ARGV);
