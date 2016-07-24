@@ -1,4 +1,5 @@
 #!perl
+package regression;
 use strict;
 use warnings;
 
@@ -64,6 +65,7 @@ sub main {
 		sector_reg($player);
 		map_reg($player);
 		plugin_reg($player);
+		multiplexer_reg($player);
 	}
 	elsif ($test eq "core") {
 		stard_core_reg($player);
@@ -86,8 +88,13 @@ sub main {
 	elsif ($test eq "plugin") {
 		plugin_reg($player);
 	}
+	elsif ($test eq 'multiplexer') {
+		multiplexer_reg($player);
+	}
 	else {
 		stard_pm($player, "Error, requested regression suite not found: $test");
+		stard_pm($player, "Available suites:\nall\ncore\ngeneral\nplayer\nfaction\nsector\nmap\nmultiplexer\nplugin");
+		exit 0;
 	};
 	stard_broadcast("All tests passed!");
 }
@@ -381,8 +388,7 @@ sub sector_reg {
 	test_result("stard_despawn_all - validate", $validate <= 0);
 
 
-	# Check that we can spawn annother mob
-	$ship_name = "spawn_test2";
+	# Check that we can spawn annother mob	$ship_name = "spawn_test2";
 	stard_spawn_entity($blueprint, $ship_name, $sector1, -1, 'false');
 
 
@@ -467,6 +473,11 @@ sub stard_core_reg {
 	my $logfile;
 	my $argfile;
 	my $result;
+
+	if (!stard_broadcast("###Running Core Tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
 
 	my @plugins = @{get_active_plugin_list()};
 	test_result("stard_core - get_active_plugin_list", $#plugins);
@@ -574,7 +585,14 @@ sub stard_core_reg {
 	unlink($argfile);
 	server_messages("[SERVER][ChannelRouter] Faction Changed by PlS[Jeryia [Jeryia]*; id(3)(2)f(10041)] to 10041\n");
 	sleep 1;
-	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' '10041'\n"));
+	test_result("stard_core - server_messages $test_cmd 2", ck_file_string($argfile, "$test_cmd 'Jeryia' '10041'\n"));
+
+	$test_cmd = "playerFaction";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	server_messages("[SERVER][ChannelRouter] Faction Changed by PlS[Jeryia2 ; id(2)(1)f(-1)] to -1\n");
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd 3", ck_file_string($argfile, "$test_cmd 'Jeryia2' '-1'\n"));
 
 	$test_cmd = "playerUnFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
@@ -630,6 +648,78 @@ sub stard_core_reg {
 	
 }
 
+## multiplexer_reg
+# Run the regression tests against the multiplexer itself.
+# The goal of these tests is to ensure that the output starmade gives
+# is what the stard-multiplexer expects.
+# INPUT1: player name
+sub multiplexer_reg {
+	my $player = shift(@_);
+
+
+	my $sector = '5 5 5';
+	my $test_cmd;
+	my $argfile;
+
+	if (!stard_broadcast("###Running Multiplexer Tests###")) {
+		print "failed to broadcast message :(\n";
+		exit 1;
+	}
+
+	
+
+	$test_cmd = "playerFaction";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	stard_faction_create("$player Faction", $player, 1);
+	stard_faction_add_member($player, 1);
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd '$player' '1'\n"));
+
+	$test_cmd = "playerFaction";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	stard_faction_create("$player Faction", $player, 2);
+	stard_faction_add_member($player, 2);
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd '$player' '2'\n"));
+
+	$test_cmd = "playerUnFaction";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	stard_faction_del_member($player, 2);
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd '$player' '2'\n"));
+
+
+	my $ship_name = "spawn_test";
+	my $blueprint = "Isanth Type-Zero Mc";
+	$test_cmd = "entityDestroyed";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	stard_change_sector_for($player, $sector);
+	stard_spawn_entity($blueprint, $ship_name, $sector, -1, 'false');
+	stard_despawn_all($ship_name, 'all', 'true');
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'SHIP_$ship_name'\n"));
+
+	$test_cmd = "sectorChange";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	stard_change_sector_for($player, '5 5 5');
+	sleep 5;
+	stard_change_sector_for($player, '2 3 4');
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "'$player' '5 5 5' '2 3 4'\n"));
+
+	$test_cmd = "playerDeath";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	stard_cmd("/kill_character", $player);
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd '$player' "));
+	
+}
 
 ## plugin_reg
 # run tests on all active plugins (who have a regression test)
