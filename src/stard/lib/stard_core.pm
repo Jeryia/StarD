@@ -291,7 +291,8 @@ sub server_messages {
 	};
 
 	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia ; id(3)(2)f(10041)] to 10041
-	if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) ; id\(\d+\)\(\d+\)f\(\d+\)\] to (-?\d+)/) {
+	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia2 ; id(2)(1)f(-1)] to -1
+	if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) ; id\(\d+\)\(\d+\)f\(-?\d+\)\] to (-?\d+)/) {
 		my $player = $1;
 		my $faction_id = $2;
 		if ($faction_id) {
