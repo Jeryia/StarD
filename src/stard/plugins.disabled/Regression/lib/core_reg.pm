@@ -78,6 +78,14 @@ sub stard_core_reg {
 
 
 	### server_messages tests
+	$test_cmd = "entityOverheat";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	ai_messages("[AI] Setting callback Server(0) Ship[TC Cruiser MKI_1470000327736](10) Executing send callback: true");
+	server_messages("[SERVER] MAIN CORE STARTED DESTRUCTION: in 900 seconds - started 1470514620375\n");
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'TC Cruiser MKI_1470000327736'\n"));
+	
 	$test_cmd = "playerSpawn";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);

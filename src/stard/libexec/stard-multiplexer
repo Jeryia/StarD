@@ -86,6 +86,9 @@ sub main {
 		if ($message =~/^\[SERVER\]/) {
 			server_messages($message);
 		}
+		if ($message =~/^\[AI\]/) {
+			ai_messages($message);
+		}
 		elsif ($message =~/\[CHANNELROUTER\]/) {
 			chat_messages($message);
 		};

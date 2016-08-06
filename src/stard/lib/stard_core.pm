@@ -34,7 +34,8 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(setup_core_env stard_core_validate_env get_active_plugin_list validate_plugins get_exec_prefix plugin_server_event plugin_command server_messages chat_messages);
+@EXPORT = qw(setup_core_env stard_core_validate_env get_active_plugin_list validate_plugins get_exec_prefix plugin_server_event plugin_command ai_messages server_messages chat_messages);
+
 
 my %exec_prefix_table;
 $exec_prefix_table{perl} = "%PERL%";
@@ -45,6 +46,10 @@ my $stard_home;
 my $stard_log;
 my $stard_plugins;
 my $stard_plugin_log;
+
+
+##### DANGER GLOBAL VARIABLE!!! #####
+my $GLOBAL_overheat_entity;
 
 
 ## stard_setup_env
@@ -232,9 +237,28 @@ sub plugin_command {
 	};
 }
 
+## ai_messages 
+# Process messages from the starmade server that
+# start with [AI] hence being an ai message :)
+# INPUT1: ai message raw text
+sub ai_messages {
+	my $message = $_[0];
+
+
+	# [AI] Setting callback Server(0) Ship[TC Cruiser MKI_1470000327736](10) Executing send callback: true
+	if ($message =~/^\[AI\] Setting callback Server\(\d+\) Ship\[(.*)\]\(\d+\) Executing send callback: true/
+	) {
+		my $entity = $1;
+		$GLOBAL_overheat_entity= $entity;
+		return;
+	};
+	return;
+}
+
+
 ## server_messages
 # Process messages from the starmade server that 
-# stard with [SERVER] hence being a server message :)
+# start with [SERVER] hence being a server message :)
 # INPUT1: server message raw text
 sub server_messages {
 	my $message = $_[0];
@@ -244,9 +268,17 @@ sub server_messages {
 	stard_core_validate_env();
 	my @plugins = @{get_active_plugin_list()};;
 
+	# [SERVER] MAIN CORE STARTED DESTRUCTION: in 900 seconds - started 1470514620375
+	if ($message =~/^\[SERVER\] MAIN CORE STARTED DESTRUCTION: in \d+ seconds - started \d+/) {
+		if ($GLOBAL_overheat_entity) {
+			plugin_server_event("entityOverheat", $GLOBAL_overheat_entity);
+			$GLOBAL_overheat_entity = undef;
+		}
+		return;
+	};
+	
 	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia [Jeryia]*; id(3)(2)f(0)]
-	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+) \[(\S+)\]\*; .*\]/
-	) {
+	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+) \[(\S+)\]\*; .*\]/) {
 		my $player = $1;
 		my $account = $2;
 		plugin_server_event("playerSpawn", $player, $account);
