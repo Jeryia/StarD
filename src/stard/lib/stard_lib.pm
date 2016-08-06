@@ -542,7 +542,7 @@ sub stard_faction_create {
 	my $leader = $_[1];
 	my $id = $_[2];
 
-	stard_if_debug(1, "stard_faction_create($name, $leader)");
+	stard_if_debug(1, "stard_faction_delete($name, $leader)");
 	stard_validate_env();
 
 	if ($id) {
