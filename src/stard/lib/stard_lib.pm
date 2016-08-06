@@ -542,7 +542,7 @@ sub stard_faction_create {
 	my $leader = $_[1];
 	my $id = $_[2];
 
-	stard_if_debug(1, "stard_faction_delete($name, $leader)");
+	stard_if_debug(1, "stard_faction_create($name, $leader)");
 	stard_validate_env();
 
 	if ($id) {
@@ -570,14 +570,14 @@ sub stard_faction_create {
 sub stard_faction_delete {
 	my $id = $_[0];
 
-	stard_if_debug(1, "stard_faction_create($id)");
+	stard_if_debug(1, "stard_faction_delete($id)");
 	stard_validate_env();
 	my $output = join("", stard_cmd("/faction_delete", $id));
 	if ($output =~/\[SUCCESS\]/) {
-		stard_if_debug(1, "stard_faction_create: return: 1");
+		stard_if_debug(1, "stard_faction_delete: return: 1");
 		return 1;
 	};
-	stard_if_debug(1, "stard_faction_create: return: 0");
+	stard_if_debug(1, "stard_faction_delete: return: 0");
 	return 0;
 };
 
