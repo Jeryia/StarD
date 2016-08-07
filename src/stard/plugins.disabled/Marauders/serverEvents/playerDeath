@@ -1,0 +1,26 @@
+#!perl
+
+use lib("../../lib");
+use stard_lib;
+
+use lib ("./lib");
+use marauders_lib;
+
+my $stard_home = "./../..";
+
+stard_setup_run_env($stard_home);
+my $CONFIG = "./marauders.conf";
+
+
+main(@ARGV);
+sub main {
+	my $player = shift(@_);
+
+
+	if (@{list_ship_objects($player)}) {
+		player_defeat($player);
+	}
+
+	sleep 30;
+	clean_far_objects();
+}

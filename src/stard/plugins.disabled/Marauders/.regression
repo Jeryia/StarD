@@ -1,0 +1,106 @@
+#!perl
+package marauders_lib;
+use strict;
+use warnings;
+
+use lib("../../lib");
+use stard_lib;
+use stard_regression;
+
+use lib ("./lib");
+use marauders_lib;
+
+my $stard_home = "./../..";
+
+stard_setup_run_env($stard_home);
+stard_stdlib_set_debug(1);
+my $CONFIG = "./marauders.conf";
+
+main(@ARGV);
+exit 0;
+sub main {
+	my $player = shift(@_);
+
+	my $plugin = "Marauders";
+	my $cur_threat;
+	my $new_threat;
+	my $add_threat;
+	my %player_info;
+	my %sector_info;
+	my $ship_id;
+	my $ship_id2;
+	my $pos;
+	my $pos2;
+	my $ship_type;
+	my %config = %{stard_read_config($CONFIG)};
+
+	## Threat Tests
+	$add_threat = 2;
+	$cur_threat = get_threat_level($player);
+	add_threat_level($player, $add_threat);
+	$new_threat = get_threat_level($player);
+	test_result("plugin-$plugin - add_threat", $cur_threat + $add_threat == $new_threat);
+
+	$add_threat = -10000;
+	$cur_threat = get_threat_level($player);
+	add_threat_level($player, $add_threat);
+	$new_threat = get_threat_level($player);
+	test_result("plugin-$plugin - check threat won't go below 0", $new_threat == 0);
+	
+	$cur_threat = get_threat_level($player);
+	player_victory($player);
+	$new_threat = get_threat_level($player);
+	test_result("plugin-$plugin - player_victory", $cur_threat + $config{General}{victory_threat} == $new_threat);
+	sleep 61;
+	test_result("plugin-$plugin - last_victory", last_victory($player) == 1);
+	test_result("plugin-$plugin - last_engagement 1", last_engagement($player) == 1);
+	
+	$cur_threat = get_threat_level($player);
+	player_defeat($player);
+	$new_threat = get_threat_level($player);
+	test_result("plugin-$plugin - player_defeat", $cur_threat + $config{General}{defeat_threat} == $new_threat);
+	sleep 61;
+	test_result("plugin-$plugin - last_defeat", last_defeat($player) == 1);
+	test_result("plugin-$plugin - last_engagement 2", last_engagement($player) == 1);
+
+
+	## id validation
+	$ship_id = _gen_id();
+	test_result("plugin-$plugin - _gen_id valid", $ship_id=~/^[a-zA-Z0-9]{8}$/);
+
+	# not a great test, but chances of them genating the same ids is VERY low.
+	$ship_id2 = _gen_id();
+	test_result("plugin-$plugin - _gen_id is rand", $ship_id ne $ship_id2);
+
+	$ship_id = _gen_obj_id;
+	test_result("plugin-$plugin - _gen_obj_id valid", $ship_id=~/^[a-zA-Z0-9]{8}$/);
+
+	$pos = _random_pos();
+	test_result("plugin-$plugin - _random_pos valid", $pos=~/^-?\d+\.?\d* -?\d+\.?\d* -?\d+\.?\d*$/);
+	
+	# not a great test, but chances of them genating the same number sets is VERY low.
+	$pos2 = _random_pos();
+	test_result("plugin-$plugin - _random_pos is rand", $pos ne $pos2);
+	
+
+	## Object tests
+	for my $ship (@{list_ship_objects($player)}) {
+		remove_ship_object($player, $ship);
+	}
+
+	$ship_type = "Marusian Skimmer";
+	%player_info = %{stard_player_info($player)};
+	$ship_id = create_ship_object($player, $ship_type, $player_info{sector}, '0 0 0');
+	%sector_info = %{stard_sector_info($player_info{sector})};
+	test_result("plugin-$plugin - create_ship_object", $sector_info{entity}{"ENTITY_SHIP_$ship_type\_$ship_id"});
+	test_result("plugin-$plugin - get_object_name", get_object_name($player, $ship_id) eq "$ship_type\_$ship_id");
+	test_result("plugin-$plugin - get_object_type", get_object_type($player, $ship_id) eq $ship_type);
+	test_result("plugin-$plugin - get_object_id", get_object_id("$ship_type\_$ship_id") eq $ship_id);
+	test_result("plugin-$plugin - get_player_from_object_id", get_player_from_object_id($ship_id) eq $player);
+	test_result("plugin-$plugin - list_ship_objects", @{list_ship_objects($player)});
+	
+	remove_ship_object($player, $ship_id);
+	%sector_info = %{stard_sector_info($player_info{sector})};
+	test_result("plugin-$plugin - remove_ship_object", !$sector_info{entity}{"ENTITY_SHIP_$ship_type\_$ship_id"});
+	test_result("plugin-$plugin - list_ship_objects 2", !(@{list_ship_objects($player)}));
+}

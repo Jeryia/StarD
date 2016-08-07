@@ -1,0 +1,43 @@
+#!perl
+use strict;
+use warnings;
+
+
+use lib("../../lib");
+use stard_lib;
+
+use lib ("./lib");
+use marauders_lib;
+
+my $stard_home = "./../..";
+my $starmade_home = "$stard_home/../StarMade/";
+
+
+stard_setup_run_env($stard_home);
+my $CONFIG = "./marauders.conf";
+my $FACTION_ID= -1;
+
+opendir(my $dh, "./blueprints");
+my @files = <$dh>;
+close($dh);
+
+FILE: foreach my $file (@files) {
+	if (-d "$starmade_home/blueprints/$file") {
+		next $file;
+	}
+	system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/$file");
+}
+
+sleep 10;
+clean_old_objects();
+
+while (1) {
+	my %player_list = stard_player_list();
+
+	clean_far_objects();
+	foreach my $player (keys %player_list) {
+		signal_potential_attack($player);
+	}
+
+	sleep 300;
+}

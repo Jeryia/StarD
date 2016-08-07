@@ -1,0 +1,21 @@
+#!perl
+
+use lib("../../lib");
+use stard_lib;
+
+use lib ("./lib");
+use marauders_lib;
+
+my $stard_home = "./../..";
+
+stard_setup_run_env($stard_home);
+my $CONFIG = "./marauders.conf";
+
+
+main(@ARGV);
+sub main {
+	shift(@_);
+	my $player = shift(@_);
+
+	signal_potential_attack($player);
+}

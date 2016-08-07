@@ -1,0 +1,42 @@
+#!perl
+
+use lib("../../lib");
+use stard_lib;
+
+use lib ("./lib");
+use marauders_lib;
+
+my $stard_home = "./../..";
+
+stard_setup_run_env($stard_home);
+my $CONFIG = "./marauders.conf";
+
+
+main(@ARGV);
+sub main {
+	my $entity = shift(@_);
+
+	my $id = get_object_id($entity);
+	my $player;
+	my $entity_name_f_id;
+
+	$entity=~s/SHIP_//g;
+	$entity=~s/SPACESTATION_//g;
+	if (!$id) {
+		exit 0;
+	}
+	$player = get_player_from_object_id($id);
+	if (!$player) {
+		exit 0;
+	}
+	my $entity_name_f_id = get_object_name($player, $id);
+	if ($entity_name_f_id ne $entity) {
+		exit 0;
+	}
+
+	remove_ship_object($player, $id);
+
+	if (!@{list_ship_objects($player)}) {
+		player_victory($player);
+	}
+}
