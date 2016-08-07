@@ -21,7 +21,7 @@ my $stard_home = "../..";
 sub plugin_reg {
 	my $player = shift(@_);
 
-	my @plugins = @{get_active_plugin_list()};
+	my @plugins = sort(@{get_active_plugin_list()});
 	foreach my $plugin (@plugins) {
 		test_result("Plugin $plugin - Final Result", plugin_reg_launch($plugin, $player));
 	}
