@@ -1,4 +1,7 @@
 #!perl
+use strict;
+use warnings;
+
 
 use lib("../../lib");
 use stard_lib;
@@ -29,12 +32,12 @@ sub main {
 	if (!$player) {
 		exit 0;
 	}
-	my $entity_name_f_id = get_object_name($player, $id);
+	$entity_name_f_id = get_object_name($player, $id);
 	if ($entity_name_f_id ne $entity) {
 		exit 0;
 	}
 
-	remove_ship_object($player, $id);
+	clear_ship_object($player, $id);
 
 	if (!@{list_ship_objects($player)}) {
 		player_victory($player);

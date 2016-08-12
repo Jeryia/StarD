@@ -368,6 +368,30 @@ sub remove_ship_object {
 	return stard_despawn_all($obj_name, 'all', 1);
 }
 
+
+## clear_ship_object
+# Removes the tracking for an object. This is generally done when it is defeated 
+# to avoid the player losing the object itself to steal.
+# INPUT1: player object was spawned for
+# INPUT2: Object id
+# OUTPUT: (boolean)  0 if failure, 1 if success.
+sub clear_ship_object {
+	my $player = shift(@_);
+	my $id = shift(@_);
+
+	if (!-e "$DATA_PLAYER/$player/objects/$id") {
+		return 0;
+	}
+	my $obj_name = get_object_name($player,$id);
+
+	if (!$obj_name) {
+		return 0;
+	}
+
+	unlink("$DATA_PLAYER/$player/objects/$id") or return 0;
+}
+
+
 ## ship_object_jump
 # Cause an ojbect to jump (if it can)
 # INPUT1: player object was spawned for
