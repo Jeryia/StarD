@@ -165,7 +165,7 @@ sub get_threat_level {
 	$threat = join("",<$fh>);
 	$threat=~/\D/g;
 
-	if (!($threat=~/\D/)) {
+	if ($threat=~/\d+\.?\d*/) {
 		return $threat;
 	}
 	return 0;
