@@ -17,9 +17,14 @@ stard_setup_run_env($stard_home);
 my $CONFIG = "./marauders.conf";
 my $FACTION_ID= -1;
 
-opendir(my $dh, "./blueprints");
-my @files = <$dh>;
-close($dh);
+opendir(my $dh, "./blueprints") or warn "Failed to open './blueprints': $!\n";
+my @files;
+while (readdir($dh)) {
+        if ($_ ne '.' && $_ ne '..') {
+                push(@files, $_);
+        }
+}
+closedir($dh);
 
 FILE: foreach my $file (@files) {
 	if (-d "$starmade_home/blueprints/$file") {
