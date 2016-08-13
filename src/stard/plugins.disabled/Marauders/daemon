@@ -16,6 +16,7 @@ my $starmade_home = "$stard_home/../StarMade/";
 stard_setup_run_env($stard_home);
 my $CONFIG = "./marauders.conf";
 my $FACTION_ID= -1;
+my $demand_restart = 0;
 
 opendir(my $dh, "./blueprints") or warn "Failed to open './blueprints': $!\n";
 my @files;
@@ -31,17 +32,21 @@ FILE: foreach my $file (@files) {
 		next $file;
 	}
 	system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/$file");
+	$demand_restart = 1;
 }
 
 sleep 10;
 clean_old_objects();
 
 while (1) {
-	my %player_list = stard_player_list();
+	my %player_list = %{stard_player_list()};
 
 	clean_far_objects();
 	foreach my $player (keys %player_list) {
 		signal_potential_attack($player);
+	}
+	if ($demand_restart) {
+		stard_broadcast("Marauders plugin has installed new blueprints. You will need to restart StarMade in order for Marauders to work correctly.");
 	}
 
 	sleep 300;
