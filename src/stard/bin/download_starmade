@@ -9,18 +9,6 @@ if [ "x$1" == "x--update" ]; then
 fi
 
 
-java -jar ./tools/StarMade-Starter.jar -nogui -force &
-PID=$!
-
-
-
-while [ ! -e $LASTFILE ]; do
-       sleep 1
-done
-
-sleep 5
-kill $PID > /dev/null 2>&1
-sleep 1
-kill -9 $PID > /dev/null 2>&1
+java -jar ./tools/StarMade-Starter.jar -nogui -force
 
 
