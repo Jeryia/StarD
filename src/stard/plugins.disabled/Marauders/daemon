@@ -29,9 +29,9 @@ closedir($dh);
 
 FILE: foreach my $file (@files) {
 	if (-d "$starmade_home/blueprints/$file") {
-		next $file;
+		next FILE;
 	}
-	system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/$file");
+	system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/");
 	$demand_restart = 1;
 }
 

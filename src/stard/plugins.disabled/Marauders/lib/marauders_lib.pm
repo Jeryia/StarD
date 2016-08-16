@@ -551,9 +551,9 @@ sub get_object_type {
 sub list_ship_objects {
 	my $player = shift(@_);
 
-	opendir(my $dh, "$DATA_PLAYER/$player/objects") or return ();
-
 	my @objects = ();
+	opendir(my $dh, "$DATA_PLAYER/$player/objects") or return \;
+
 	while (readdir $dh) {
 		if ($_ ne '.' && $_ ne '..') {
 			push(@objects, $_);
