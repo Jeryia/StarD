@@ -18,7 +18,7 @@ while [ ! -e $LASTFILE ]; do
        sleep 1
 done
 
-sleep 5
+sleep 30
 kill $PID > /dev/null 2>&1
 sleep 1
 kill -9 $PID > /dev/null 2>&1
