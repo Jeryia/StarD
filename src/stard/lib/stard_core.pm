@@ -266,7 +266,7 @@ sub server_messages {
 	
 	stdout_log("recieved starmade message: $message", 8);
 	stard_core_validate_env();
-	my @plugins = @{get_active_plugin_list()};;
+	my @plugins = @{get_active_plugin_list()};
 
 	# [SERVER] MAIN CORE STARTED DESTRUCTION: in 900 seconds - started 1470514620375
 	if ($message =~/^\[SERVER\] MAIN CORE STARTED DESTRUCTION: in \d+ seconds - started \d+/) {
@@ -345,7 +345,7 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 	};
 
 	# [SERVER][Faction] Sending removal of member Jeryia from Faction [id=10041, name=Test Faction, description=description goes here, size: 1; FP: 100]
-	if ($message =~/^\[SERVER\]\[Faction\] Sending removal of member (\S+) from Faction \[id=(\d+).*/) {
+	if ($message =~/^\[SERVER\]\[Faction\] Sending removal of member (\S+) from Faction \[id=(-?\d+).*/) {
 		my $player = $1;
 		my $faction_id = $2;
 		plugin_server_event("playerUnFaction", $player, $faction_id);
@@ -366,8 +366,8 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 
 	# [SERVER] received object faction change request 10038 for object SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]
 	if (
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\((\d+\))\]/ ||
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\]\((\d+\))/
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\((-?\d+\))\]/ ||
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\]\((-?\d+\))/
 	) {
 	 	my $faction_id = $1;
 		my $type = $2;
@@ -402,7 +402,6 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 		plugin_server_event("sectorChange", $entity, $player, $old_sector, $new_sector);
 		return;
 	};
-	
 }
 
 

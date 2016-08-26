@@ -78,6 +78,7 @@ sub stard_core_reg {
 
 
 	### server_messages tests
+	# test overheating entity
 	$test_cmd = "entityOverheat";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -86,6 +87,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'TC Cruiser MKI_1470000327736'\n"));
 	
+	# test player spawning for authenticated player
 	$test_cmd = "playerSpawn";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -93,6 +95,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd 1", ck_file_string($argfile, "$test_cmd 'Jeryia' 'Jeryia'\n"));
 	
+	# test player spawning for non authenticated player
 	$test_cmd = "playerSpawn";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -100,6 +103,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd 2", ck_file_string($argfile, "$test_cmd 'Jeryia'\n"));
 
+	# test player login
 	$test_cmd = "playerLogin";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -107,6 +111,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia'\n"));
 
+	# test player logout
 	$test_cmd = "playerLogout";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -114,20 +119,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia'\n"));
 
-	$test_cmd = "playerDeath";
-	$argfile = "./tmp/serverEvents/$test_cmd";
-	unlink($argfile);
-	server_messages("[SERVER] character PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(486)] has been deleted by Sector[487](8, 8, 8)\n");
-	sleep 1;
-	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' 'Sector[487](8, 8, 8)'\n"));
-
-	$test_cmd = "playerDeath";
-	$argfile = "./tmp/serverEvents/$test_cmd";
-	unlink($argfile);
-	server_messages("[SERVER] character PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(486)] has been deleted by Sector[487](8, 8, 8)\n");
-	sleep 1;
-	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' 'Sector[487](8, 8, 8)'\n"));
-
+	# test player logout alt format
 	$test_cmd = "playerLogout";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -135,6 +127,15 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' 'Jeryia'\n"));
 
+	# test player death
+	$test_cmd = "playerDeath";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	server_messages("[SERVER] character PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(486)] has been deleted by Sector[487](8, 8, 8)\n");
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' 'Sector[487](8, 8, 8)'\n"));
+
+	# test player joining a faction
 	$test_cmd = "playerFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -142,6 +143,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' '10041'\n"));
 
+	# test player joining a faction alt format
 	$test_cmd = "playerFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -149,6 +151,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd 2", ck_file_string($argfile, "$test_cmd 'Jeryia' '10041'\n"));
 
+	# test player joinging a faction that is a negative id
 	$test_cmd = "playerFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -156,6 +159,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd 3", ck_file_string($argfile, "$test_cmd 'Jeryia2' '-1'\n"));
 
+	# test player leaving a faction
 	$test_cmd = "playerUnFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -163,6 +167,15 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' '10041'\n"));
 
+	# test player leaving a faction of negative id
+	$test_cmd = "playerUnFaction";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	server_messages("[SERVER][Faction] Sending removal of member Jeryia from Faction [id=-1, name=Test Faction, description=description goes here, size: 1; FP: 100]\n");
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'Jeryia' '-1'\n"));
+
+	# test entity losing faction
 	$test_cmd = "entityUnFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -170,6 +183,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034'\n"));
 
+	# test entity joining faction
 	$test_cmd = "entityFaction";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -177,6 +191,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034' '10038'\n"));
 
+	# test deleting an entity
 	$test_cmd = "entityDestroyed";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -184,6 +199,7 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'SPACESTATION_Beta_base_1443297379'\n"));
 
+	# test sector change
 	$test_cmd = "sectorChange";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
@@ -191,12 +207,22 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'ENTITY_PLAYERCHARACTER_Jeryia' 'Jeryia' '3 8 7' '3 8 6'\n"));
 
+	# test sector change to negative sectors
+	$test_cmd = "sectorChange";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	server_messages("[SERVER] PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(139)] has players attached. Doing Sector Change for PlS[Jeryia ; id(3)(1)f(10073)]: Sector[5](-3, -8, -7) -> Sector[23](-3, -2, -6)\n");
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd 2", ck_file_string($argfile, "$test_cmd 'ENTITY_PLAYERCHARACTER_Jeryia' 'Jeryia' '-3 -8 -7' '-3 -2 -6'\n"));
+
+	# test sector change for character (instead of ship)
+	$test_cmd = "sectorChange";
 	$test_cmd = "sectorChange";
 	$argfile = "./tmp/serverEvents/$test_cmd";
 	unlink($argfile);
 	server_messages("[SERVER] Ship[UE Patrol Ship MKIV_1443985052059](299) has CHARACTER. Doing Sector Change for PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(272)]: Sector[330](5, 8, 4) -> Sector[344](5, 8, 5) ID 344\n");
 	sleep 1;
-	test_result("stard_core - server_messages $test_cmd 2", ck_file_string($argfile, "$test_cmd 'UE Patrol Ship MKIV_1443985052059' 'Jeryia' '5 8 4' '5 8 5'\n"));
+	test_result("stard_core - server_messages $test_cmd 3", ck_file_string($argfile, "$test_cmd 'UE Patrol Ship MKIV_1443985052059' 'Jeryia' '5 8 4' '5 8 5'\n"));
 
 
 	### chat_messages tests
@@ -206,6 +232,4 @@ sub stard_core_reg {
 	chat_messages("[CHANNELROUTER] RECEIVED MESSAGE ON Server(0): [CHAT][sender=$player][receiverType=CHANNEL][receiver=all][message=!test a1 a2 a3 ' sd']");
 	sleep 1;
 	test_result("stard_core - chat_messages $test_cmd", ck_file_string($argfile, "$test_cmd '$player' 'a1' 'a2' 'a3' ' sd'\n"));
-	
-	
 }
