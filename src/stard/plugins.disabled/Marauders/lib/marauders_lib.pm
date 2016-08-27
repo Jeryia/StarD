@@ -552,7 +552,7 @@ sub list_ship_objects {
 	my $player = shift(@_);
 
 	my @objects = ();
-	opendir(my $dh, "$DATA_PLAYER/$player/objects") or return \;
+	opendir(my $dh, "$DATA_PLAYER/$player/objects") or return \@objects;
 
 	while (readdir $dh) {
 		if ($_ ne '.' && $_ ne '..') {
