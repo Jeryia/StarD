@@ -31,7 +31,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(player_defeat player_victory last_engagement last_victory last_defeat attack_ok add_threat_level get_threat_level launch_attack start_attack_event create_ship_object remove_ship_object ship_object_jump get_player_from_object_id get_object_id get_object_name get_object_type list_ship_objects clean_old_objects clean_far_objects clean_far_ship get_tracked_players get_object_age signal_potential_attack);
+@EXPORT = qw(player_defeat player_victory last_engagement last_victory last_defeat attack_ok add_threat_level get_threat_level launch_attack start_attack_event create_ship_object remove_ship_object ship_object_jump get_player_from_object_id get_object_id get_object_name get_object_type list_ship_objects clean_old_objects clean_far_objects clean_far_ship get_tracked_players get_object_age signal_potential_attack clear_ship_object);
 
 
 ## player_defeat
