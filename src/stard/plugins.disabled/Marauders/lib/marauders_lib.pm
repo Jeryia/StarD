@@ -9,7 +9,6 @@ use stard_lib;
 
 my $DATA = "./data";
 my $DATA_PLAYER = "./data/players";
-my $WAVE_MAX_VARIANCE = 1;
 my $ID_SIZE = 8;
 # in minutes
 my $OBJ_MAX_AGE = 60;
@@ -217,7 +216,7 @@ sub launch_attack {
 	foreach my $wave (keys %wave_options) {
 		my $wave_diff = abs($level - $wave_options{$wave}{level});
 
-		if ($wave_diff <= $WAVE_MAX_VARIANCE) {
+		if ($wave_diff <= $wave_options{wave_variance}) {
 			push(@wave_choices, $wave);
 		}
 		elsif (!(defined $wave_closest_name) || $wave_diff < $wave_closest_level) {
