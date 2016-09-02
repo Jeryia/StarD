@@ -45,6 +45,11 @@ sub main {
 	%player_info = %{stard_player_info($player)};
 	test_result("plugin-$plugin - over deposit", $last_credits == $player_info{credits});
 
+	# check if deposit removed money from the player's account
+	%player_info = %{stard_player_info($player)};
+	test_command("deposit", $player, 'all');
+	%player_info = %{stard_player_info($player)};
+	test_result("plugin-$plugin - deposit", $player_info{credits} == 0);
 
 	# Make sure the withdraw command will give the player money
 	%player_info = %{stard_player_info($player)};
