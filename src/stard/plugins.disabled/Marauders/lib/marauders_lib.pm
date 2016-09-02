@@ -138,11 +138,16 @@ sub add_threat_level {
 	my $player = shift(@_);
 	my $threat = shift(@_);
 
+	my %config = %{stard_read_config($CONFIG)};
 	my $cur_threat = get_threat_level($player);
 	my $new_threat = $cur_threat + $threat;
 
 	if ($new_threat < 0) {
 		$new_threat =0;
+	}
+
+	if ($new_threat > $config{General}{max_threat}) {
+		$new_threat = $config{General}{max_threat};
 	}
 	
 	mkdir("$DATA_PLAYER/$player");
