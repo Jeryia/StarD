@@ -44,6 +44,7 @@ sub main {
 		usage($player);
 		exit 1;
 	};
+	$player_credits = get_player_credits($player);
 	if ($amount eq 'all') {
 		$amount = $player_credits;
 	};
@@ -54,7 +55,6 @@ sub main {
 	# and gather all data
 	my $lock_fh = bank_lock_account($player);
 	$in_bank = bank_get_balance($player);
-	$player_credits = get_player_credits($player);
 	if (!$lock_fh) {
 		stard_pm($player, "FAILED COMMAND: failed to get lock on $player\'s bank account: $?\n");
 		exit 1;
