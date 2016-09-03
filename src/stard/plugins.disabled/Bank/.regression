@@ -31,6 +31,7 @@ sub main {
 
 
 	# check if deposit removed money from the player's account
+	stard_give_credits($player, $bank_credits);
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("deposit", $player, $bank_credits);
@@ -62,7 +63,7 @@ sub main {
 	# Make sure the withdraw command will not allow the player to withdraw more than they have banked.
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
-	test_command("withdraw", $player, $bank_credits);
+	test_command("withdraw", $player, 100000000);
 	%player_info = %{stard_player_info($player)};
 	test_result("plugin-$plugin - overdraw", $player_info{credits} == $last_credits);
 }

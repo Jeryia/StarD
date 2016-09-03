@@ -41,6 +41,7 @@ sub main {
 
 	# Check to see that when a player places a bounty that they get the correct 
 	# amount of credits taken from them.
+	stard_give_credits($player, $bounty_credits);
 	%player_info = %{stard_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("bounty", $player, $player, $bounty_credits);

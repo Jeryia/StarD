@@ -35,6 +35,7 @@ sub main {
 	my %config = %{stard_read_config($CONFIG)};
 
 	## Threat Tests
+	add_threat_level($player, -100);
 	$add_threat = 2;
 	$cur_threat = get_threat_level($player);
 	add_threat_level($player, $add_threat);
@@ -54,7 +55,9 @@ sub main {
 	sleep 61;
 	test_result("plugin-$plugin - last_victory", last_victory($player) == 1);
 	test_result("plugin-$plugin - last_engagement 1", last_engagement($player) == 1);
-	
+
+	add_threat_level($player, -10000);	
+	add_threat_level($player, 10);
 	$cur_threat = get_threat_level($player);
 	player_defeat($player);
 	$new_threat = get_threat_level($player);
@@ -103,4 +106,22 @@ sub main {
 	%sector_info = %{stard_sector_info($player_info{sector})};
 	test_result("plugin-$plugin - remove_ship_object", !$sector_info{entity}{"ENTITY_SHIP_$ship_type\_$ship_id"});
 	test_result("plugin-$plugin - list_ship_objects 2", !(@{list_ship_objects($player)}));
+
+
+	## Attack tests
+	player_defeat($player);
+	sleep 20;
+	test_result("plugin-$plugin - attack_ok after defeat", !attack_ok($player));
+
+	unlink("./data/players/$player/defeat");
+	player_victory($player);
+	sleep 20;
+	system("touch", "./data/players/$player/defeat");
+	test_result("plugin-$plugin - attack_ok after vict", !attack_ok($player));
+
+
+	unlink("./data/players/$player/victory");
+	unlink("./data/players/$player/defeat");
+	test_result("plugin-$plugin - attack_ok norm", attack_ok($player));
+
 }
