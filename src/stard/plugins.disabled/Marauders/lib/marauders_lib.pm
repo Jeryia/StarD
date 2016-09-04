@@ -112,8 +112,10 @@ sub last_defeat {
 # OUTPUT: (boolean) 0 if it's not ok to attack player, 1 if it is ok.
 sub attack_ok {
 	my $player = shift(@_);
+	my %player_info = %{shift(@_)};
 
 	my %config = %{stard_read_config($CONFIG)};
+	my $spawn = stard_get_spawn_sector();
 
 	# Attack is not ok, if last attack was too soon.
 	if (last_defeat($player) < $config{General}{min_attack_time_after_defeat}) {
@@ -123,6 +125,9 @@ sub attack_ok {
 		return 0;
 	}
 	if (@{list_ship_objects($player)}) {
+		return 0;
+	}
+	if (stard_loc_distance($spawn, $player_info{sector}) <= $config{General}{spawn_safety_distance}) {
 		return 0;
 	}
 	
@@ -185,11 +190,11 @@ sub signal_potential_attack {
 	
 	my $attack_chance = $config{General}{encounter_chance};
 	if ( $attack_chance >= int(rand(100))) {
-		if (!attack_ok($trigger_player)) {
+		my %player_list = %{stard_player_list()};
+		if (!attack_ok($trigger_player, $player_list{$trigger_player})) {
 			return;
 		}
 	
-		my %player_list = %{stard_player_list()};
 		my $attack_sector = $player_list{$trigger_player}{sector};
 
 		foreach my $player (keys %player_list) {
@@ -592,14 +597,21 @@ sub clean_far_objects {
 
 	foreach my $player (@players) {
 		my @objects = @{list_ship_objects($player)};
-		if (@objects) {
+		my $object_removed = 0;
+
+		foreach my $object (@objects) {
+			my $age = get_object_age($player, $object);
+			if ($age >=1) {
+				clean_far_ship($player, $object, \%player_list);
+				$object_removed++;
+			}
+		}
+
+		#
+		if ($object_removed) {
 			add_threat_level($player, $config{General}{retreat_threat});
 		}
 
-		foreach my $object (@objects) {
-			clean_far_ship($player, $object, \%player_list);
-
-		}
 	}
 }
 
