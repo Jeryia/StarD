@@ -221,7 +221,7 @@ sub launch_attack {
 	foreach my $wave (keys %wave_options) {
 		my $wave_diff = abs($level - $wave_options{$wave}{level});
 
-		if ($wave_diff <= $wave_options{wave_variance}) {
+		if ($wave_diff <= $wave_options{General}{wave_variance}) {
 			push(@wave_choices, $wave);
 		}
 		elsif (!(defined $wave_closest_name) || $wave_diff < $wave_closest_level) {
