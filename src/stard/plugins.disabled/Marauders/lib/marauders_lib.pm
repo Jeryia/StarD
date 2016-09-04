@@ -588,9 +588,13 @@ sub clean_old_objects {
 sub clean_far_objects {
 	my @players = @{get_tracked_players()};
 	my %player_list = %{stard_player_list()};
+	my %config = %{stard_read_config($CONFIG)};
 
 	foreach my $player (@players) {
 		my @objects = @{list_ship_objects($player)};
+		if (@objects) {
+			add_threat_level($player, $config{General}{retreat_threat});
+		}
 
 		foreach my $object (@objects) {
 			clean_far_ship($player, $object, \%player_list);
@@ -616,6 +620,7 @@ sub clean_far_ship {
 	# clean out ones that no longer exist
 	if (!$ships{$name}) {
 		remove_ship_object($player, $id);
+	
 	}
 	$ship_loc = $ships{$name};
 	
