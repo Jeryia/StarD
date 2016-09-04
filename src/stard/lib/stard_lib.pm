@@ -1201,6 +1201,16 @@ sub stard_get_main_conf_field {
 	return $stard_config{General}{$field};
 }
 
+## stard_get_spawn_sector
+# gets the current player spawn sector
+# OUTPUT: player spawn sector in space seperated list
+sub stard_get_spawn_sector {
+	my $sector_x = stard_get_main_conf_field("DEFAULT_SPAWN_SECTOR_X");
+	my $sector_y = stard_get_main_conf_field("DEFAULT_SPAWN_SECTOR_Y");
+	my $sector_z = stard_get_main_conf_field("DEFAULT_SPAWN_SECTOR_Z");
+	return "$sector_x $sector_y $sector_z";
+}
+
 ## stard_teleport_to
 # change the position of the player in a given sector
 # INPUT1: Player Name
