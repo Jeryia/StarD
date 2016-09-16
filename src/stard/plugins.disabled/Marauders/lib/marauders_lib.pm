@@ -267,6 +267,10 @@ sub start_attack_event {
 			sleep $wave{scout_wait};
 			%player_info = %{stard_player_info($player)};
 		}
+		if (!get_object_name($object)) {
+			# if scout is disabled/destroyed cancel attack
+			return;
+		}
 		if ($wave{scout_clear}) {
 			remove_ship_object($player, $object);
 		}
@@ -530,7 +534,7 @@ sub get_object_name {
 
 	my $type;
 
-	open(my $fh, "<", "$DATA_PLAYER/$player/objects/$id") or return ();
+	open(my $fh, "<", "$DATA_PLAYER/$player/objects/$id") or return 0;
 	$type = join("", <$fh>);
 	close($fh);
 	return "$type\_$id";
