@@ -109,19 +109,20 @@ sub main {
 
 
 	## Attack tests
+	%player_info = %{stard_player_info($player)};
 	player_defeat($player);
 	sleep 20;
-	test_result("plugin-$plugin - attack_ok after defeat", !attack_ok($player));
+	test_result("plugin-$plugin - attack_ok after defeat", !attack_ok($player, \%player_info));
 
 	unlink("./data/players/$player/defeat");
 	player_victory($player);
 	sleep 20;
 	system("touch", "./data/players/$player/defeat");
-	test_result("plugin-$plugin - attack_ok after vict", !attack_ok($player));
+	test_result("plugin-$plugin - attack_ok after vict", !attack_ok($player, \%player_info));
 
 
 	unlink("./data/players/$player/victory");
 	unlink("./data/players/$player/defeat");
-	test_result("plugin-$plugin - attack_ok norm", attack_ok($player));
+	test_result("plugin-$plugin - attack_ok norm", attack_ok($player, \%player_info));
 
 }
