@@ -44,7 +44,6 @@ sub main {
 
 	if (stard_is_admin($player)) {
 		stard_god_mode($player, 1);
-		stard_invisibility_mode($player, 1);
 		stard_pm($player, "God mode and invisibility active");
 		exit 0;
 	}
