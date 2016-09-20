@@ -43,8 +43,8 @@ sub main {
 	my $player = $_[0];
 
 	if (stard_is_admin($player)) {
-		stard_god_mode($player, 1);
-		stard_pm($player, "God mode active");
+		stard_invisibility_mode($player, 1);
+		stard_pm($player, "Invisibility active");
 		exit 0;
 	}
 };
