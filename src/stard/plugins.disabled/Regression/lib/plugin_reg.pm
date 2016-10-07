@@ -4,9 +4,10 @@ use strict;
 use warnings;
 
 use lib("../../lib");
-use stard_lib;
-use stard_core;
-use stard_regression;
+use Starmade::Chat;
+use Stard::Base;
+use Stard::Plugin;
+use Stard::Regression;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -41,7 +42,7 @@ sub plugin_reg_launch {
 	}
 
 
-	stard_broadcast("###Running $plugin Plugin Tests###");
+	starmade_broadcast("###Running $plugin Plugin Tests###");
 
 	my $pid = fork();
 	if ($pid) {

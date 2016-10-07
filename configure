@@ -491,6 +491,7 @@ build_stard:
 	cp -pfr \$(STARD_SOURCE) \$(STARD_BUILD)
 	chmod 755 \$(STARD_BUILD)/bin/*
 	chmod 644 \$(STARD_BUILD)/lib/*
+	chmod 755 \$(STARD_BUILD)/lib/perl
 " >> ./Makefile
 
 for file in '$(STARD_BUILD)/stard.cfg'; do

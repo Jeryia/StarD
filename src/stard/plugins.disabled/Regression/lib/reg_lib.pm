@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use lib("../../lib");
-use stard_lib;
+use Starmade::Chat;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -25,7 +25,7 @@ sub ck_file_string {
 	my $fh;
 	if (!open($fh, "<", $file)) {
 		warn "Failed to open file '$file': $!\n";
-		stard_broadcast("Failed to open file '$file': $!\n");
+		starmade_broadcast("Failed to open file '$file': $!\n");
 		return 0;
 	}
 	while (<$fh>) {

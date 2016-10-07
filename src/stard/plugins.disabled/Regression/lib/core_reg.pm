@@ -4,9 +4,12 @@ use strict;
 use warnings;
 
 use lib("../../lib");
-use stard_lib;
-use stard_core;
-use stard_regression;
+use Starmade::Chat;
+use Stard::Base;
+use Stard::Multiplexer;
+use Stard::Plugin;
+use Stard::Log;
+use Stard::Regression;
 
 use lib("./lib");
 use reg_lib;
@@ -28,7 +31,7 @@ sub stard_core_reg {
 	my $argfile;
 	my $result;
 
-	if (!stard_broadcast("###Running Core Tests###")) {
+	if (!starmade_broadcast("###Running Core Tests###")) {
 		print "failed to broadcast message :(\n";
 		exit 1;
 	}
