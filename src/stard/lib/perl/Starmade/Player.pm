@@ -213,8 +213,8 @@ sub starmade_player_list {
 sub starmade_player_info {
 	my $player = $_[0];
 
-	my @raw = starmade_cmd("/player_info $player");
 	starmade_if_debug(1, "starmade_player_info($player)");
+	my @raw = starmade_cmd("/player_info $player");
 	starmade_validate_env();
 
 	my %player_info;
@@ -278,14 +278,14 @@ sub starmade_change_sector_for {
 	my $player = $_[0];
 	my $sector = $_[1];
 
-	starmade_if_debug(1, "starmade_faction_del_member($player, $sector)");
+	starmade_if_debug(1, "starmade_change_sector_for($player, $sector)");
 	starmade_validate_env();
 	my $output = join("", starmade_cmd("/change_sector_for", $player, split(" ", $sector)));
 	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_faction_del_member: return: 0");
+		starmade_if_debug(1, "starmade_change_sector_for: return: 0");
 		return 0;
 	};
-	starmade_if_debug(1, "starmade_faction_del_member: return: 1");
+	starmade_if_debug(1, "starmade_change_sector_for: return: 1");
 	return 1;
 };
 
@@ -319,21 +319,25 @@ sub starmade_god_mode {
 	my $player = $_[0];
 	my $mode = $_[1];
 
+	starmade_if_debug(1, "starmade_god_mode($player, $mode)");
 	if ($mode) {
 		my @tmp = starmade_cmd("/god_mode '$player' true");
 		my $output = join("", @tmp);
 		if ($output=~/\[ADMIN COMMAND\] activated godmode for $player/) {
 			return 1;
+			starmade_if_debug(1, "starmade_god_mode: return 1");
 		}
+		starmade_if_debug(1, "starmade_god_mode: return 0");
 		return 0;
-		
 	}
 	else {
 		my @tmp = starmade_cmd("/god_mode '$player' false");
 		my $output = join("", @tmp);
 		if ($output=~/\[ADMIN COMMAND\] deactivated godmode for $player/) {
+			starmade_if_debug(1, "starmade_god_mode: return 1");
 			return 1;
 		}
+		starmade_if_debug(1, "starmade_god_mode: return 0");
 		return 0;
 	}
 }
@@ -347,12 +351,15 @@ sub starmade_invisibility_mode {
 	my $player = $_[0];
 	my $mode = $_[1];
 
+	starmade_if_debug(1, "starmade_invisibility_mode($player, $mode)");
 	if ($mode) {
 		my @tmp = starmade_cmd("/invisibility_mode '$player' true");
 		my $output = join("", @tmp);
 		if ($output=~/\[ADMIN COMMAND\] activated invisibility for $player/) {
+			starmade_if_debug(1, "starmade_invisibility_mode: return 1");
 			return 1;
 		}
+		starmade_if_debug(1, "starmade_invisibility_mode: return 0");
 		return 0;
 		
 	}
@@ -360,8 +367,10 @@ sub starmade_invisibility_mode {
 		my @tmp = starmade_cmd("/invisibility_mode '$player' false");
 		my $output = join("", @tmp);
 		if ($output=~/\[ADMIN COMMAND\] deactivated invisibility for $player/) {
+			starmade_if_debug(1, "starmade_invisibility_mode: return 1");
 			return 1;
 		}
+		starmade_if_debug(1, "starmade_invisibility_mode: return 0");
 		return 0;
 	}
 }
