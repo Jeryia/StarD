@@ -3,10 +3,10 @@ use strict;
 use warnings;
 use Cwd;
 
-use lib("./lib");
-use stard_lib;
-use stard_core;
-use stard_log;
+use lib("./lib/perl");
+use Stard::Multiplexer;
+use Stard::Plugin;
+use Stard::Log;
 
 #All rights reserved.
 #
@@ -39,8 +39,7 @@ my $prog = $0;
 
 
 #load stard libraries
-setup_core_env($stard_home);
-stard_setup_run_env($stard_home);
+stard_setup_lib_env($stard_home);
 set_loglevel(6);
 
 

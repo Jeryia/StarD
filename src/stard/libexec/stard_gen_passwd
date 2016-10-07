@@ -3,9 +3,6 @@ use strict;
 use warnings;
 use Cwd;
 
-use lib("./lib");
-use stard_lib;
-use stard_core;
 
 #All rights reserved.
 #
@@ -37,8 +34,6 @@ my $starmade_server = "$starmade_home/StarMade";
 my $stard_plugins = "$stard_home/plugins";
 my $prog = $0;
 
-#load stard libraries
-stard_setup_run_env($stard_home);
 
 main();
 

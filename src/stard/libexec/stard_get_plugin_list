@@ -3,9 +3,8 @@ use strict;
 use warnings;
 use Cwd;
 
-use lib("./lib");
-use stard_core;
-use stard_lib;
+use lib("./lib/perl");
+use Stard::Plugin;
 
 #All rights reserved.
 #
@@ -28,8 +27,7 @@ use stard_lib;
 my $stard_home= getcwd();
 
 #load stard libraries
-setup_core_env($stard_home);
-stard_setup_run_env($stard_home);
+stard_setup_lib_env($stard_home);
 
 
 ## Actual Work

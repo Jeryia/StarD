@@ -3,9 +3,9 @@ use strict;
 use warnings;
 use Cwd;
 
-use lib("./lib");
-use stard_lib;
-use stard_core;
+use lib("./lib/perl");
+use Stard::Base;
+use Starmade::Base;
 
 #All rights reserved.
 #
@@ -33,15 +33,15 @@ my $stard_home= getcwd();
 
 
 # load stard_lib.
-setup_core_env($stard_home);
-stard_setup_run_env($stard_home);
+stard_setup_lib_env($stard_home);
+starmade_setup_lib_env($stard_home);
 $| = 1;
 
 
 &main();
 sub main {
 	my $input = '';
-	print stard_cmd("/status");
+	print starmade_cmd("/status");
 	print "########################################################\n";
 	print "Welcome to the stard shell!\n";
 	print "This offers a general shell interface to the starmade server\n";
@@ -54,7 +54,7 @@ sub main {
 		my @args = split(" ", $input);
 		my $cmd = shift(@args);
 		if ($cmd =~/^\//) {
-			print stard_cmd($cmd, @args);
+			print starmade_cmd($cmd, @args);
 		}
 		elsif ($cmd =~s/^!//) {
 			print plugin_command($cmd, @args);

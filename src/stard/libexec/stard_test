@@ -3,9 +3,9 @@ use strict;
 use warnings;
 use Cwd;
 
-use lib("./lib");
-use stard_lib;
-use stard_core;
+use lib("./lib/perl");
+use Stard::Base;
+use Starmade::Base;
 
 #All rights reserved.
 #
@@ -35,7 +35,7 @@ my $starmade_server = "$starmade_home/StarMade";
 my $stard_plugins = "$stard_home/plugins";
 my $prog = $0;
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 &main();
 
@@ -93,8 +93,8 @@ sub check_starmade {
 	}
 	
 	if (
-		stard_get_starmade_conf_field("SUPER_ADMIN_PASSWORD_USE") ne 'true' ||
-		! stard_get_starmade_conf_field("SUPER_ADMIN_PASSWORD") =~/\S/
+		get_starmade_conf_field("SUPER_ADMIN_PASSWORD_USE") ne 'true' ||
+		! get_starmade_conf_field("SUPER_ADMIN_PASSWORD") =~/\S/
 	) {
 		print "Not Ok!\n";
 		starmade_configs_not_ok();
@@ -149,7 +149,7 @@ sub starmade_configs_not_ok {
 sub check_stard_cmd_interface {
 	print "##Checking stard to starmade interface ##\n";
 	print "Checking stard_cmd...\n";
-	my $output = join("", stard_cmd("/status"));
+	my $output = join("", starmade_cmd("/status"));
 	print "Server Status: $output\n";
 	if ($output=~/Players/) {
 		print "Ok!\n";
