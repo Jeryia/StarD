@@ -134,6 +134,13 @@ $bin/fix_plugins
 # make sure we have a clean state before we start launching things
 $bin/stard_daemons stop
 
+# clear any old messages out of the pipe
+timeout 1 cat $error &
+echo '' > $error
+timeout 1 cat $input &
+echo '' > $input
+sleep 2
+
 trap "on_die" SIGINT
 trap "on_die" SIGTERM
 
