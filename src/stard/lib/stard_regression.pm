@@ -1,5 +1,4 @@
 package stard_regression;
-use lib("../../lib");
 use stard_lib;
 use stard_core;
 
