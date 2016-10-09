@@ -5,7 +5,7 @@ use File::Copy;
 use Carp;
 
 use Starmade::Base;
-use Starmade::Spawn;
+use Starmade::Sector;
 use Stard::Log;
 
 

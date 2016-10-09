@@ -8,7 +8,7 @@ use Starmade::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_run_env starmade_search starmade_loc_distance starmade_location_add);
+@EXPORT= qw(starmade_setup_lib_env starmade_search starmade_loc_distance starmade_location_add);
 
 
 

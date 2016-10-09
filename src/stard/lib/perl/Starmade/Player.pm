@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Carp;
 
+use Starmade::Message;
 
 #All rights reserved.
 #
@@ -26,7 +27,7 @@ use Carp;
 # plugins and internally by starmade to talk to 
 # the starmade deamon.
 #
-# NOTE the funtion starmade_setup_run_env(PATH) needs to be called to use this library
+# NOTE the funtion starmade_setup_lib_env(PATH) needs to be called to use this library
 
 
 require Exporter;
@@ -132,7 +133,7 @@ sub starmade_player_list {
 	my %player_list;
 	my $pos;
 	my $name;
-	my $faction;
+	my $faction = 0;
 	my $control;
 	my $sector;
 	my $smname;
@@ -176,7 +177,9 @@ sub starmade_player_list {
 			$player_list{$name}{sector} = $sector;
 			$player_list{$name}{ip} = $ip;
 			starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{pos} = $pos");
-			starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{control} = $control");
+			if ($control) {
+				starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{control} = $control");
+			}
 			starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{faction} = $faction");
 			starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{credits} = $credits");
 			starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{smname} = $smname");

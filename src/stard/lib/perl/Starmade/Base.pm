@@ -10,7 +10,7 @@ use Stard::Base qw(stard_read_config get_stard_conf_field stard_setup_lib_env);
 # plugins and internally by stard to talk to 
 # the starmade deamon.
 #
-# NOTE the funtion starmade_setup_run_env(PATH) needs to be called to use this library
+# NOTE the funtion starmade_setup_lib_env(PATH) needs to be called to use this library
 
 
 require Exporter;
@@ -39,7 +39,7 @@ my $starmade_last_output;
 
 
 
-## starmade_setup_run_env
+## starmade_setup_lib_env
 # setup up basic variables for the stard library. 
 # This tells the library where stard's home 
 # folder is (by default /var/starmade/stard) but 
@@ -49,7 +49,7 @@ my $starmade_last_output;
 sub starmade_setup_lib_env {
 	$stard_home = $_[0];
 
-	starmade_if_debug(2, "starmade_setup_run_env($stard_home)");
+	starmade_if_debug(2, "starmade_setup_lib_env($stard_home)");
 	$starmade_home = "$stard_home/..";
 	$starmade_server = "$starmade_home/StarMade";
 	stard_setup_lib_env($stard_home);
@@ -63,7 +63,7 @@ sub starmade_setup_lib_env {
 	else {
 		push(@starmade_cmd, get_starmade_conf_field('SUPER_ADMIN_PASSWORD'));
 	}	
-	starmade_if_debug(2, "starmade_setup_run_env: return:");
+	starmade_if_debug(2, "starmade_setup_lib_env: return:");
 };
 
 ## starmade_escape_chars
@@ -92,10 +92,10 @@ sub starmade_escape_chars {
 };
 
 ## starmade_validate_env
-# validates that the starmade_setup_run_env has been called, and we're setup ok.
+# validates that the starmade_setup_lib_env has been called, and we're setup ok.
 sub starmade_validate_env {
 	if (! ($starmade_home =~/\S/)) {
-		croak("stard_home has not been set! the function starmade_setup_run_env, with a valid stard_home needs to be called before any other functions in the starmade libraries");
+		croak("stard_home has not been set! the function starmade_setup_lib_env, with a valid stard_home needs to be called before any other functions in the starmade libraries");
 	}
 }
 
