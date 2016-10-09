@@ -30,7 +30,7 @@ use Stard::Plugin;
 
 ## Core libraries for stard.
 # This provides the primary functionality for stard to function.
-# NOTE: This library requires stard_lib.pm
+# NOTE: This library requires the Stard::Base environment setup
 
 our (@ISA, @EXPORT);
 
@@ -140,7 +140,7 @@ sub plugin_command {
 	};
 
 	if (! $commands_executed) {
-		stard_pm($player, "Error command: !$command does not exist!");
+		starmade_pm($player, "Error command: !$command does not exist!");
 		stdout_log("No plugins have command '$command'... reporting not found", 5);
 	};
 }
