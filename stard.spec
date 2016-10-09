@@ -11,6 +11,19 @@ Source0:	stard.tar.gz
 Provides:	perl(stard_core)
 Provides:	perl(stard_lib)
 Provides:	perl(stard_log)
+Provides:	perl(Stard::Base)
+Provides:	perl(Stard::Multiplexer)
+Provides:	perl(Stard::Plugin)
+Provides:	perl(Stard::Log)
+Provides:	perl(Stard::Regression)
+Provides:	perl(Starmade::Base)
+Provides:	perl(Starmade::Chat)
+Provides:	perl(Starmade::Player)
+Provides:	perl(Starmade::Faction)
+Provides:	perl(Starmade::Misc)
+Provides:	perl(Starmade::Sector)
+Provides:	perl(Starmade::Message)
+Provides:	perl(Starmade::Map)
 BuildArch: 	noarch
 BuildRequires:	bash perl
 Requires:	bash perl wget rsync 
