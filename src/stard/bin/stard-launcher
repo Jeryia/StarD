@@ -117,6 +117,10 @@ fi
 #   Setup and start StarD 
 ###################################
 
+# If there is a stard-launcher running. Kill it as it will interfere with the 
+# current one.
+pkill -9 --pidfile ./stard-launcher.pid > /dev/null 2>&1
+echo $$ > ./stard-launcher.pid
 
 
 ## setup output files for the starmade server
@@ -130,6 +134,22 @@ $bin/rotate_logs
 # make sure plugins are setup correctly
 $bin/fix_plugins
 
+# stop any already running starmade daemon
+running_starmades=`lsof $SERVER_DIR 2>&1 | grep java | wc -l`
+if [ $running_starmades -gt 0 ]; then
+	echo "Starmade is already running. Trying to kill it..."
+	kill `lsof $SERVER_DIR 2>&1 | grep java | awk '{print $2}'` 2>&1 > /dev/null
+	sleep 30;
+	running_starmades=`lsof $SERVER_DIR 2>&1 | grep java | wc -l`
+fi
+
+
+if [ $running_starmades -gt 0 ]; then
+	echo "Starmade is still running... Trying a bigger hammer..."
+	kill -9 `lsof $SERVER_DIR 2>&1 | grep java | awk '{print $2}'` 2>&1 > /dev/null
+	sleep 2;
+fi
+                                                         
 
 # make sure we have a clean state before we start launching things
 $bin/stard_daemons stop

@@ -156,6 +156,18 @@ else
 	exit 1
 fi
 
+echo -n "lsof... "
+command -v lsof > /dev/null 2>&1 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate lsof installation... aborting."
+	echo "see --help for more information"
+	exit 1
+fi
+
 echo -n "perl... "
 command -v perl > /dev/null 2>&1
 RET=$?
