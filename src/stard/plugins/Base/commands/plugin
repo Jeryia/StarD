@@ -3,10 +3,12 @@ use strict;
 use warnings;
 use File::Copy;
 
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Player;
+
+use Stard::Plugin;
 
 #All rights reserved.
 #
@@ -33,8 +35,8 @@ my $plugins_disabled_dir = "$stard_home/plugins.disabled";
 
 my $prog = $0;
 
-stard_setup_run_env($stard_home);
-setup_core_env($stard_home);
+starmade_setup_lib_env($stard_home);
+stard_setup_lib_env($stard_home);
 
 
 main(@ARGV);
@@ -49,7 +51,7 @@ sub main {
 	my @plugins = @_;
 
 
-	stard_run_if_admin($player);
+	starmade_run_if_admin($player);
 	if (!$command) {
 		help($player);
 		exit 1;
@@ -99,13 +101,13 @@ sub load_plugin {
 	}
 	my %disabled_plugins = %{get_disabled_plugins_hash()};
 	if (!$disabled_plugins{$plugin}) {
-		stard_pm($player, "'$plugin' is already loaded or not available.");
+		starmade_pm($player, "'$plugin' is already loaded or not available.");
 		help($player);
 		exit 1;
 	}
 	move("$plugins_disabled_dir/$plugin", "$plugins_dir/$plugin") or die "Failed to move '$plugins_disabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
 	start_stard_deamons($player);
-	stard_broadcast("Plugin: '$plugin' has been loaded");
+	starmade_broadcast("Plugin: '$plugin' has been loaded");
 }
 
 ## unload_plugin
@@ -121,22 +123,22 @@ sub unload_plugin {
 		exit 1;
 	}
 	if ($plugin eq 'Base') {
-		stard_pm($player, "Cannot remove 'Base' plugin, this would remove the !plugin command!");
+		starmade_pm($player, "Cannot remove 'Base' plugin, this would remove the !plugin command!");
 		exit 1;
 	}
 	my %active_plugins = %{get_active_plugins_hash()};
 	if (!$active_plugins{$plugin}) {
-		stard_pm($player, "Plugin: '$plugin' is not loaded.");
+		starmade_pm($player, "Plugin: '$plugin' is not loaded.");
 		help($player);
 		exit 1;
 	}
-	stard_broadcast("Restarting Plugin Deamons. Standby...");
+	starmade_broadcast("Restarting Plugin Deamons. Standby...");
 	stop_stard_deamons($player);
 	move("$plugins_dir/$plugin", "$plugins_disabled_dir/$plugin") or die "Failed to move '$plugins_dir/$plugin' to '$plugins_disabled_dir/$plugin'\n";
 	start_stard_deamons($player);
-	stard_broadcast("Plugin deamon restart complete!");
+	starmade_broadcast("Plugin deamon restart complete!");
 		
-	stard_broadcast("Plugin: '$plugin' has been unloaded");
+	starmade_broadcast("Plugin: '$plugin' has been unloaded");
 }
 
 ## help
@@ -153,7 +155,7 @@ sub help {
 	$output .= "    unload <plugin> - unload the given plugin\n";
 	$output .= "    list - list what plugins are loaded and what plugins are unloaded\n";
 	$output .= "    info <plugin> - display infornation on a given plugin\n";
-	stard_pm($player, $output);
+	starmade_pm($player, $output);
 	
 }
 
@@ -163,7 +165,7 @@ sub start_stard_deamons {
 	my $player = $_[0];
 	my @out = `../../bin/stard_daemons start`;
 	print "@out";
-	stard_pm($player, join("", @out));
+	starmade_pm($player, join("", @out));
 }
 
 ## stop_stard_deamons
@@ -175,7 +177,7 @@ sub stop_stard_deamons {
 	my $player = $_[0];
 	my @out = `../../bin/stard_daemons stop`;
 	print "@out";
-	stard_pm($player, join("", @out));
+	starmade_pm($player, join("", @out));
 	
 }
 
@@ -190,7 +192,7 @@ sub display_active_plugins {
 	my @plugin_list = keys %plugins;
 	@plugin_list = sort(@plugin_list);
 	$output .= join("\n", @plugin_list);
-	stard_pm($player, $output);
+	starmade_pm($player, $output);
 }
 
 ## display_disabled_plugins
@@ -204,7 +206,7 @@ sub display_disabled_plugins {
 	my @plugin_list = keys %plugins;
 	@plugin_list = sort(@plugin_list);
 	$output .= join("\n", @plugin_list);
-	stard_pm($player, $output);
+	starmade_pm($player, $output);
 }
 
 ## get_disabled_plugins_hash
@@ -257,23 +259,23 @@ sub display_plugin_info {
 	if ($active_plugins{$plugin}) {
 		my $fh;
 		if (!open($fh, "<", "$plugins_dir/$plugin/info.txt")) {
-			 stard_cmd($player, "No information available for plugin '$plugin'");
+			 starmade_cmd($player, "No information available for plugin '$plugin'");
 			exit 1;
 		}
 		my @output = <$fh>;
-		stard_pm($player, "$plugin info:\n" . join("", @output));
+		starmade_pm($player, "$plugin info:\n" . join("", @output));
 	}
 	elsif ($disabled_plugins{$plugin}) {
 		my $fh;
 		if (!open($fh, "<", "$plugins_disabled_dir/$plugin/info.txt")) {
-			 stard_cmd($player, "No information available for plugin '$plugin'");
+			 starmade_cmd($player, "No information available for plugin '$plugin'");
 			exit 1;
 		}
 		my @output = <$fh>;
-		stard_pm($player, "$plugin info:\n" . join("", @output));
+		starmade_pm($player, "$plugin info:\n" . join("", @output));
 	}
 	else {
-		stard_pm($player, "'$plugin' does not appear to exist. Could not get any info on it");
+		starmade_pm($player, "'$plugin' does not appear to exist. Could not get any info on it");
 		help($player);
 	}
 }

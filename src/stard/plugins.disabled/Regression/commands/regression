@@ -6,7 +6,7 @@ use warnings;
 use lib("../../lib/perl");
 use Stard::Base;
 use Starmade::Base;
-use Starmade::Chat;
+use Starmade::Message;
 		
 use lib("./lib");
 use core_reg;

@@ -1,10 +1,9 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+
+use lib("../../lib/perl");
+use Starmade::Message;
 
 #All rights reserved.
 #
@@ -25,7 +24,7 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -51,11 +50,11 @@ sub main {
 	};
 
 	if (@limits) {
-		stard_broadcast("Server limits have been sent to you $player.");
-		stard_pm($player, join("", @limits));
+		starmade_broadcast("Server limits have been sent to you $player.");
+		starmade_pm($player, join("", @limits));
 	}
 	else {
-		stard_broadcast("No limits defined for this server");
-		stard_broadcast("Ask the admin to write a limits.txt file in the starmade directory");
+		starmade_broadcast("No limits defined for this server");
+		starmade_broadcast("Ask the admin to write a limits.txt file in the starmade directory");
 	}
 };	

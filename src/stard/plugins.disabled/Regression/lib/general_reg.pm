@@ -3,9 +3,8 @@ package general_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
 use Starmade::Base;
-use Starmade::Chat;
+use Starmade::Message;
 use Starmade::Player;
 use Starmade::Misc;
 use Stard::Regression;

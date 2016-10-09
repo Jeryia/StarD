@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+use Starmade::Player;
+
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -87,7 +89,7 @@ sub bounty_add_amount {
 sub get_player_credits {
 	my $player = $_[0];
 	
-	my %player_info = %{stard_player_info($player)};
+	my %player_info = %{starmade_player_info($player)};
 	return $player_info{credits};
 }
 

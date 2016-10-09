@@ -3,8 +3,7 @@ package plugin_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use Starmade::Chat;
+use Starmade::Message;
 use Stard::Base;
 use Stard::Plugin;
 use Stard::Regression;

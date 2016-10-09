@@ -2,10 +2,10 @@
 use strict;
 use warnings;
 
+use lib("../../lib/perl");
+use Starmade::Message;
+
 use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
 use bounty_lib;
 
 #All rights reserved.
@@ -23,7 +23,7 @@ use bounty_lib;
 ## setup environment
 my $stard_home = "./../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 main(@ARGV);
@@ -45,14 +45,14 @@ sub main {
 	}
 
 	if (!$amount || $amount =~/\D+/) {
-		stard_pm($requester, "You must provide the number to deposit!");
+		starmade_pm($requester, "You must provide the number to deposit!");
 		usage($requester);
 		exit 1;
 	};
 
-	my %player_list = %{stard_player_list()};
+	my %player_list = %{starmade_player_list()};
 	if (!$player_list{$player}) {
-		stard_pm($requester, "$player is not logged in or does not exist.\n You can only place bounties on players that are online!");
+		starmade_pm($requester, "$player is not logged in or does not exist.\n You can only place bounties on players that are online!");
 		exit 0;
 	}
 
@@ -63,34 +63,34 @@ sub main {
 	$in_bounty = bounty_get_balance($player);
 	$player_credits = get_player_credits($requester);
 	if (!$lock_fh) {
-		stard_pm($requester, "FAILED COMMAND: failed to get lock on $requester\'s bounty account: $!\n");
+		starmade_pm($requester, "FAILED COMMAND: failed to get lock on $requester\'s bounty account: $!\n");
 		exit 1;
 	};
 
 
 	## validate player gas the credits they think they do
 	if ($player_credits < $amount) {
-		stard_pm($requester, "You do not have that many credits to offer!");
+		starmade_pm($requester, "You do not have that many credits to offer!");
 		exit 1;
 	};
 
 
 
 	## perform transaction
-	if (!stard_give_credits($player, "-$amount")) {
-		stard_pm($player, "Deposit failed...");
+	if (!starmade_give_credits($player, "-$amount")) {
+		starmade_pm($player, "Deposit failed...");
 		exit 0;
 	};
 
 	if(!bounty_add_amount($player, $amount)) {
-		stard_pm($player, "Deposit failed...");
-		stard_give_credits($player, "$amount");
+		starmade_pm($player, "Deposit failed...");
+		starmade_give_credits($player, "$amount");
 		exit 0;
 	};
 	bounty_unlock_account($lock_fh);
-	stard_pm($requester, "$requester, $amount has been put up for the bounty on $player");
-	stard_broadcast("A bounty has been placed on $player\'s head!");
-	stard_broadcast("type !bounty of rmore information");
+	starmade_pm($requester, "$requester, $amount has been put up for the bounty on $player");
+	starmade_broadcast("A bounty has been placed on $player\'s head!");
+	starmade_broadcast("type !bounty of rmore information");
 };
 
 ## usage
@@ -98,7 +98,7 @@ sub main {
 # INPUT1: player to send help message to
 sub usage {
 	my $player = $_[0];
-	my %tmp = %{stard_player_list()};
+	my %tmp = %{starmade_player_list()};
 	my @players = keys(%tmp);
 
 	my $output = "Available Bounties:\n";
@@ -110,7 +110,7 @@ sub usage {
 	}
 	$output .= "Kill the player to get the reward. The reward will be distributed to all nearby faction members.";
 
-	stard_pm($player, $output);
-	stard_pm($player, "Usage: !bounty <player> <amount>");
-	stard_pm($player, "Description: Put up credits toward a player's bounty.");
+	starmade_pm($player, $output);
+	starmade_pm($player, "Usage: !bounty <player> <amount>");
+	starmade_pm($player, "Description: Put up credits toward a player's bounty.");
 }

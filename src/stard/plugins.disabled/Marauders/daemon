@@ -3,8 +3,9 @@ use strict;
 use warnings;
 
 
-use lib("../../lib");
-use stard_lib;
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Player;
 
 use lib ("./lib");
 use marauders_lib;
@@ -13,7 +14,7 @@ my $stard_home = "./../..";
 my $starmade_home = "$stard_home/../StarMade/";
 
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 my $CONFIG = "./marauders.conf";
 my $FACTION_ID= -1;
 my $demand_restart = 0;
@@ -39,14 +40,14 @@ sleep 10;
 clean_old_objects();
 
 while (1) {
-	my %player_list = %{stard_player_list()};
+	my %player_list = %{starmade_player_list()};
 
 	clean_far_objects();
 	foreach my $player (keys %player_list) {
 		signal_potential_attack($player);
 	}
 	if ($demand_restart) {
-		stard_broadcast("Marauders plugin has installed new blueprints. You will need to restart StarMade in order for Marauders to work correctly.");
+		starmade_broadcast("Marauders plugin has installed new blueprints. You will need to restart StarMade in order for Marauders to work correctly.");
 	}
 
 	sleep 300;

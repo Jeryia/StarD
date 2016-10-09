@@ -3,17 +3,20 @@ package marauders_lib;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use stard_lib;
-use stard_regression;
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Sector;
+use Starmade::Player;
+use Stard::Base;
+use Stard::Regression;
 
 use lib ("./lib");
 use marauders_lib;
 
 my $stard_home = "./../..";
 
-stard_setup_run_env($stard_home);
-stard_stdlib_set_debug(1);
+starmade_setup_lib_env($stard_home);
+starmade_stdlib_set_debug(1);
 my $CONFIG = "./marauders.conf";
 
 main(@ARGV);
@@ -33,6 +36,14 @@ sub main {
 	my $pos2;
 	my $ship_type;
 	my %config = %{stard_read_config($CONFIG)};
+
+	# clean up any current objects
+	foreach my $object (@{list_ship_objects($player)}) {
+		remove_ship_object($player, $object);
+	}
+
+	# move the player so that they won't bein the spawn safety area
+	starmade_change_sector_for($player, '100 100 100');
 
 	## Threat Tests
 	add_threat_level($player, -100);
@@ -92,9 +103,9 @@ sub main {
 	}
 
 	$ship_type = "Marusian Skimmer";
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	$ship_id = create_ship_object($player, $ship_type, $player_info{sector}, '0 0 0');
-	%sector_info = %{stard_sector_info($player_info{sector})};
+	%sector_info = %{starmade_sector_info($player_info{sector})};
 	test_result("plugin-$plugin - create_ship_object", $sector_info{entity}{"ENTITY_SHIP_$ship_type\_$ship_id"});
 	test_result("plugin-$plugin - get_object_name", get_object_name($player, $ship_id) eq "$ship_type\_$ship_id");
 	test_result("plugin-$plugin - get_object_type", get_object_type($player, $ship_id) eq $ship_type);
@@ -103,13 +114,13 @@ sub main {
 	test_result("plugin-$plugin - list_ship_objects", @{list_ship_objects($player)});
 	
 	remove_ship_object($player, $ship_id);
-	%sector_info = %{stard_sector_info($player_info{sector})};
+	%sector_info = %{starmade_sector_info($player_info{sector})};
 	test_result("plugin-$plugin - remove_ship_object", !$sector_info{entity}{"ENTITY_SHIP_$ship_type\_$ship_id"});
 	test_result("plugin-$plugin - list_ship_objects 2", !(@{list_ship_objects($player)}));
 
 
 	## Attack tests
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	player_defeat($player);
 	sleep 20;
 	test_result("plugin-$plugin - attack_ok after defeat", !attack_ok($player, \%player_info));
@@ -120,9 +131,13 @@ sub main {
 	system("touch", "./data/players/$player/defeat");
 	test_result("plugin-$plugin - attack_ok after vict", !attack_ok($player, \%player_info));
 
-
 	unlink("./data/players/$player/victory");
 	unlink("./data/players/$player/defeat");
 	test_result("plugin-$plugin - attack_ok norm", attack_ok($player, \%player_info));
 
+
+	test_result("$plugin - entityDestroyed", test_event("entityDestroyed", 'sdf') == 0);
+	test_result("$plugin - entityOverheat", test_event("entityOverheat", 'sdf') == 0);
+	test_result("$plugin - playerDeath", test_event("playerDeath", 'sdf', 'asdf') == 0);
+	test_result("$plugin - sectorChange", test_event("sectorChange", 'sdf', 'sdf', '0 0 0', '1 1 1') == 0);
 }

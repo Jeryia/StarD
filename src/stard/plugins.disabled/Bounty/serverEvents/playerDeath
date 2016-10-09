@@ -2,10 +2,12 @@
 use strict;
 use warnings;
 
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Misc;
+use Starmade::Sector;
+
 use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
 use bounty_lib;
 
 #All rights reserved.
@@ -23,7 +25,7 @@ use bounty_lib;
 ## setup environment
 my $stard_home = "./../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 main(@ARGV);
@@ -37,7 +39,7 @@ sub main {
 	my $player = $_[0];
 	my $killed_by = convert_entity_name($_[1]);
 
-	my %player_info = %{stard_player_info($player)};
+	my %player_info = %{starmade_player_info($player)};
 	my $bounty = bounty_get_balance($player);
 	my @pay_players;
 
@@ -69,8 +71,8 @@ sub main {
 	# pay players
 	my $payment = $in_bounty/($#pay_players +1);
 	foreach my $pay_player (@pay_players) {
-		stard_give_credits($pay_player, $in_bounty);
-		stard_broadcast("$pay_player has been awarded $payment for the bounty on $player!\n");
+		starmade_give_credits($pay_player, $in_bounty);
+		starmade_broadcast("$pay_player has been awarded $payment for the bounty on $player!\n");
 	}
 	bounty_unlock_account($lock_fh);
 };
@@ -83,17 +85,17 @@ sub players_to_pay {
 
 
 	my $faction = get_faction_of_ship($killed_by);
-	my %player_list = %{stard_player_list()};
+	my %player_list = %{starmade_player_list()};
 
 
 	
 	if ($faction && $faction > 0) {
-		my %ships = stard_search($killed_by);
+		my %ships = starmade_search($killed_by);
 		
 		foreach my $player (keys %player_list) {
 			my $player_fac = $player_list{$player}{faction};
 			my $player_loc = $player_list{$player}{loc};
-			my $dist = stard_loc_distance($bounty_loc, $player_loc);
+			my $dist = starmade_loc_distance($bounty_loc, $player_loc);
 			if (
 				$player_fac == $faction
 				&& $dist <= 1
@@ -123,7 +125,7 @@ sub players_to_pay {
 # INPUT1: player to send help message to
 sub usage {
 	my $player = $_[0];
-	my %tmp = %{stard_player_list()};
+	my %tmp = %{starmade_player_list()};
 	my @players = keys(%tmp);
 
 	my $output = "Available Bounties:\n";
@@ -132,23 +134,23 @@ sub usage {
 	}
 	$output .= "Kill the player to get the reward. The reward will be distributed to all nearby faction members.";
 
-	stard_pm($player, $output);
-	stard_pm($player, "Usage: !bounty <player> <amount>");
-	stard_pm($player, "Description: Put up credits toward a player's bounty.");
+	starmade_pm($player, $output);
+	starmade_pm($player, "Usage: !bounty <player> <amount>");
+	starmade_pm($player, "Description: Put up credits toward a player's bounty.");
 }
 
 sub get_faction_of_ship {
 	my $ship = $_[0];
-	my %ships = %{stard_search($ship)};
+	my %ships = %{starmade_search($ship)};
 
 	my %sector_info;
 
 	if ($ships{$ship}) {
-		%sector_info = %{stard_sector_info($ships{$ship})};
+		%sector_info = %{starmade_sector_info($ships{$ship})};
 		return $sector_info{entity}{$ship}{faction};
 	}
 	else {
-		my %player_list = %{stard_player_list()};
+		my %player_list = %{starmade_player_list()};
 		if ($player_list{$ship}) {
 			return $player_list{$ship}{faction};
 		}

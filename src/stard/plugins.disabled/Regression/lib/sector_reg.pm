@@ -3,11 +3,9 @@ package sector_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use Starmade::Chat;
+use Starmade::Message;
 use Starmade::Sector;
 use Starmade::Player;
-use Starmade::Spawn;
 use Starmade::Misc;
 use Stard::Regression;
 

@@ -1,10 +1,10 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Player;
 
 #All rights reserved.
 #
@@ -26,7 +26,7 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -40,7 +40,7 @@ sub main {
 	my $player = $_[0];
 	my $command;
 
-	stard_run_if_admin($player);
+	starmade_run_if_admin($player);
 	if ($_[1]) {
 		$command = $_[1];
 	}
@@ -51,19 +51,19 @@ sub main {
 
 
 	if ($command eq 'restart') {
-		stard_broadcast("Restarting stard backend. Commands may not function during this time!");
+		starmade_broadcast("Restarting stard backend. Commands may not function during this time!");
 		my @out = `../../bin/stard_daemons restart`;
 		print "backend restart requested by '$player'\n";
 		print "@out";
-		stard_pm($player, join("", @out));
+		starmade_pm($player, join("", @out));
 		
-		stard_broadcast("Restart Complete! Commands should again be functional");
+		starmade_broadcast("Restart Complete! Commands should again be functional");
 	}
 	elsif ( $command eq 'status') {
 		my @out = `../../bin/stard_daemons status`;
 		print "backend status requested by '$player'\n";
 		print "@out";
-		stard_pm($player, "Stard Status:\n" . join("", @out));
+		starmade_pm($player, "Stard Status:\n" . join("", @out));
 		
 	}
 	else {
@@ -81,5 +81,5 @@ sub help {
 	$output .= "Commands:\n";
 	$output .= "    status - get the current status of stard\n";
 	$output .= "    restart - restarts the stard backend. Reloading all mods. Note: commands will not work while restarting\n";
-	stard_pm($player, $output);
+	starmade_pm($player, $output);
 }

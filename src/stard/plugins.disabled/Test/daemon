@@ -1,8 +1,4 @@
 #!perl
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -18,10 +14,6 @@ use stard_core;
 $| = 1;
 
 ## setup environment
-my $debug_home = '.';
-my $stard_home = "$debug_home/../..";
-require "$stard_home/lib/stard_lib.pm";
-stard_setup_run_env($stard_home);
 
 
 while ( 1 == 1 ) {

@@ -1,0 +1,25 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Player;
+use Stard::Regression;
+
+
+my $stard_home = "../../";
+my $stard_plugins = "$stard_home/plugins";
+starmade_setup_lib_env($stard_home);
+starmade_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+	my $plugin = "GodlyAdmins";
+
+
+	test_result("$plugin - playerSpawn", test_event("playerSpawn", $player) == 0);
+}

@@ -3,8 +3,7 @@ package reg_lib;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use Starmade::Chat;
+use Starmade::Message;
 
 require Exporter;
 our @ISA = qw(Exporter);

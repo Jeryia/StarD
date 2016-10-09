@@ -1,9 +1,9 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Player;
 
 #All rights reserved.
 #
@@ -22,7 +22,7 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -60,7 +60,7 @@ sub main {
 	my $timeDiff = $curTime - $lastTime;
 	if (!($timeDiff >= 60)) {
 		my $remaining = 60 - $timeDiff;
-		stard_pm($player, "You must wait annother $remaining seconds before you can use that command again\n");
+		starmade_pm($player, "You must wait annother $remaining seconds before you can use that command again\n");
 		exit 0;
 	}
 	open(my $time_fh, ">", "$base_spool/$player") or die "failed to open file '$base_spool/$player': $!";
@@ -68,9 +68,9 @@ sub main {
 	close($time_fh);
 	
 	# give player some gear
-	stard_give_item($player, "Ship Core", 1);
-	stard_give_item($player, "Power Reactor", 1);
-	stard_give_item($player, "Thruster", 2);
-	stard_pm($player, "$player, You have been given a ship core, power reactor, and thrusters.");
+	starmade_give_item($player, "Ship Core", 1);
+	starmade_give_item($player, "Power Reactor", 1);
+	starmade_give_item($player, "Thruster", 2);
+	starmade_pm($player, "$player, You have been given a ship core, power reactor, and thrusters.");
 	close($read_fh);
 };

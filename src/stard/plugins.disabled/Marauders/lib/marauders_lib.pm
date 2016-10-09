@@ -3,8 +3,11 @@ package marauders_lib;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use stard_lib;
+use lib("../../lib/perl");
+use Starmade::Player;
+use Starmade::Sector;
+use Starmade::Misc;
+use Stard::Base;
 
 
 my $DATA = "./data";
@@ -115,7 +118,7 @@ sub attack_ok {
 	my %player_info = %{shift(@_)};
 
 	my %config = %{stard_read_config($CONFIG)};
-	my $spawn = stard_get_spawn_sector();
+	my $spawn = starmade_get_spawn_sector();
 
 	# Attack is not ok, if last attack was too soon.
 	if (last_defeat($player) < $config{General}{min_attack_time_after_defeat}) {
@@ -127,7 +130,7 @@ sub attack_ok {
 	if (@{list_ship_objects($player)}) {
 		return 0;
 	}
-	if (stard_loc_distance($spawn, $player_info{sector}) <= $config{General}{spawn_safety_distance}) {
+	if (starmade_loc_distance($spawn, $player_info{sector}) <= $config{General}{spawn_safety_distance}) {
 		return 0;
 	}
 	
@@ -190,7 +193,7 @@ sub signal_potential_attack {
 	
 	my $attack_chance = $config{General}{encounter_chance};
 	if ( $attack_chance >= int(rand(100))) {
-		my %player_list = %{stard_player_list()};
+		my %player_list = %{starmade_player_list()};
 		if (!attack_ok($trigger_player, $player_list{$trigger_player})) {
 			return;
 		}
@@ -256,7 +259,7 @@ sub start_attack_event {
 	my $player = shift(@_);
 	my %wave = %{shift(@_)};
 
-	my %player_info = %{stard_player_info($player)};
+	my %player_info = %{starmade_player_info($player)};
 	my @attack_wave;
 	my @attack_wave_pos;
 
@@ -265,7 +268,7 @@ sub start_attack_event {
 
 		if ($wave{scout_wait}) {
 			sleep $wave{scout_wait};
-			%player_info = %{stard_player_info($player)};
+			%player_info = %{starmade_player_info($player)};
 		}
 		if (!get_object_name($object)) {
 			# if scout is disabled/destroyed cancel attack
@@ -276,8 +279,8 @@ sub start_attack_event {
 		}
 		
 		# if player goes too far away, don't
-		my %player_info_new = %{stard_player_info($player)};
-		if (stard_loc_distance($player_info{sector}, $player_info_new{sector}) >= 2) {
+		my %player_info_new = %{starmade_player_info($player)};
+		if (starmade_loc_distance($player_info{sector}, $player_info_new{sector}) >= 2) {
 			return;
 		}
 		%player_info = %player_info_new;
@@ -286,24 +289,24 @@ sub start_attack_event {
 	@attack_wave = split(",", $wave{objects});
 	@attack_wave_pos = split(",", $wave{obj_pos});
 
-	my $sector_size = stard_get_starmade_conf_field('SECTOR_SIZE');
+	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
 
 	my $attack_center = _random_pos();
 	
 
 	for (my $i = 0; $i <= $#attack_wave; $i++) {
 		my $object = $attack_wave[$i];
-		my $pos = stard_location_add($attack_wave_pos[$i], $attack_center);
+		my $pos = starmade_location_add($attack_wave_pos[$i], $attack_center);
 		create_ship_object($player, $object, $player_info{sector}, $pos);
 	}
-	stard_faction_mod_relations($player_info{faction},-10000, 'enemy');
+	starmade_faction_mod_relations($player_info{faction},-10000, 'enemy');
 }
 
 ## _random_pos
 # Provide a random position in to spawn units in the given sector
 # OUTPUT: position (space seperated list)
 sub _random_pos {
-	my $sector_size = stard_get_starmade_conf_field('SECTOR_SIZE');
+	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
 
 	return int(rand($sector_size * 2 - 500) - $sector_size)
 		. " " . int(rand($sector_size * 2 - 500) - $sector_size) 
@@ -337,7 +340,7 @@ sub create_ship_object {
 	my $rand_id = _gen_obj_id();
 	my $object_name = "$object_type\_$rand_id";
 	
-	if (!stard_spawn_entity_pos(
+	if (!starmade_spawn_entity_pos(
 		$object_config{$object_type}{blueprint},
 		$object_name,
 		$sector,
@@ -350,7 +353,7 @@ sub create_ship_object {
 
 	my $fh;
 	if(!open($fh, ">", "$DATA_PLAYER/$player/objects/$rand_id")) {
-		stard_despawn_all($object_name, 'all', 1);
+		starmade_despawn_all($object_name, 'all', 1);
 		warn "Error Spawning '$object_name'!\n";
 		return 0;
 	}
@@ -378,7 +381,7 @@ sub remove_ship_object {
 	}
 
 	unlink("$DATA_PLAYER/$player/objects/$id") or return 0;
-	return stard_despawn_all($obj_name, 'all', 1);
+	return starmade_despawn_all($obj_name, 'all', 1);
 }
 
 
@@ -424,22 +427,22 @@ sub ship_object_jump {
 		return 0;
 	}
 
-	my %ships = %{stard_search($obj_name)};
+	my %ships = %{starmade_search($obj_name)};
 
 	if (!$ships{$obj_name}) {
 		return 0;
 	}
 
 	$sector = $ships{$obj_name};
-	my %sector_info = %{stard_sector_info($sector)};
+	my %sector_info = %{starmade_sector_info($sector)};
 
 	if(!$sector_info{entity}{$obj_name}) {
 		return 0;
 	}
 	$pos = $sector_info{entity}{$obj_name}{pos};
 
-	stard_despawn_all($obj_name, 'all', 1);
-	stard_spawn_entity_pos($object_config{$obj_type}{jump_bp}, "$obj_name\_j", $sector, $sector_info{entity}{$obj_name}{faction}, $pos, 1);
+	starmade_despawn_all($obj_name, 'all', 1);
+	starmade_spawn_entity_pos($object_config{$obj_type}{jump_bp}, "$obj_name\_j", $sector, $sector_info{entity}{$obj_name}{faction}, $pos, 1);
 	
 	my $pid = fork();
 	if (!$pid) {
@@ -596,7 +599,7 @@ sub clean_old_objects {
 # Remove objects that are out of range of any player
 sub clean_far_objects {
 	my @players = @{get_tracked_players()};
-	my %player_list = %{stard_player_list()};
+	my %player_list = %{starmade_player_list()};
 	my %config = %{stard_read_config($CONFIG)};
 
 	foreach my $player (@players) {
@@ -630,7 +633,7 @@ sub clean_far_ship {
 	my %player_list = %{shift(@_)};
 
 	my $name= get_object_name($player, $id);
-	my %ships = %{stard_search($name)};
+	my %ships = %{starmade_search($name)};
 	my $ship_loc;
 
 	# clean out ones that no longer exist
@@ -643,7 +646,7 @@ sub clean_far_ship {
 	
 	foreach my $player (keys %player_list) {
 		my $sector = $player_list{$player}{sector};
-		my $distance = stard_loc_distance($sector, $ship_loc);
+		my $distance = starmade_loc_distance($sector, $ship_loc);
 		if ($distance >= 2) {
 			remove_ship_object($player, $id);
 		}

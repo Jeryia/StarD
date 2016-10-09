@@ -1,10 +1,9 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Player;
 
 #All rights reserved.
 #
@@ -23,7 +22,7 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -43,9 +42,9 @@ sub main {
 	
 
 	## if player is in a ship, they are not stuck.
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	if ($player_info{control} && !($player_info{control}=~/PLAYERCHARACTER/)) {
-		stard_pm($player, "This command is only to be used in astronaut mode");
+		starmade_pm($player, "This command is only to be used in astronaut mode");
 		exit 0;
 	};
 
@@ -69,7 +68,7 @@ sub main {
 	my $timeDiff = $curTime - $lastTime;
 	if (!($timeDiff >= 30)) {
 		my $remaining = 30 - $timeDiff;
-		stard_pm($player, "You must wait annother $remaining seconds before you can use that command again\n");
+		starmade_pm($player, "You must wait annother $remaining seconds before you can use that command again\n");
 		exit 0;
 	}
 	open(my $time_fh, ">", "$base_spool/$player.stuck") or die "failed to open file '$base_spool/$player.stuck': $!";
@@ -82,7 +81,7 @@ sub main {
 	my @pos = split(" ", $player_info{pos});
 	$pos[$axis] += 300;
 	my $newLoc = join(" ", @pos);
-	stard_teleport_to($player, $newLoc);
-	stard_pm($player, "$player, You have been moved 300m. Hopefully this will get you free");
+	starmade_teleport_to($player, $newLoc);
+	starmade_pm($player, "$player, You have been moved 300m. Hopefully this will get you free");
 	close($read_fh);
 };

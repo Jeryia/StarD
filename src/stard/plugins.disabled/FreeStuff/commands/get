@@ -2,10 +2,11 @@
 use strict;
 use warnings;
 
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Player;
+use Stard::Base;
 
 #All rights reserved.
 #
@@ -22,7 +23,7 @@ use stard_core;
 ## setup environment
 my $stard_home = "./../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -39,34 +40,34 @@ sub main {
 	my %config = %{stard_read_config("./freestuff.cfg")};
 
 	if (!$item) {
-		stard_pm($player, "Available items:" );
+		starmade_pm($player, "Available items:" );
 		foreach my $item (sort(keys %config)) {
-			stard_pm($player, $item);
+			starmade_pm($player, $item);
 		}
 		exit 0;
 	}
 
 	if ($config{$item}) {
 		if($config{$item}{cmd}) {
-			stard_cmd($config{$item}{cmd}, $player);
+			starmade_cmd($config{$item}{cmd}, $player);
 		}
 		elsif ($config{$item}{metaItem}) {
-			stard_give_metaitem($player, $config{$item}{metaItem});
+			starmade_give_metaitem($player, $config{$item}{metaItem});
 		}
 		elsif ($config{$item}{itemID}) {
-			stard_give_item_id($player, $config{$item}{itemID}, 1);
+			starmade_give_item_id($player, $config{$item}{itemID}, 1);
 		}
 		elsif ($config{$item}{name}) {
-			stard_give_item($player, $config{$item}{name}, 1);
+			starmade_give_item($player, $config{$item}{name}, 1);
 		}
 		else {
-			stard_pm($player, "Sorry, that item is not available");
+			starmade_pm($player, "Sorry, that item is not available");
 			exit 0;
 		}
-		stard_pm($player, "You have been given a $item!");
+		starmade_pm($player, "You have been given a $item!");
 	}
 	else {
-		stard_pm($player, "Sorry, that item is not available");
+		starmade_pm($player, "Sorry, that item is not available");
 		exit 0;
 	}
 };

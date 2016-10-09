@@ -2,10 +2,11 @@
 use strict;
 use warnings;
 
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Player;
+
 use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
 use bank_lib;
 
 #All rights reserved.
@@ -23,7 +24,7 @@ use bank_lib;
 ## setup environment
 my $stard_home = "./../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -47,31 +48,31 @@ sub main {
 
 	## Make sure things look ok
 	if (!($amount) || ($amount =~/\D+/)) {
-		stard_pm($player, "You must provide the number to pay the other player!");
+		starmade_pm($player, "You must provide the number to pay the other player!");
 		usage($player);
 		exit 1;
 	}
 	if ($player eq $recipient) {
-		stard_pm($player, "You can not give yourself money!");
+		starmade_pm($player, "You can not give yourself money!");
 		exit 0;
 	}
 	if ($player_credits < $amount) {
-		stard_pm($player, "You do not have that many credits to give!");
+		starmade_pm($player, "You do not have that many credits to give!");
 		exit 1;
 	}
 
 
 	## Perform transaction
-	if (!stard_give_credits($recipient, $amount)) {
-		stard_pm($player, "Could not give $recipient credits. Are they online?");
+	if (!starmade_give_credits($recipient, $amount)) {
+		starmade_pm($player, "Could not give $recipient credits. Are they online?");
 		exit 1;
 	}
-	if (!stard_give_credits($player, "-$amount")) {
-		stard_give_credits($recipient, "-$amount");
+	if (!starmade_give_credits($player, "-$amount")) {
+		starmade_give_credits($recipient, "-$amount");
 		exit 0;
 	}
-	stard_pm($player, "You have given $recipient $amount credits");
-	stard_pm($recipient, "$player has given you $amount credits");
+	starmade_pm($player, "You have given $recipient $amount credits");
+	starmade_pm($recipient, "$player has given you $amount credits");
 };
 
 ## usage
@@ -79,6 +80,6 @@ sub main {
 # INPUT1: player to send help message to
 sub usage {
 	my $player = $_[0];
-	stard_pm($player, "Usage: pay <player> <amount>");
-	stard_pm($player, "Description: Give annother player credits");
+	starmade_pm($player, "Usage: pay <player> <amount>");
+	starmade_pm($player, "Description: Give annother player credits");
 }

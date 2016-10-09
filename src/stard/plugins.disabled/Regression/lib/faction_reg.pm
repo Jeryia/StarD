@@ -3,8 +3,7 @@ package faction_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use Starmade::Chat;
+use Starmade::Message;
 use Starmade::Faction;
 use Starmade::Player;
 use Stard::Regression;

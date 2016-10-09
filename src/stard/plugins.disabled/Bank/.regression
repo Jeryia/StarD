@@ -2,16 +2,14 @@
 use strict;
 use warnings;
 
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
-use stard_regression;
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Player;
+use Stard::Regression;
 
 my $stard_home = "../../";
-stard_setup_run_env($stard_home);
-setup_core_env($stard_home);
-stard_stdlib_set_debug(1);
+starmade_setup_lib_env($stard_home);
+starmade_stdlib_set_debug(1);
 
 main(@ARGV);
 
@@ -31,40 +29,40 @@ sub main {
 
 
 	# check if deposit removed money from the player's account
-	stard_give_credits($player, $bank_credits);
-	%player_info = %{stard_player_info($player)};
+	starmade_give_credits($player, $bank_credits);
+	%player_info = %{starmade_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("deposit", $player, $bank_credits);
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - deposit", $last_credits - $player_info{credits} == $bank_credits);
 
 
 	# Make sure the deposit command will not allow the player to deposit more than they have
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("deposit", $player, 100000000000);
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - over deposit", $last_credits == $player_info{credits});
 
 	# check if deposit removed money from the player's account
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	test_command("deposit", $player, 'all');
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - deposit", $player_info{credits} == 0);
 
 	# Make sure the withdraw command will give the player money
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("withdraw", $player, $bank_credits);
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - withdraw", $player_info{credits} - $last_credits == $bank_credits);
 
 
 	# Make sure the withdraw command will not allow the player to withdraw more than they have banked.
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	$last_credits = $player_info{credits};
 	test_command("withdraw", $player, 100000000);
-	%player_info = %{stard_player_info($player)};
+	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - overdraw", $player_info{credits} == $last_credits);
 }
 

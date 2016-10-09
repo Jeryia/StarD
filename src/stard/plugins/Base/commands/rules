@@ -1,10 +1,8 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+use lib("../../lib/perl");
+use Starmade::Message;
 
 #All rights reserved.
 #
@@ -27,7 +25,7 @@ my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
 require "$stard_home/lib/stard_lib.pm";
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -52,11 +50,11 @@ sub main {
 	};
 
 	if (@rules) {
-		stard_broadcast("Rules have been sent to you $player.");
-		stard_pm($player, join("", @rules));
+		starmade_broadcast("Rules have been sent to you $player.");
+		starmade_pm($player, join("", @rules));
 	}
 	else {
-		stard_broadcast("No rules defined for this server");
-		stard_broadcast("Ask the admin to write a rules.txt file in the starmade directory");
+		starmade_broadcast("No rules defined for this server");
+		starmade_broadcast("Ask the admin to write a rules.txt file in the starmade directory");
 	}
 };	

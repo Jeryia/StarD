@@ -3,9 +3,8 @@ package player_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
 use Starmade::Player;
-use Starmade::Chat;
+use Starmade::Message;
 use Stard::Regression;
 
 require Exporter;

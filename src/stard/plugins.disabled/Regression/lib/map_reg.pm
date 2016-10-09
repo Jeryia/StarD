@@ -3,11 +3,9 @@ package map_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
-use Starmade::Chat;
+use Starmade::Message;
 use Starmade::Map;
 use Starmade::Sector;
-use Starmade::Spawn;
 use Starmade::Misc;
 use Stard::Base;
 use Stard::Regression;

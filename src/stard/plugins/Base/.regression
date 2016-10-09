@@ -3,17 +3,14 @@ use strict;
 use warnings;
 
 use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
-use stard_regression;
+use lib("../../lib/perl");
+use Starmade::Message;
+use Stard::Regression;
 
 
 my $stard_home = "../../";
 my $stard_plugins = "$stard_home/plugins";
-stard_setup_run_env($stard_home);
-setup_core_env($stard_home);
-stard_stdlib_set_debug(1);
+starmade_setup_lib_env($stard_home);
 
 main(@ARGV);
 
@@ -27,7 +24,7 @@ sub main {
 	my $last_credits;
 
 	# unload the Test plugin before we start
-	stard_broadcast("Setting up test environment. Please wait...");
+	starmade_broadcast("Setting up test environment. Please wait...");
 	test_command("plugin", '', "unload", "Test");
 
 
@@ -46,5 +43,12 @@ sub main {
 	$result = `../../bin/stard_daemons status | grep -q 'Test is'; echo \$?`;
 	test_result("$plugin - plugin unload daemon:", $result != 0);
 
+	
+	test_result("$plugin - core", test_command("core", $player) == 0);
+	test_result("$plugin - help", test_command("help", $player) == 0);
+	test_result("$plugin - limits", test_command("limits", $player) == 0);
+	test_result("$plugin - motd", test_command("motd", $player) == 0);
+	test_result("$plugin - rules", test_command("rules", $player) == 0);
+	test_result("$plugin - stard", test_command("stard", $player, 'status') == 0);
 }
 

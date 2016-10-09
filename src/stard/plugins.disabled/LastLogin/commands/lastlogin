@@ -1,9 +1,9 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Player;
 
 #All rights reserved.
 #
@@ -25,7 +25,7 @@ my $lastlogin_home = '.';
 my $lastlogin_data = "$lastlogin_home/data";
 my $stard_home = "$lastlogin_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -48,9 +48,9 @@ sub main {
 	}
 
 	my $time;
-	my %player_list = %{stard_player_list()};
+	my %player_list = %{starmade_player_list()};
 	if ($player_list{$player}) {
-		stard_pm($requester, "$player is online right now!");
+		starmade_pm($requester, "$player is online right now!");
 		exit 0;
 	}
 
@@ -69,24 +69,24 @@ sub main {
 
 
 			if ($timediff_days == 0) {
-				stard_pm($requester, "$player was last online $timediff_hours hours ago");
+				starmade_pm($requester, "$player was last online $timediff_hours hours ago");
 			}
 			else {
-				stard_pm($requester, "$player was last online $timediff_days days ago");
+				starmade_pm($requester, "$player was last online $timediff_days days ago");
 			}
 		}
 		else {
-			stard_pm($requester, "Error, malformed data file. Please report this to an admin!");
+			starmade_pm($requester, "Error, malformed data file. Please report this to an admin!");
 		}
 	}
 	else {
-		stard_pm($requester, "$player has never logged into this server.");
+		starmade_pm($requester, "$player has never logged into this server.");
 	}
 
 };
 
 sub usage {
 	my $player = $_[0];
-	stard_pm($player, "usage: !lastlogin <player name>");
-	stard_pm($player, "description: Gives you how long ago a player last logged in");
+	starmade_pm($player, "usage: !lastlogin <player name>");
+	starmade_pm($player, "description: Gives you how long ago a player last logged in");
 }

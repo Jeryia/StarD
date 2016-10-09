@@ -1,10 +1,7 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+use lib("../../lib/perl");
 
 #All rights reserved.
 #
@@ -24,13 +21,6 @@ use stard_core;
 
 
 ## setup environment
-my $base_home = '.';
-my $base_spool = "$base_home/spool";
-my $stard_home = "$base_home/../..";
-
-stard_setup_run_env($stard_home);
-
-
 
 main(@ARGV);
 exit 0;

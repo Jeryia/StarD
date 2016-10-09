@@ -3,13 +3,11 @@ package multiplexer_reg;
 use strict;
 use warnings;
 
-use lib("../../lib");
 use Starmade::Base;
-use Starmade::Chat;
+use Starmade::Message;
 use Starmade::Faction;
 use Starmade::Player;
 use Starmade::Sector;
-use Starmade::Spawn;
 use Stard::Multiplexer;
 use Stard::Regression;
 

@@ -1,9 +1,9 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
+use lib("../../lib/perl");
+use Starmade::Messages;
+use Starmade::Player;
 
 #All rights reserved.
 #
@@ -29,7 +29,7 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -42,9 +42,9 @@ exit 0;
 sub main {
 	my $player = $_[0];
 
-	if (stard_is_admin($player)) {
-		stard_invisibility_mode($player, 1);
-		stard_pm($player, "Invisibility active");
+	if (starmade_is_admin($player)) {
+		starmade_invisibility_mode($player, 1);
+		starmade_pm($player, "Invisibility active");
 		exit 0;
 	}
 };

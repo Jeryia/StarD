@@ -1,10 +1,8 @@
 #!perl
 use strict;
 use warnings;
-use lib("./lib");
-use lib("../../lib");
-use stard_lib;
-use stard_core;
+use lib("../../lib/perl");
+use Starmade::Message;
 
 #All rights reserved.
 #
@@ -31,7 +29,7 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
-stard_setup_run_env($stard_home);
+starmade_setup_lib_env($stard_home);
 
 
 
@@ -61,7 +59,7 @@ sub main {
 	};
 
 	if (@welcome) {
-		stard_pm($player, join("", @welcome));
+		starmade_pm($player, join("", @welcome));
 		unlink("$base_spool/$player.login");
 	}	
 };
