@@ -78,7 +78,7 @@ function status {
 
 		echo
 		echo "Daemon Status:"
-		su $USER -c "/var/starmade/stard/bin/stard_daemons status"
+		su $USER -c "%STARMADEDIR%/stard/bin/stard_daemons status"
 
 		return $STATUS
 
@@ -87,7 +87,7 @@ function status {
 		echo "$NAME is not running"
 		echo
 		echo "Daemon Status:"
-		su $USER -c "/var/starmade/stard/bin/stard_daemons status"
+		su $USER -c "%STARMADEDIR%/stard/bin/stard_daemons status"
 		RET=$?
 		if [ $RET -ne 0 ]; then
 			STATUS=$RET
