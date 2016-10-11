@@ -8,8 +8,8 @@ use Starmade::Message;
 use Starmade::Faction;
 use Starmade::Player;
 use Starmade::Sector;
+use Starmade::Regression;
 use Stard::Multiplexer;
-use Stard::Regression;
 
 use lib("./lib");
 use reg_lib;

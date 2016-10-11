@@ -1,4 +1,4 @@
-package Stard::Regression;
+package Starmade::Regression;
 use lib("../../lib");
 use Starmade::Chat;
 use Stard::Base;

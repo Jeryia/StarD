@@ -7,7 +7,7 @@ use Starmade::Message;
 use Starmade::Sector;
 use Starmade::Player;
 use Starmade::Misc;
-use Stard::Regression;
+use Starmade::Regression;
 
 require Exporter;
 our @ISA = qw(Exporter);

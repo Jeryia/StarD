@@ -7,8 +7,8 @@ use lib("../../lib/perl");
 use Starmade::Base;
 use Starmade::Sector;
 use Starmade::Player;
+use Starmade::Regression;
 use Stard::Base;
-use Stard::Regression;
 
 use lib ("./lib");
 use marauders_lib;

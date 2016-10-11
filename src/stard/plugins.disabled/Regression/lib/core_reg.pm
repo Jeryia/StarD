@@ -8,7 +8,7 @@ use Stard::Base;
 use Stard::Multiplexer;
 use Stard::Plugin;
 use Stard::Log;
-use Stard::Regression;
+use Starmade::Regression;
 
 use lib("./lib");
 use reg_lib;

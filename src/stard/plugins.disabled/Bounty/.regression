@@ -6,7 +6,7 @@ use lib("../../lib/perl");
 use Starmade::Base;
 use Starmade::Message;
 use Starmade::Player;
-use Stard::Regression;
+use Starmade::Regression;
 
 
 my $stard_home = "../../";

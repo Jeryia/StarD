@@ -8,7 +8,7 @@ use Starmade::Map;
 use Starmade::Sector;
 use Starmade::Misc;
 use Stard::Base;
-use Stard::Regression;
+use Starmade::Regression;
 
 require Exporter;
 our @ISA = qw(Exporter);

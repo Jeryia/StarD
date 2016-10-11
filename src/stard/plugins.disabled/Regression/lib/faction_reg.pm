@@ -6,7 +6,7 @@ use warnings;
 use Starmade::Message;
 use Starmade::Faction;
 use Starmade::Player;
-use Stard::Regression;
+use Starmade::Regression;
 
 require Exporter;
 our @ISA = qw(Exporter);

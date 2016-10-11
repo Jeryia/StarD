@@ -5,7 +5,7 @@ use warnings;
 
 use Starmade::Player;
 use Starmade::Message;
-use Stard::Regression;
+use Starmade::Regression;
 
 require Exporter;
 our @ISA = qw(Exporter);

@@ -5,7 +5,7 @@ use warnings;
 use lib("./lib");
 use lib("../../lib/perl");
 use Starmade::Message;
-use Stard::Regression;
+use Starmade::Regression;
 
 
 my $stard_home = "../../";
