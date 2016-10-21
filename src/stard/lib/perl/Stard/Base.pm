@@ -37,9 +37,9 @@ require Exporter;
 
 
 my %exec_prefix_table;
-$exec_prefix_table{perl} = "/usr/bin/perl";
-$exec_prefix_table{bash} = "/usr/bin/bash";
-$exec_prefix_table{python} = "/usr/bin/python";
+$exec_prefix_table{perl} = "%PERL%";
+$exec_prefix_table{bash} = "%BASH%";
+$exec_prefix_table{python} = "%PYTHON%";
 
 my $stard_home;
 my $stard_log;
