@@ -9,7 +9,7 @@ my $server_dir = "../../../StarMade";
 
 main(@ARGV);
 sub main {
-	my @files_xml = `cd $merge_dir; find . -name '*.xml'`;
+	my @files_xml = split("\n",`cd $merge_dir; find . -name '*.xml'`);
 
 	foreach my $file (@files_xml) {
 		xml_merge("$server_dir/$file", "$merge_dir/$file");
