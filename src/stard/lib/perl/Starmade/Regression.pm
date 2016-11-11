@@ -1,6 +1,6 @@
 package Starmade::Regression;
 use lib("../../lib");
-use Starmade::Chat;
+use Starmade::Message;
 use Stard::Base;
 
 our (@ISA, @EXPORT);

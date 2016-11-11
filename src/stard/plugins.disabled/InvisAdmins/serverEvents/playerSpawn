@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib("../../lib/perl");
-use Starmade::Messages;
+use Starmade::Message;
 use Starmade::Player;
 
 #All rights reserved.
