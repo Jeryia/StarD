@@ -152,6 +152,7 @@ fi
                                                          
 
 # make sure we have a clean state before we start launching things
+$bin/stard_daemons prerun
 $bin/stard_daemons stop
 
 # clear any old messages out of the pipe

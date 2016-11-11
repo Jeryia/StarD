@@ -135,6 +135,7 @@ function start_plugins {
 
 
 function prerun {
+	setup_logging
 	echo -n "Launching prerun scripts"
 	for plugin in $ACTIVE_PLUGINS; do
 		if [ -x "$plugin_dir/$plugin/prerun" ]; then
@@ -246,7 +247,7 @@ function stop {
 }
 
 
-case "$1" ini
+case "$1" in
 	prerun)
 		prerun
 		exit 0
