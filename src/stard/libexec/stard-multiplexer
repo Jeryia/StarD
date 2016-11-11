@@ -4,6 +4,7 @@ use warnings;
 use Cwd;
 
 use lib("./lib/perl");
+use Starmade::Base;
 use Stard::Multiplexer;
 use Stard::Plugin;
 use Stard::Log;
@@ -40,6 +41,7 @@ my $prog = $0;
 
 #load stard libraries
 stard_setup_lib_env($stard_home);
+starmade_setup_lib_env($stard_home);
 set_loglevel(6);
 
 

@@ -8,7 +8,7 @@ use POSIX;
 
 use lib("./lib");
 
-use Starmade::Base;
+use Starmade::Message;
 use Stard::Base;
 use Stard::Log;
 use Stard::Plugin;
@@ -334,9 +334,10 @@ sub chat_messages {
 				if (!$args) {
 					$args = '';
 				};
-
-				stdout_log("Spawning server command '$cmd $player $args'", 6);
-				plugin_command($cmd, $player, quotewords('\s+', 0, $args));
+				if (!($cmd =~/^\./ || $cmd=~/^\//)) {
+					stdout_log("Spawning server command '$cmd $player $args'", 6);
+					plugin_command($cmd, $player, quotewords('\s+', 0, $args));
+				};
 			};
 		};
 	};
