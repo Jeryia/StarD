@@ -1,0 +1,326 @@
+#!/bin/bash
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
+echo "Checking Dependancies"
+echo -n "bash... "
+command -v bash > /dev/null 2>&1 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	BASH=$(command -v bash)
+else
+	echo "not ok"
+	echo "FAILED to locate bash installation... aborting."
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "wget... "
+command -v wget > /dev/null 2>&1 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate wget installation... aborting."
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "lsof... "
+command -v lsof > /dev/null 2>&1 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate lsof installation... aborting."
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "perl... "
+command -v perl > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	PERL=$(command -v perl)
+else
+	echo "not ok"
+	echo "FAILED to locate perl installation... aborting."
+	echo "If perl is installed, it is not in your current"
+	echo "path, you can specify a specific path to the perl"
+	echo "binary with the --perl option"
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "perl-strict... "
+$PERL -e "use strict" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module strict... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-warnings... "
+$PERL -e "use warnings" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module warnings... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-File::Basename... "
+$PERL -e "use File::Basename" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module File::Basename... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-File::Path... "
+$PERL -e "use File::Path" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module File::Path... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Text::ParseWords... "
+$PERL -e "use Text::ParseWords" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Text::ParseWords... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Config::IniFiles... "
+$PERL -e "use Config::IniFiles" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Config::IniFiles... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Proc::Daemon... "
+$PERL -e "use Proc::Daemon" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Proc::Daemon... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Carp... "
+$PERL -e "use Carp" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Carp... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-Cwd... "
+$PERL -e "use Cwd" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module Cwd... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "perl-POSIX... "
+$PERL -e "use POSIX" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module POSIX... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "python... "
+command -v python > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	PYTHON=$(command -v python)
+else
+	echo "not ok"
+	echo "FAILED to locate python installation... aborting."
+	echo "If perl is installed, it is not in your current"
+	echo "path, you can specify a specific path to the perl"
+	echo "binary with the --perl option"
+	echo "see --help for more information"
+	exit 1
+fi
+
+echo -n "java... "
+command -v java > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+	JAVA=$(command -v java)
+else
+	echo "not ok"
+	echo "FAILED to locate java installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+
+echo -n "pkill... "
+command -v pkill > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate pkill installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "pgrep... "
+command -v pgrep > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate pgrep installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+
+echo -n "sed... "
+command -v sed > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate sed installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "mkfifo... "
+command -v mkfifo > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate mkfifo installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
+echo -n "rsync... "
+command -v rsync > /dev/null 2>&1
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate rsync installation... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+#if [ $SYSTEMD -eq 1 ]; then
+#	echo -n "systemd... "
+#	if [ -d $SYSTEMDSERVICEDIR ]; then
+#		echo "ok"
+#		INITV=0
+#	else
+#		echo "not ok"
+#		echo "Failed to locate where to place systems service script"
+#if [ $SYSTEMD -eq 1 ]; then
+#	echo -n "systemd... "
+#	if [ -d $SYSTEMDSERVICEDIR ]; then
+#		echo "ok"
+#		INITV=0
+#	else
+#		echo "not ok"
+#		echo "Failed to locate where to place systems service script"
+#		echo "You can specify a specific location with the argument"
+#		echo "--systemd-service-dir"
+#		echo "Systemd support will be disabled"
+#		SYSTEMD=0
+#		
+#	fi
+#fi
+
+
+if [ $INITV -eq 1 ]; then
+	echo -n "initv... "
+	if [ -d /etc/init.d ]; then
+		echo "ok"
+	else
+		echo "not ok"
+		echo "Failed to locate where to place init script!"
+		echo "/etc/init.d does not appear to exist!"
+		INITV=0
+	fi
+fi
+
+if [ $INITV -eq 0 ]; then
+	if [ $SYSTEMD -eq 0 ]; then
+		echo "################"
+		echo "    WARNING"
+		echo "################"
+		echo "All service options are disabled. $NAME will not use any OS service launching utilities"
+	fi
+fi

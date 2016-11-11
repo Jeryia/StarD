@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
+if [ $STANDALONE -ne 1 ]; then
+	echo "
+
+install:
+ifeq (\$(USERID), 0)
+	useradd -c 'Privilege-separated starmade server' -s /bin/bash -r -d \$(STARMADEDIR) \$(USER) 2> /dev/null || :
+	service stard stop || :
+endif
+	cp -pfr \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
+
+	cp -pf \$(BUILD_DIR)/sbin/stard \$(DESTDIR)\$(SBINDIR)/
+	cp -pf \$(BUILD_DIR)/sbin/stard-backup \$(DESTDIR)\$(SBINDIR)/
+
+	mkdir -p \$(DESTDIR)\$(SYSCONFDIR)/
+	cp -pn \$(BUILD_DIR)/etc/stard \$(DESTDIR)\$(SYSCONFDIR)
+
+	mv -n \$(DESTDIR)\$(STARMADEDIR)/stard/stard.cfg.newversion \$(DESTDIR)\$(STARMADEDIR)/stard/stard.cfg
+	
+	chmod 775 \$(DESTDIR)\$(STARMADEDIR)
+	chmod 1770 \$(DESTDIR)\$(STARMADEDIR)/spool
+ifeq (\$(USERID), 0)
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/*
+	chown root:\$(USER) \$(DESTDIR)\$(STARMADEDIR)
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/spool
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/log
+endif
+" >> ./Makefile
+
+	for plugin in ./src/stard/plugins.disabled/*; do 
+		name=$(basename $plugin)
+		echo "
+	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && cp -R '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name' '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/'\" || :
+	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && rm -rf '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name'\" || :
+" >> ./Makefile
+	done
+	
+	if [ $INITV -eq 1 ]; then
+		echo "	cp -p \$(BUILD_DIR)/stard.initv \$(DESTDIR)/etc/init.d/stard" >> ./Makefile
+	fi
+	#if [ $SYSTEMD -eq 1 ]; then 
+	#	echo "	cp -p \$(BUILD_DIR)/stard.service \$(DESTDIR)\$(SYSTEMDSERVICEDIR)/" >> ./Makefile
+	#	echo "ifeq (\$(USERID), 0)" >> ./Makefile
+	#	echo "	systemctl daemon-reload" >> ./Makefile
+	#	echo "endif" >> ./Makefile
+	#fi
+fi
+echo "
+clean:
+	rm -rf ./build
+" >> ./Makefile

@@ -133,6 +133,22 @@ function start_plugins {
 	return 1
 }
 
+
+function prerun {
+	echo -n "Launching prerun scripts"
+	for plugin in $ACTIVE_PLUGINS; do
+		if [ -x "$plugin_dir/$plugin/prerun" ]; then
+			echo "Running $plugin prerun..."
+			CWD=`pwd`
+			cd "$plugin_dir/$plugin"
+			exec_prefix=`$stard_bin/exec_prefix "$plugin_dir/$plugin/prerun"`
+			$exec_prefix $plugin_dir/$plugin/prerun > "$stard_plugin_log/$plugin-log/prerun.log"
+		fi
+	done
+	return 0
+}
+
+
 ## stop_plugins
 # stop all plugins
 function stop_plugins {
@@ -230,7 +246,11 @@ function stop {
 }
 
 
-case "$1" in
+case "$1" ini
+	prerun)
+		prerun
+		exit 0
+		;;
 	start)
 		start
 		start_plugins

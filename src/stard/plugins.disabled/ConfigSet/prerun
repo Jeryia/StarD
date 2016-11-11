@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+use XML::Merge;
+
+my $merge_dir = "./StarMade";
+my $server_dir = "../../../StarMade";
+
+main(@ARGV);
+sub main {
+	my @files_xml = `cd $merge_dir; find . -name '*.xml'`;
+
+	foreach my $file (@files_xml) {
+		xml_merge("$server_dir/$file", "$merge_dir/$file");
+	}
+}
+
+
+
+
+sub xml_merge {
+	my $orig_file = shift(@_);
+	my $merge_file = shift(@_);
+
+	my $r_fh;
+	my $w_fh;
+	my $merge_obj = XML::Merge->new(
+		'filename' => $orig_file
+	);
+
+	$merge_obj->merge(
+		'filename' => $merge_file, 
+		'conflict_resolution_method' => 'merg'
+	);
+	$merge_obj->write();
+	
+	open($r_fh, "<", $orig_file) or return 0;
+	my @contents = <$r_fh>;
+	close($r_fh);
+
+	open($w_fh, ">", $orig_file) or return 0;
+	my @new_contents;
+	Line: foreach my $line (@contents) {
+		if ($line=~/^<\?xml/) {
+			next Line;
+		}
+		push(@new_contents, $line);
+	}
+	print $w_fh join("", @new_contents);
+	close($w_fh);
+}

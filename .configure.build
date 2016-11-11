@@ -1,0 +1,157 @@
+#!/bin/bash
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
+# The makers of stard make no claim of ownership or relationship with the owners of StarMade
+
+function subs_strings {
+	
+	echo "	sed -i \"s,%BASH%,\$(BASH),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%PERL%,\$(PERL),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%PYTHON%,\$(PYTHON),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%JAVA%,\$(JAVA),g\" $1" >> ./Makefile
+
+	echo "	sed -i \"s,%SBINDIR%,\$(SBINDIR),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%SYSCONFDIR%,\$(SYSCONFDIR),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%LOCALSTATEDIR%,\$(LOCALSTATEDIR),g\" $1" >> ./Makefile
+
+	echo "	sed -i \"s,%STARMADEDIR%,\$(STARMADEDIR),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%SYSTEMDSERVICEDIR%,\$(SYSTEMDSERVICEDIR),g\" $1" >> ./Makefile
+
+	echo "	sed -i \"s,%USER%,\$(USER),g\" $1" >> ./Makefile
+	echo "	sed -i \"s,%STANDALONE%,\$(STANDALONE),g\" $1" >> ./Makefile
+	echo "" >> ./Makefile
+}
+
+echo -n "Writing New Makefile..."
+echo -n '' > ./Makefile
+
+echo "
+NAME			= stard
+VERSION			= 0.0.1
+STARMADE_SOURCE		= ./src/starmade/
+STARD_SOURCE		= ./src/stard/
+SYSTEM_SOURCE		= ./src/system/
+BUILD_DIR		= ./build
+STARMADE_BUILD		= \$(BUILD_DIR)/starmade
+STARD_BUILD		= \$(STARMADE_BUILD)/stard
+BASE_DIR		= \$(pwd)
+
+
+## location settings
+BASH 			= $BASH
+PERL 			= $PERL
+PYTHON 			= $PYTHON
+JAVA 			= $JAVA
+PREFIX			= $PREFIX
+SBINDIR			= \$(PREFIX)$SBINDIR
+SYSCONFDIR		= $SYSCONFDIR
+LOCALSTATEDIR		= \$(PREFIX)/$LOCALSTATEDIR
+STARMADEDIR		= \$(LOCALSTATEDIR)$STARMADEDIR
+SYSTEMDSERVICEDIR	= $SYSTEMDSERVICEDIR
+
+## general configs
+USER			= $USER
+STANDALONE		= $STANDALONE
+
+## environment
+USERID			= \$(shell id -u )
+
+all: clean mkbuild build_stard build_system
+
+mkbuild: 
+	mkdir -p \$(STARMADE_BUILD)/spool
+	mkdir \$(STARMADE_BUILD)/tools
+	ln -s ./StarMade \$(STARMADE_BUILD)/server
+build_stard:
+	cp -pfr \$(STARD_SOURCE) \$(STARD_BUILD)
+	chmod 755 \$(STARD_BUILD)/bin/*
+	chmod 644 \$(STARD_BUILD)/lib/*
+	chmod 755 \$(STARD_BUILD)/lib/perl
+	chmod 755 \$(STARD_BUILD)/lib/perl/*
+	chmod 755 \$(STARD_BUILD)/lib/python
+	chmod 755 \$(STARD_BUILD)/lib/python/*
+	chmod 644 \$(STARD_BUILD)/lib/perl/Stard/*
+	chmod 644 \$(STARD_BUILD)/lib/perl/Starmade/*
+" >> ./Makefile
+
+if [ $STANDALONE -ne 1 ]; then
+	echo "	mv \$(STARD_BUILD)/stard.cfg \$(STARD_BUILD)/stard.cfg.newversion" >> ./Makefile
+fi
+
+echo "
+
+
+build_system:
+	cp -pfr \$(SYSTEM_SOURCE)/sbin/ \$(BUILD_DIR)/sbin
+	cp -pfr \$(SYSTEM_SOURCE)/etc/ \$(BUILD_DIR)/etc
+	cp -pf \$(SYSTEM_SOURCE)/stard.initv \$(BUILD_DIR)/
+
+	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.disabled
+	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins
+	mkdir -p \$(BUILD_DIR)/starmade/stard/log
+	mkdir -p \$(BUILD_DIR)/starmade/stard/spool
+" >> ./Makefile
+
+if [ $STANDALONE -eq 1 ]; then
+	echo "	cp \$(BUILD_DIR)/etc/stard-launcher.conf.standalone \$(BUILD_DIR)/starmade/stard/stard-launcher.conf" >> ./Makefile
+fi
+
+
+
+
+subs_strings '$(STARD_BUILD)/bin/stard-launcher'
+subs_strings '$(STARD_BUILD)/bin/stard_cmd'
+subs_strings '$(STARD_BUILD)/bin/stard_get_plugin_list'
+subs_strings '$(STARD_BUILD)/bin/stard-multiplexer'
+subs_strings '$(STARD_BUILD)/bin/stard_daemons'
+subs_strings '$(STARD_BUILD)/bin/stard_gen_passwd'
+subs_strings '$(STARD_BUILD)/bin/stard_shell'
+subs_strings '$(STARD_BUILD)/bin/stard_test'
+subs_strings '$(STARD_BUILD)/bin/exec_prefix'
+subs_strings '$(STARD_BUILD)/lib/stard_lib.pm'
+subs_strings '$(STARD_BUILD)/lib/stard_core.pm'
+subs_strings '$(STARD_BUILD)/lib/stard_map.pm'
+subs_strings '$(STARD_BUILD)/bin/rotate_logs'
+subs_strings '$(STARD_BUILD)/bin/download_starmade'
+subs_strings '$(STARD_BUILD)/bin/fix_plugins'
+
+
+subs_strings '$(STARD_BUILD)/lib/perl/Stard/Base.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Stard/Log.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Stard/Multiplexer.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Stard/Plugin.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Base.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Faction.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Map.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Message.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Misc.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Player.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Regression.pm'
+subs_strings '$(STARD_BUILD)/lib/perl/Starmade/Sector.pm'
+
+subs_strings '$(STARD_BUILD)/libexec/stard_cmd'
+subs_strings '$(STARD_BUILD)/libexec/stard_cmd'
+subs_strings '$(STARD_BUILD)/libexec/stard_shell'
+subs_strings '$(STARD_BUILD)/libexec/stard_gen_passwd'
+subs_strings '$(STARD_BUILD)/libexec/stard_get_plugin_list'
+subs_strings '$(STARD_BUILD)/libexec/stard_test'
+subs_strings '$(STARD_BUILD)/libexec/stard-multiplexer'
+
+subs_strings '$(BUILD_DIR)/sbin/stard'
+subs_strings '$(BUILD_DIR)/sbin/stard-backup'
+subs_strings '$(BUILD_DIR)/etc/stard'
+subs_strings '$(BUILD_DIR)/etc/stard-launcher.conf.standalone'
+subs_strings '$(BUILD_DIR)/stard.initv'
+
