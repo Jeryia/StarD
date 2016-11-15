@@ -1,0 +1,1 @@
+Set Starmade config files on startup (allows you to keep settings persistant through updates)
