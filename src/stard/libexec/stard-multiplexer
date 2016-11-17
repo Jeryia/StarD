@@ -62,7 +62,7 @@ sub main {
 	my $starmade_home = "$stard_home/..";
 	my $spool = "$starmade_home/spool";
 
-	# read config file
+	# read starmade output
 	my $serverOutFile = "$spool/serverErr";
 	my $serverOUT_fh;
 
