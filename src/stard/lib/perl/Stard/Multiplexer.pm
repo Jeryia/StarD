@@ -334,7 +334,7 @@ sub chat_messages {
 				if (!$args) {
 					$args = '';
 				};
-				if (!($cmd =~/^\./ || $cmd=~/^\//)) {
+				if (!($cmd =~/^\./ || $cmd=~/\//)) {
 					stdout_log("Spawning server command '$cmd $player $args'", 6);
 					plugin_command($cmd, $player, quotewords('\s+', 0, $args));
 				};
