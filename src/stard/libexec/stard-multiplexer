@@ -75,7 +75,7 @@ sub main {
 		exit 1;
 	}
 
-
+	# Main loop for analysing starmade output
 	stdout_log("$prog has started successfully!", 5);
 	while( <$serverOUT_fh> ) {
 		my $message = $_;
