@@ -2,6 +2,9 @@
 # StarMade™ is a registered trademark of Schine GmbH (All Rights Reserved)*
 # The makers of stard make no claim of ownership or relationship with the owners of StarMade
 
+# Description: downloads the latest version of starmade, 
+# or updates to the latest version of starmade
+
 LASTFILE="./StarMade/version.txt"
 
 if [ "x$1" == "x--force" ]; then

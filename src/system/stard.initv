@@ -62,6 +62,10 @@ function kill_procs {
 	done
 }
 
+
+## status
+# Check that status of the stard daemons
+# OUTPUT: returns true if running else false
 function status {
 	echo -n "Checking $NAME..."
 	if [ -f $PIDFILE ]; then
@@ -97,7 +101,9 @@ function status {
 	return 0
 }
 
-
+## start
+# starts the stard deamons
+# OUTPUT: true if successfull, otherwise false
 function start {
 	echo -n "Starting $NAME..."
 	nohup $EXEC > /dev/null 2>&1 &
@@ -112,6 +118,10 @@ function start {
 	fi
 	
 }
+
+## stop
+# stop the stard daemons
+# OUTPUT: true is successfull false if not
 function stop {
         echo -n "Stopping $NAME..."
 	if [ -f $PIDFILE ]; then
@@ -147,18 +157,24 @@ function stop {
 	echo
 }
 
+## update-sm
+# Tells starmade to update itself
 function update-sm {
 	echo "Performing update on StarMade"
 	cd "$baseDir"
 	su $USER -c "./stard/bin/download_starmade --update" || return 1
 }
 
+## backup
+# backs up stard and starmade
 function backup {
 	echo "Performing backup of stard (including StarMade)"
 	cd "$baseDir"
 	rsync -arv --delete "$baseDir"/* "$baseDir.bak"
 }
 
+## restore
+# restores the previous backup of starmade and stard
 function restore {
 	echo "Are you sure you want to restore (The current server will be deleted and replaced with the latest backup):"
 	echo -n "Please Type Yes or No:"
@@ -173,6 +189,8 @@ function restore {
 	fi
 }
 
+
+#### execution starts here ####
 case "$1" in
 start)
 	status > /dev/null 2>&1
