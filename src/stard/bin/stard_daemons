@@ -262,7 +262,9 @@ case "$1" in
 	;;
 	restart)
 		stop
+		stop_plugins
 		start
+		start_plugins
 	;;		
 	restart-plugins)
 		stop_plugins
