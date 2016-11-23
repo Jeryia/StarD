@@ -77,7 +77,7 @@ sub starmade_escape_chars {
 	my @chars = split("",$string);
 
 	my $valid_chars = "abcdefghijklmnopqrstuvwxyz1234567890_/ \t@#%^&*()-+\[\].,<>?!\":;\{\}\(\)\*\&\^!";
-	my $output;
+	my $output = '';
 
 
 	foreach my $char (@chars) {
@@ -135,7 +135,13 @@ sub starmade_cmd {
 
 	my @output;
 
-	starmade_if_debug(2, "starmade_cmd($cmd, " . join(", ", @args) . ")");
+	if (@args) {
+		starmade_if_debug(2, "starmade_cmd($cmd, " . join(", ", @args) . ")");
+	}
+	else {
+		starmade_if_debug(2, "starmade_cmd($cmd)");
+	}
+
 	starmade_validate_env();
 
 	foreach my $entry (@args) {
