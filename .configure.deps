@@ -153,6 +153,18 @@ else
 	exit 1
 fi
 
+echo -n "perl-XML::Merge... "
+$PERL -e "use XML::Merge" 
+RET=$?
+if [ $RET -eq 0 ]; then
+	echo "ok"
+else
+	echo "not ok"
+	echo "FAILED to locate perl module XML::Merge... aborting."
+	echo "Look into installing this package from your distro's repositories"
+	exit 1
+fi
+
 echo -n "perl-Carp... "
 $PERL -e "use Carp" 
 RET=$?

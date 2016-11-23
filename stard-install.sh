@@ -57,7 +57,7 @@ if [ "x$INSTALL_DEPS" == 'xy' ]; then
 		sudo yum install -y epel-release
 		echo "Program wants to run 'yum install -y java perl perl-Carp perl-File-Path perl-File-Basename perl-Text-ParseWords perl-Config-IniFiles perl-Proc-Daemon perl-PathTools procps-ng sed coreutils rsync make wget'."
 		echo "If you are being asked for a password here, it's because it wants you to use your sudo password"
-		sudo yum install -y java perl perl-Carp perl-File-Path perl-File-Basename perl-Text-ParseWords perl-Config-IniFiles perl-Proc-Daemon perl-PathTools procps-ng sed coreutils rsync make wget 
+		sudo yum install -y java perl perl-Carp perl-File-Path perl-File-Basename perl-Text-ParseWords perl-Config-IniFiles perl-Proc-Daemon perl-PathTools procps-ng sed coreutils rsync make wget perl-XML-Merge 
 	fi
 
 	command -v apt-get
