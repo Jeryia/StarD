@@ -11,10 +11,17 @@ main(@ARGV);
 sub main {
 	mkdir($merge_dir);
 	my @files_xml = split("\n",`cd $merge_dir; find . -name '*.xml'`);
+	my @files_cfg = split("\n",`cd $merge_dir; find . -name '*.cfg'`);
 
 	foreach my $file (@files_xml) {
 		if (-r "$merge_dir/$file" && -w "$server_dir/$file") {
 			xml_merge("$server_dir/$file", "$merge_dir/$file");
+		}
+	}
+
+	foreach my $file (@files_cfg) {
+		if (-r "$merge_dir/$file" && -w "$server_dir/$file") {
+			cfg_merge("$server_dir/$file", "$merge_dir/$file");
 		}
 	}
 }
@@ -52,4 +59,118 @@ sub xml_merge {
 	}
 	print $w_fh join("", @new_contents);
 	close($w_fh);
+}
+
+## cfg_merge
+# merge two starmade configuration files
+# INPUT1: original file
+# INPUT2: merge file
+# OUTPUT: 
+sub cfg_merge {
+	my $orig_file = shift(@_);
+	my $merge_file = shift(@_);
+
+
+	my $orig_r_fh;
+	my $orig_w_fh;
+
+
+	my $merge_fh;
+	my %merge_values;
+	my %merge_unused;
+	my @tmp;
+
+
+	# open merge file to get it's contents
+	if (!open($merge_fh, "<", $merge_file)) {
+		warn "failed to open $merge_file: $!\n";
+		return;
+	}
+
+	@tmp = <$merge_fh>;
+	close($merge_fh);
+
+	foreach my $line (@tmp) {
+		my ($key, $value) = cfg_get_keypair($line);
+		$merge_values{$key} = $value;
+		$merge_unused{$key} = 1;
+	}
+
+
+	# open and lock original file for modification
+	if (!open($orig_r_fh, "<", $orig_file)) {
+		warn "failed to open $orig_file: $!\n";
+		return;
+	}
+	flock($orig_r_fh,2) or return;
+
+	# get contents
+	my @new_contents = <$orig_r_fh>;
+
+
+	# modify the contents of the new file
+	foreach my $line (@new_contents) {
+		my ($key, $value) = cfg_get_keypair($line);
+		if ($merge_values{$key}) {
+			$line = cfg_set_keypair($line, $key, $merge_values{$key});
+			delete $merge_unused{$key};
+		}
+	}
+
+	foreach my $key (keys %merge_unused) {
+		push(@new_contents, "$key = $merge_values{$key}\n");
+	}
+
+	if (!open($orig_w_fh, ">", $orig_file)) {
+		warn "failed to open $orig_file: $!\n";
+		return;
+	}
+
+	print $orig_w_fh join('', @new_contents);
+	close($orig_w_fh);
+	close($orig_r_fh);
+}
+
+## cfg_get_keypair
+# get the keypair value and key from a given config line
+# INPUT1: line to evaluate
+sub cfg_get_keypair {
+	my $line = shift(@_);
+
+	my $key;
+	my $value;
+
+	# key = value //comment
+	if ($line =~/(\S+)\s*=(.*)\/\// ||
+		$line =~/(\S+)\s*=\s*(.*)/
+	) {
+		$key = $1;
+		$value = $2;
+
+		# get rid of whitespace in beginning and end.
+		$key=~s/^\s+//g;
+		$key=~s/\s+$//g;
+		$value=~s/^\s+//g;
+		$value=~s/\s+$//g;
+		return ($key, $value);
+	}
+}
+
+## cfg_set_keypair
+# get the keypair value and key from a given config line
+# INPUT1: line to evaluate
+sub cfg_set_keypair {
+	my $line = shift(@_);
+	my $new_key = shift(@_);
+	my $new_value = shift(@_);
+
+	my ($old_key, $old_value) = cfg_get_keypair($line);
+
+	if ($new_key ne $old_key) {
+		return;
+	}
+
+	$line=~s/=(\s*)$old_value/=$1$new_value/;
+
+	return $line;
 }
