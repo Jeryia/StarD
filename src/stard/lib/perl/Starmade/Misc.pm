@@ -26,7 +26,7 @@ sub starmade_search {
 
 	foreach my $line (@output) {
 		#RETURN: [SERVER, FOUND: Station_Piratestation Alpha_6_9_0_1441738472505 -> (6, 9, 0), 0]
-		if ($line=~/RETURN: \[SERVER, FOUND: (.*) -> \((\d+), (\d+), (\d+)\), \d+]/) {
+		if ($line=~/RETURN: \[SERVER, FOUND: (.*) -> \((-?\d+), (-?\d+), (-?\d+)\), \d+]/) {
 			$ships{$1} = "$2 $3 $4";
 			starmade_if_debug(1, "starmade_search: return(multiline): %HASH{$1} = '$2 $3 $4'");
 		}
