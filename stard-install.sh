@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.2.1"
+VERSION="0.3.0"
 INSTALLDIR='/var'
 STANDALONE=0
 
@@ -63,7 +63,8 @@ if [ "x$INSTALL_DEPS" == 'xy' ]; then
 	command -v apt-get
 	RET=$?
 	if [ $RET -eq 0 ]; then
-		sudo apt-get install -y default-jre perl-base perl-modules procps coreutils sed rsync make wget libconfig-inifiles-perl libproc-daemon-perl python-minimal 
+		sudo apt-get install -y default-jre perl-base perl-modules procps coreutils sed rsync make wget libconfig-inifiles-perl libproc-daemon-perl python-minimal cpan
+		cpan -i XML::Merge
 	fi
 fi
 
