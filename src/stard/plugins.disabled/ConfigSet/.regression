@@ -1,0 +1,49 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Regression;
+
+
+my $stard_home = "../../";
+my $stard_plugins = "$stard_home/plugins";
+starmade_setup_lib_env($stard_home);
+starmade_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+	my $plugin = "ConfigSet";
+
+
+	my $reg_dir = "./.reg/";
+
+	my $config_dir = "../../../StarMade/";
+	my $merge_dir = "./StarMade/";
+
+	# setup test environment
+	system("cp", "$reg_dir/test.xml", "$config_dir/test.xml");
+	system("cp", "$reg_dir/merge.xml", "$merge_dir/test.xml");
+
+	system("cp", "$reg_dir/test.cfg", "$config_dir/test.cfg");
+	system("cp", "$reg_dir/merge.cfg", "$merge_dir/test.cfg");
+
+	# run tests	
+	test_result("$plugin - returns 0", system("./prerun") == 0);
+
+	test_result("$plugin - xml merge", system("diff", "$config_dir/test.xml", "$reg_dir/final.xml") == 0);
+	test_result("$plugin - cfg merge", system("diff", "$config_dir/test.cfg", "$reg_dir/final.cfg") == 0);
+
+	# cleanup
+	unlink("$config_dir/test.xml");
+	unlink("$merge_dir/test.xml");
+	unlink("$config_dir/test.cfg");
+	unlink("$merge_dir/test.cfg");
+}
+
+
+

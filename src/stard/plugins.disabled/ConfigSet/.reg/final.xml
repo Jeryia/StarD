@@ -1,0 +1,8 @@
+<BlockBehavior>
+        <General>
+                <BasicValues>                        
+                        <DefensiveEffectMaxPercentMassMult>12</DefensiveEffectMaxPercentMassMult>   <!-- multiplication of mass used as max percent for defensive effects: ratio = effectBlockCount / (mass*DefensiveEffectMaxPercentMassMult)-->
+                        <other_thing>1</other_thing>   <!-- some useless thing)-->
+                </BasicValues>
+        </General>
+</BlockBehavior>
