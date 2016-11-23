@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Faction;
 use Starmade::Player;
 use Starmade::Sector;
 use Starmade::Misc;
@@ -217,6 +219,7 @@ sub launch_attack {
 	my $level = shift(@_);
 
 	my %wave_options = %{stard_read_config("./waves.conf")};
+	my %config_options = %{stard_read_config($CONFIG)};
 	my $wave_closest_name;
 	my $wave_closest_level;
 	my @wave_choices;
@@ -229,7 +232,7 @@ sub launch_attack {
 	foreach my $wave (keys %wave_options) {
 		my $wave_diff = abs($level - $wave_options{$wave}{level});
 
-		if ($wave_diff <= $wave_options{General}{wave_variance}) {
+		if ($wave_diff <= $config_options{General}{wave_variance}) {
 			push(@wave_choices, $wave);
 		}
 		elsif (!(defined $wave_closest_name) || $wave_diff < $wave_closest_level) {
@@ -270,7 +273,7 @@ sub start_attack_event {
 			sleep $wave{scout_wait};
 			%player_info = %{starmade_player_info($player)};
 		}
-		if (!get_object_name($object)) {
+		if (!get_object_name($player, $object)) {
 			# if scout is disabled/destroyed cancel attack
 			return;
 		}
@@ -299,7 +302,6 @@ sub start_attack_event {
 		my $pos = starmade_location_add($attack_wave_pos[$i], $attack_center);
 		create_ship_object($player, $object, $player_info{sector}, $pos);
 	}
-	starmade_faction_mod_relations($player_info{faction},-10000, 'enemy');
 }
 
 ## _random_pos
@@ -417,7 +419,7 @@ sub ship_object_jump {
 	my $player = shift(@_);
 	my $id = shift(@_);
 
-	my $obj_name = get_object_name($id);
+	my $obj_name = get_object_name($player, $id);
 	my $obj_type = get_object_type($id);
 	my %object_config = %{stard_read_config("./objects.conf")};
 	my $sector;
@@ -638,14 +640,18 @@ sub clean_far_ship {
 
 	# clean out ones that no longer exist
 	if (!$ships{$name}) {
+		warn "Could not determine location of ship '$name'!\n";
 		remove_ship_object($player, $id);
-	
+		return;
 	}
 	$ship_loc = $ships{$name};
 	
 	
-	foreach my $player (keys %player_list) {
+	Player: foreach my $player (keys %player_list) {
 		my $sector = $player_list{$player}{sector};
+		if (!$sector) {
+			next Player;
+		}
 		my $distance = starmade_loc_distance($sector, $ship_loc);
 		if ($distance >= 2) {
 			remove_ship_object($player, $id);
