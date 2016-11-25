@@ -314,7 +314,7 @@ sub starmade_teleport_to {
 
 
 ## starmade_god_mode
-# Change the gode mode status of a player
+# Change the god mode status of a player
 # INPUT1: player name
 # INPUT2: (boolean) true to activate god mode, false to deactivate
 # OUTPUT: (boolean) true if successfull
