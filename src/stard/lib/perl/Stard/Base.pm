@@ -87,6 +87,15 @@ sub stard_if_debug {
 	}
 }
 
+## stard_set_debug
+# set the debugging level for the stard libraries
+# INPUT1: debug level to set
+sub stard_set_debug {
+	my $level = $_[0];
+	print "stard_set_debug($level)\n";
+	$debug_level = $level;
+}
+
 ## get_exec_prefix
 # Get the first line in a file, and use it as an executable
 # INPUT1: executable
