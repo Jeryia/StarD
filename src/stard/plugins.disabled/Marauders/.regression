@@ -105,6 +105,7 @@ sub main {
 	$ship_type = "Marusian Skimmer";
 	%player_info = %{starmade_player_info($player)};
 	$ship_id = create_ship_object($player, $ship_type, $player_info{sector}, '0 0 0');
+	sleep 1;
 	%sector_info = %{starmade_sector_info($player_info{sector})};
 	test_result("plugin-$plugin - create_ship_object", $sector_info{entity}{"ENTITY_SHIP_$ship_type\_$ship_id"});
 	test_result("plugin-$plugin - get_object_name", get_object_name($player, $ship_id) eq "$ship_type\_$ship_id");
