@@ -97,7 +97,7 @@ sub stard_set_debug {
 }
 
 ## get_exec_prefix
-# Get the first line in a file, and use it as an executable
+# Determine what program to execute the script with
 # INPUT1: executable
 # OUTPUT: command to launch with
 sub get_exec_prefix {
@@ -108,7 +108,7 @@ sub get_exec_prefix {
 	my $prefix = <$fh>;
 	close($fh);
 
-	#compare against 
+	# compare against 
 	if ($prefix =~/#!(.*)\n/) {
 		my $exec_prefix = $1;
 		if ($exec_prefix_table{$exec_prefix}) {
@@ -188,13 +188,13 @@ sub get_stard_conf_field {
 }
 
 ## get_stard_home
-# Output: path to the stard home
+# Output: Path to the stard home
 sub get_stard_home {
 	return $stard_home;
 }
 
 ## get_stard_plugins_dir
-# Output: path to the stard home
+# Output: Path to the stard home
 sub get_stard_plugins_dir {
 	return $stard_plugins;
 }

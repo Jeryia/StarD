@@ -317,7 +317,7 @@ sub starmade_teleport_to {
 # Change the god mode status of a player
 # INPUT1: player name
 # INPUT2: (boolean) true to activate god mode, false to deactivate
-# OUTPUT: (boolean) true if successfull
+# OUTPUT: (boolean) true if successful
 sub starmade_god_mode {
 	my $player = $_[0];
 	my $mode = $_[1];
@@ -348,8 +348,8 @@ sub starmade_god_mode {
 ## starmade_invisibility_mode
 # Change the invisability mode status of a player
 # INPUT1: player name
-# INPUT2; (boolean) true to activate invisability mode, false to deactivate
-# OUTPUT: (boolean) true if successfull
+# INPUT2: (boolean) true to activate invisability mode, false to deactivate
+# OUTPUT: (boolean) true if successful
 sub starmade_invisibility_mode {
 	my $player = $_[0];
 	my $mode = $_[1];
