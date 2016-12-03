@@ -36,6 +36,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(stard_setup_lib_env get_active_plugin_list validate_plugins);
 
+my @plugin_list = ();
 
 ##### DANGER GLOBAL VARIABLE!!! #####
 my $GLOBAL_overheat_entity;
@@ -47,8 +48,11 @@ my $GLOBAL_overheat_entity;
 sub get_active_plugin_list {
 	stard_lib_validate_env();
 	my @plugins = ();
-	my $stard_plugins = get_stard_plugins_dir();
+	if (@plugin_list) {
+		return \@plugin_list;
+	}
 
+	my $stard_plugins = get_stard_plugins_dir();
 	opendir(my $dh, $stard_plugins) or die "could not open '$stard_plugins': $!\n";
 	while (readdir $dh) {
 		my $plugin = $_;
@@ -56,6 +60,7 @@ sub get_active_plugin_list {
 			push(@plugins, $plugin);
 		}
 	}
+	@plugin_list = @plugins;
 	return \@plugins;
 }
 

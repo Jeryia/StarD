@@ -5,6 +5,7 @@ use Cwd;
 
 use lib("./lib/perl");
 use Starmade::Base;
+use Stard::Base;
 use Stard::Multiplexer;
 use Stard::Plugin;
 use Stard::Log;
@@ -28,8 +29,6 @@ my $prog = $0;
 #load stard libraries
 stard_setup_lib_env($stard_home);
 starmade_setup_lib_env($stard_home);
-set_loglevel(6);
-
 
 
 main();
@@ -52,6 +51,14 @@ sub main {
 	my $serverOutFile = "$spool/serverErr";
 	my $serverOUT_fh;
 
+
+	if (get_stard_conf_field('loglevel')) {
+		set_loglevel(get_stard_conf_field('loglevel'));
+	}
+	else {
+		set_loglevel(6);
+	}
+
 	# Check if plugins look ok
 	validate_plugins();
 
@@ -66,17 +73,18 @@ sub main {
 	while( <$serverOUT_fh> ) {
 		my $message = $_;
 
-		# temp fix in the starmade output, some entries spell server wrong :P	
-		$message=~s/^\[SREVER\]/\[SERVER\]/ig;
 
 		
 		if ($message =~/^\[SERVER\]/) {
+			# temp fix in the starmade output, some entries spell server wrong :P	
+			$message=~s/^\[SREVER\]/\[SERVER\]/ig;
+
 			server_messages($message);
 		}
-		if ($message =~/^\[AI\]/) {
+		elsif ($message =~/^\[AI\]/) {
 			ai_messages($message);
 		}
-		elsif ($message =~/\[CHANNELROUTER\]/) {
+		elsif ($message =~/^\[CHANNELROUTER\]/) {
 			chat_messages($message);
 		};
 

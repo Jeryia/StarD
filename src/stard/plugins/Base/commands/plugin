@@ -106,7 +106,10 @@ sub load_plugin {
 		exit 1;
 	}
 	move("$plugins_disabled_dir/$plugin", "$plugins_dir/$plugin") or die "Failed to move '$plugins_disabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
+	starmade_broadcast("Restarting Plugin Deamons. Standby...");
+	stop_stard_deamons($player);
 	start_stard_deamons($player);
+	starmade_broadcast("Plugin deamon restart complete!");
 	starmade_broadcast("Plugin: '$plugin' has been loaded");
 }
 

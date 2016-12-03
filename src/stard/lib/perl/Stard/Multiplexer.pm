@@ -184,82 +184,16 @@ sub server_messages {
 		}
 		return;
 	};
-	
-	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia [Jeryia]*; id(3)(2)f(0)]
-	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+) \[(\S+)\]\*; .*\]/) {
-		my $player = $1;
-		my $account = $2;
-		plugin_server_event("playerSpawn", $player, $account);
-		return;
-	};
-	
-	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia; id(3)(2)f(0)]
-	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+); .*\]/) {
-		my $player = $1;
-		plugin_server_event("playerSpawn", $player);
-		return;
-	};
+        # [SERVER][SEGMENTCONTROLLER] PERMANENTLY DELETING ENTITY: ENTITY_SPACESTATION_Beta_base_1443297379.ent
+	if (
+		$message =~/^\[SERVER\]\[SEGMENTCONTROLLER\] PERMANENTLY DELETING ENTITY: ENTITY_(.+)\.ent/
+	) {
 
-	# [2015-10-03 11:08:20] [SERVER][LOGIN] new client connected. given id: 2: description: Jeryia
-	if ($message =~/^\[SERVER\]\[LOGIN\] new client connected. given id: \d+: description: (\S+)/) {
-		my $player = $1;
-		plugin_server_event("playerLogin", $player);
+		my $entity = $1;
+		
+		plugin_server_event("entityDestroyed", $entity);
 		return;
 	};
-
-	#[SERVER][DISCONNECT] Client 'RegisteredClient: Jeryia (5) connected: true' HAS BEEN DISCONNECTED
-	if ($message =~/^\[SERVER\]\[DISCONNECT\] Client 'RegisteredClient: (\S+) \(\d+\) connected: true' HAS BEEN DISCONNECTED.*/) {
-		my $player = $1;
-		plugin_server_event("playerLogout", $player);
-		return;
-	};
-
-	# [SERVER] character PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(486)] has been deleted by Sector[487](8, 8, 8)
-	if ($message =~/^\[SERVER\] character PlayerCharacter\[\(ENTITY_PLAYERCHARACTER_(.*)\)\(\d+\)\] has been deleted by (.*)$/) {
-		my $player = $1;
-		my $killer = $2;
-		plugin_server_event("playerDeath", $player, $killer);
-		return;
-	};
-	
-	# [SERVER] onLoggedOut starting for RegisteredClient: Jeryia (2) [Jeryia]connected: true
-	if ($message =~/^\[SERVER\] onLoggedOut starting for RegisteredClient: (\S+) \(\d+\) \[(\S+)\]connected:/) {
-		my $player = $1;
-		my $account = $2;
-		plugin_server_event("playerLogout", $player, $account);
-		return;
-	};
-
-	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia ; id(3)(2)f(10041)] to 10041
-	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia2 ; id(2)(1)f(-1)] to -1
-	if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) ; id\(\d+\)\(\d+\)f\(-?\d+\)\] to (-?\d+)/) {
-		my $player = $1;
-		my $faction_id = $2;
-		if ($faction_id) {
-			plugin_server_event("playerFaction", $player, $faction_id);
-		};
-		return;
-	};
-
-	
-	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia [Jeryia]*; id(3)(2)f(10041)] to 10041
-if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+\]\*?; id\(\d+\)\(\d+\)f\(\d+\)\] to (-?\d+)/) {
-		my $player = $1;
-		my $faction_id = $2;
-		if ($faction_id) {
-			plugin_server_event("playerFaction", $player, $faction_id);
-		};
-		return;
-	};
-
-	# [SERVER][Faction] Sending removal of member Jeryia from Faction [id=10041, name=Test Faction, description=description goes here, size: 1; FP: 100]
-	if ($message =~/^\[SERVER\]\[Faction\] Sending removal of member (\S+) from Faction \[id=(-?\d+).*/) {
-		my $player = $1;
-		my $faction_id = $2;
-		plugin_server_event("playerUnFaction", $player, $faction_id);
-		return;
-	};
-
 	# [SREVER] FACTION BLOCK REMOVED FROM SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]; resetting faction !!!!!!!!!!!!!!
 	if (
 		$message =~/^\[SERVER\] FACTION BLOCK REMOVED FROM (\S+)\[(.+)\((\d+)\)\]; resetting faction/ ||
@@ -271,30 +205,6 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 		plugin_server_event("entityUnFaction", $entity);
 		return;
 	};
-
-	# [SERVER] received object faction change request 10038 for object SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]
-	if (
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\((-?\d+\))\]/ ||
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\]\((-?\d+\))/
-	) {
-	 	my $faction_id = $1;
-		my $type = $2;
-		my $entity = $3;
-		my $id = $4;
-		plugin_server_event("entityFaction", $entity, $faction_id);
-		return;
-	};
-        # [SERVER][SEGMENTCONTROLLER] PERMANENTLY DELETING ENTITY: ENTITY_SPACESTATION_Beta_base_1443297379.ent
-	if (
-		$message =~/^\[SERVER\]\[SEGMENTCONTROLLER\] PERMANENTLY DELETING ENTITY: ENTITY_(.+)\.ent/
-	) {
-
-		my $entity = $1;
-		
-		plugin_server_event("entityDestroyed", $entity);
-		return;
-	};
-
 	# [SERVER] PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(139)] has players attached. Doing Sector Change for PlS[Jeryia ; id(3)(1)f(10073)]: Sector[5](3, 8, 7) -> Sector[23](3, 8, 6)
 	# [SERVER] Ship[UE Patrol Ship MKIV_1443985052059](299) has CHARACTER. Doing Sector Change for PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(272)]: Sector[330](5, 8, 4) -> Sector[344](5, 8, 5) ID 344
 	if (
@@ -308,6 +218,83 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 		my $new_sector = "$6 $7 $8";
 		
 		plugin_server_event("sectorChange", $entity, $player, $old_sector, $new_sector);
+		return;
+	};
+	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia [Jeryia]*; id(3)(2)f(0)]
+	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+) \[(\S+)\]\*; .*\]/) {
+		my $player = $1;
+		my $account = $2;
+		plugin_server_event("playerSpawn", $player, $account);
+		return;
+	};
+	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia; id(3)(2)f(0)]
+	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+); .*\]/) {
+		my $player = $1;
+		plugin_server_event("playerSpawn", $player);
+		return;
+	};
+	# [2015-10-03 11:08:20] [SERVER][LOGIN] new client connected. given id: 2: description: Jeryia
+	if ($message =~/^\[SERVER\]\[LOGIN\] new client connected. given id: \d+: description: (\S+)/) {
+		my $player = $1;
+		plugin_server_event("playerLogin", $player);
+		return;
+	};
+	#[SERVER][DISCONNECT] Client 'RegisteredClient: Jeryia (5) connected: true' HAS BEEN DISCONNECTED
+	if ($message =~/^\[SERVER\]\[DISCONNECT\] Client 'RegisteredClient: (\S+) \(\d+\) connected: true' HAS BEEN DISCONNECTED.*/) {
+		my $player = $1;
+		plugin_server_event("playerLogout", $player);
+		return;
+	};
+	# [SERVER] character PlayerCharacter[(ENTITY_PLAYERCHARACTER_Jeryia)(486)] has been deleted by Sector[487](8, 8, 8)
+	if ($message =~/^\[SERVER\] character PlayerCharacter\[\(ENTITY_PLAYERCHARACTER_(.*)\)\(\d+\)\] has been deleted by (.*)$/) {
+		my $player = $1;
+		my $killer = $2;
+		plugin_server_event("playerDeath", $player, $killer);
+		return;
+	};
+	# [SERVER] onLoggedOut starting for RegisteredClient: Jeryia (2) [Jeryia]connected: true
+	if ($message =~/^\[SERVER\] onLoggedOut starting for RegisteredClient: (\S+) \(\d+\) \[(\S+)\]connected:/) {
+		my $player = $1;
+		my $account = $2;
+		plugin_server_event("playerLogout", $player, $account);
+		return;
+	};
+	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia ; id(3)(2)f(10041)] to 10041
+	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia2 ; id(2)(1)f(-1)] to -1
+	if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) ; id\(\d+\)\(\d+\)f\(-?\d+\)\] to (-?\d+)/) {
+		my $player = $1;
+		my $faction_id = $2;
+		if ($faction_id) {
+			plugin_server_event("playerFaction", $player, $faction_id);
+		};
+		return;
+	};
+	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia [Jeryia]*; id(3)(2)f(10041)] to 10041
+if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+\]\*?; id\(\d+\)\(\d+\)f\(\d+\)\] to (-?\d+)/) {
+		my $player = $1;
+		my $faction_id = $2;
+		if ($faction_id) {
+			plugin_server_event("playerFaction", $player, $faction_id);
+		};
+		return;
+	};
+	# [SERVER][Faction] Sending removal of member Jeryia from Faction [id=10041, name=Test Faction, description=description goes here, size: 1; FP: 100]
+	if ($message =~/^\[SERVER\]\[Faction\] Sending removal of member (\S+) from Faction \[id=(-?\d+).*/) {
+		my $player = $1;
+		my $faction_id = $2;
+		plugin_server_event("playerUnFaction", $player, $faction_id);
+		return;
+	};
+	# [SERVER] received object faction change request 10038 for object SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]
+	if (
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\((-?\d+\))\]/ ||
+		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\]\((-?\d+\))/
+	) {
+	 	my $faction_id = $1;
+		my $type = $2;
+		my $entity = $3;
+		my $id = $4;
+		plugin_server_event("entityFaction", $entity, $faction_id);
 		return;
 	};
 }
