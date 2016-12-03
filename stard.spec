@@ -1,5 +1,5 @@
 Name:		stard
-Version:	0.3.0
+Version:	0.3.1
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
@@ -106,66 +106,3 @@ fi
 
 %doc
 
-
-
-%changelog
-
-* Fri Jul 22 2016 Jeryia <johndoe@gmail.com>
-- v0.2.1
-- Fixed issues with stard-multiplexer being unable to launch serverEvents correctly
-- Fixed logging issues with the plugin commands.
-- Allow the loading and unloading of multiple plugins at once.
-- !plugin list now lists plugins in alphabetical order.
-* Wed Jul 20 2016 Jeryia <johndoe@gmail.com>
-- v0.2.0
-- Moved to new plugin loading model:
-  - plugins only need to be in the plugins directory to be loaded
-  - plugins can now be loaded and unloaded via the in game command !plugin
-  - unloaded plugins go in plugins.disabled
-  - all plugins now start in plugins.disabled except for the Base plugin as it provides the !plugin command
-  - Plugins now can have a info.txt file associated with them that contains information that !plugin can query for admins to know what a plugin is before loading it
-- Add new plugins(these are all disabled by default):
-  - GodlyAdmins - admins get god mode and invisability on login
-  - Bounty - allows players to put up and collect on bounties on other player's heads.
-  - LastLogin - allows players to check ho long ago a player last logged in.
-- Added the stard_map library. This library allows spawning of stations/ships at specific coordinates from an ini file.
-- General polishing of code. (see github commits for details)
-- Fixed an issue with updating to newer versions of starmade
-
-* Sun Jan 24 2016 Jeryia <johndoe@gmail.com>
-- v0.1.0
-- Support for multi-line messages with chat commands
-- Update support for StarMade via service stard update-sm
-- Ability to backup and restore entire setup via service stard backup and service stard restore
-- Stuck now teleports a player 300m instead of to an ajacent sector.
-- Workaround so that StarMade no longer takes up an entire cpu at all times...
-- fixed up log rotation
-- added new action stard_countdown
-* Thu Oct 29 2015 Jeryia <johndoe@gmail.com>
-- v0.0.13
-- Permission setting is less strict in starmade server directory
-- Fixing Permissions on plugins who have them set incorrectly
-* Sun Oct 18 2015 Jeryia <johndoe@gmail.com>
-- v0.0.12
-- Logging has been fixed to report the real time of the event instead of the time the server started
-- The Base plugin is now loaded by default.
-* Fri Oct 16 2015 Jeryia <johndoe@gmail.com>
-- v0.0.11
-- Install scripts now create required directories, since git deletes them (as they are empty
-* Tue Oct 13 2015 Jeryia <johndoe@gmail.com>
-- v0.0.10
-- Standalone version fully tested and ready for release
-- Modified libraries to be more like standard perl libraries
-- Fixed a bug where this would not catch entities unfactioning
-* Sat Sep 19 2015 Jeryia <johndoe@gmail.com>
-- v0.0.9
-- Standalone version now compiles and seems to run ok. Still considered experimental.
-- Pulled some self healing bits back into the script (now will download starmade for you, and set the keys if they are not set).
-- Added feature to set the current working directory of all called plugin actions to be the plugin's directory.
-- Daemon configuration is now stored in /etc/sysconfig (red hat) or /etc/default (debian)
-* Wed Sep 9 2015 Jeryia <johndoe@gmail.com>
-- v0.0.2
-- Regression testing fully added.
-- much refactoring
-* Mon Sep 7 2015 Jeryia <johndoe@gmail.com>
-- rpm first built
