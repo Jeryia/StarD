@@ -106,6 +106,7 @@ build_system:
 
 if [ $STANDALONE -eq 1 ]; then
 	echo "	cp \$(BUILD_DIR)/etc/stard-launcher.conf.standalone \$(BUILD_DIR)/starmade/stard/stard-launcher.conf" >> ./Makefile
+	subs_strings '\$(BUILD_DIR)/starmade/stard/stard-launcher.conf'
 fi
 
 
