@@ -149,7 +149,7 @@ function stop_plugins {
 			daemons='1'
 		fi
 	done
-	if [$daemons -eq 0 ]; then
+	if [ $daemons -eq 0 ]; then
 		echo "SUCCESS"
 		return 0;
 	fi
