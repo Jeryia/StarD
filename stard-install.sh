@@ -116,7 +116,7 @@ fi
 
 
 echo "Starmade server has started. Waiting a few to let it collect itself before we start poking it"
-sleep 20
+sleep 60
 
 
 
