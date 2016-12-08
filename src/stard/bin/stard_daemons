@@ -140,12 +140,19 @@ function prerun {
 # stop all plugins
 function stop_plugins {
 	echo -n "Stopping Plugin daemons...";
+
+	daemons='0'
 	for plugin in $PLUGINS; do
 		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
 			PID=`cat $plugin_dir/$plugin/daemon.pid`
 			kill $PID
+			daemons='1'
 		fi
 	done
+	if [$daemons -eq 0 ]; then
+		echo "SUCCESS"
+		return 0;
+	fi
 	sleep 5
 	for plugin in $PLUGINS; do
 		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
