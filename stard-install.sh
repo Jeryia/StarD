@@ -93,7 +93,12 @@ cd $INSTALLDIR/starmade/
 if [ "$STANDALONE" -eq 0 ]; then
 	sudo su starmade -c $INSTALLDIR/starmade/stard/bin/download_starmade
 else 
+	cd $INSTALLDIR/starmade/
 	$INSTALLDIR/starmade/stard/bin/download_starmade
+	cd -
+	cd $INSTALLDIR/starmade/StarMade/
+	timeout 5 java -jar StarMade.jar -server -port 9999 &
+	cd -
 fi
 	
 
