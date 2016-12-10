@@ -160,6 +160,15 @@ $bin/stard_daemons start
 # haven't seen a use for stdout so we just throw it away.
 cd $SERVER_DIR
 echo "Starting Starmade"
+
+if [ $STANDALONE -ne 0 ]; then
+	echo "StarD is now started with StarMade!"
+	echo "It may take a few moments for you to be able to log"
+	echo "onto the server, as StarMade collects itself"
+	echo
+	echo "To stop stard just hit ctrl-c"
+	echo "To start stard again type starmade/stard/bin/stard-launcher"
+fi
 # temporary fix for starmade bug (T69)
 tail -f /dev/null > $input &
 $EXEC > /dev/null 2> $error < $input
