@@ -127,6 +127,14 @@ function install_dependancies {
 		dep_list="$dep_list perl"
 	fi
 	
+	command -v lsof > /dev/null 2>&1
+	RET=$?
+	if [ $RET -ne 0 ]; then
+		apt_packages="$apt_packages lsof"
+		yum_packages="$yum_packages lsof"
+		dep_list="$dep_list lsof"
+	fi
+	
 	command -v pkill > /dev/null 2>&1
 	RET=$?
 	if [ $RET -ne 0 ]; then
@@ -270,7 +278,7 @@ function install_dependancies {
 	RET=$?
 	if [ $RET -eq 0 ]; then
 		rpm -q coreutils > /dev/null 2>&1
-		$RET=$?
+		RET=$?
 		if [ $RET -ne 0 ]; then
 			yum_packages="$yum_packages coreutils"
 		fi
@@ -351,10 +359,11 @@ function start_stard {
 	## start stard
 	if [ $STANDALONE -eq 0 ]; then
 		systemctl daemon-reload 2>&1 > /dev/null ||:
+		sleep 1
 		sudo service stard start
 
 		echo "Starmade server has started. Waiting a few to let it collect itself before we start poking it"
-		sleep 60
+		sleep 30
 	else
 		$INSTALLDIR/starmade/stard/bin/stard-launcher
 	fi
@@ -372,7 +381,7 @@ function validate_install {
 	## validate stard
 	echo "Checking to see if stard is healthy"
 	if [ $STANDALONE -eq 0 ]; then
-		sudo service stard status
+		sudo systemctl status stard --no-pager
 	fi
 
 
@@ -393,7 +402,7 @@ function validate_install {
 	else
 		echo
 		echo "Though stard is running, it is not set to start on boot."
-		echo "To set it to run at boot, run the command sudo chkconfig stard on"
+		echo "To set it to run at boot, run the command sudo systemctl enable stard"
 	fi
 }
 
