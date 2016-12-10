@@ -1,10 +1,18 @@
 #!%BASH%
 
-
+### BEGIN INIT INFO
 # stard
-# chkconfig: 345 90 20
+# Provides:		stard
+# chkconfig: 		345 90 20
+# Required-Start:	$remote_fs
+# Should-Start:		$network
+# Should-Stop:		$network
+# Default-Start:	2 3 4 5
+# Default-Stop:		
+# Short-Description:	StarMade Deamon wrapper
 # description: starmade deamon
 # processname: stard
+### END INIT INFO
 
 source "%SYSCONFDIR%/stard"
 EXEC=%SBINDIR%/stard
