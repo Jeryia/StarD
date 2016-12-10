@@ -33,6 +33,12 @@ sub general_reg {
 		exit 1;
 	}
 
+	my @admins = @{starmade_admin_list()};
+	if (!@admins) {
+		stard_cmd("/add_admin $player");
+	}
+
+
 	# Check to make sure the starmade_escape_chars function correctly escapes 
 	# the given characters
 	$test = "starmade_escape_chars - escape test";
@@ -63,7 +69,7 @@ sub general_reg {
 
 	
 	# Check to see if there are admins in the admins.txt file
-	my @admins = @{starmade_admin_list()};
+	@admins = @{starmade_admin_list()};
 	test_result($test, @admins, "no admins appear in admins.txt");
 
 
