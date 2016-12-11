@@ -8,7 +8,7 @@ use Starmade::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_search starmade_loc_distance starmade_location_add);
+@EXPORT= qw(starmade_setup_lib_env starmade_search starmade_loc_distance starmade_location_add starmade_status starmade_wait_until_running);
 
 
 
@@ -72,4 +72,34 @@ sub starmade_location_add {
 	return join(" ", @return);
 };
 
+## starmade_status
+# Check if the starmade server is running
+# OUTPUT: true if running false if not
+sub starmade_status {
+	my $status = join("", starmade_cmd("/status"));
+	if ($status =~/RETURN: \[SERVER,/) {
+		return 1;
+	};
+	return 0;
+}
+
+## starmade_wait_until_running
+# Block until the starmade daemon is found to be running. Also includes skew to 
+# avoid many daemons from querying the starmade server at once.
+sub starmade_wait_until_running {
+	my $is_running = 0;
+	my $skew = 20;
+
+	while (!$is_running) {
+		$is_running = starmade_status();
+		my $sleep_time = rand($skew);
+		select(undef, undef, undef, $sleep_time);
+	};
+}
+
+
+
+
 1;
+
+
