@@ -88,7 +88,7 @@ sub starmade_status {
 # avoid many daemons from querying the starmade server at once.
 sub starmade_wait_until_running {
 	my $is_running = 0;
-	my $skew = 20;
+	my $skew = 5;
 
 	while (!$is_running) {
 		$is_running = starmade_status();
