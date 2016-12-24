@@ -1,0 +1,270 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Misc;
+use Starmade::Player;
+use Starmade::Sector;
+use Stard::Base;
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+starmade_setup_lib_env($stard_home);
+
+my $CONFIG_DIR = "./config";
+my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
+my $MAP_FILE = "$CONFIG_DIR/civ.map";
+my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
+
+## locations of the different configuration files for each category.
+my %CATEGORY_CONF_FILE;
+$CATEGORY_CONF_FILE{ship} = "$CONFIG_DIR/buy_ships.conf";
+$CATEGORY_CONF_FILE{blocks} = "$CONFIG_DIR/buy_blocks.conf";
+$CATEGORY_CONF_FILE{dock} = "$CONFIG_DIR/buy_docks.conf";
+
+my %CATEGORY_CONF;
+$CATEGORY_CONF{ship} = "buy_ships";
+$CATEGORY_CONF{blocks} = "buy_blocks";
+$CATEGORY_CONF{dock} = "buy_docks";
+
+
+my $DATA = "./data";
+my $FACTION_MAP_FILE = "$DATA/faction_map";
+
+
+main(@ARGV);
+exit 0;
+
+#########################################################
+
+
+sub main {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $item = shift(@_);
+	my $quantity = shift(@_);
+
+
+	my %map = %{stard_read_config($MAP_FILE)};
+	my %config = ();
+
+	my %player_info = %{starmade_player_info($player)};
+
+	Object: foreach my $object (keys %map) {
+		if ($map{$object}{sector} eq $player_info{sector}) {
+			%config = %{$map{$object}};
+			last Object;
+		}
+	}
+
+	if (!%config) {
+		starmade_pm($player, "You can not buy anything here.");
+		exit 0;
+	}
+	if (starmade_loc_distance("0 0 0", $player_info{pos}) > 750) {
+		starmade_pm($player, "You are not close enough to the station to trade with it.");
+		exit 0;
+	}
+
+	shop_category($player, $category, $item, $quantity, \%config, \%player_info);
+}
+
+sub help {
+	my $player = shift(@_);
+
+	my @categories = keys %CATEGORY_CONF;
+	my $message = "Usage: !buy <category> <item> <quantity>\n";
+	$message .= "Available Categories:\n";
+	foreach my $category (@categories) {
+		$message .="$category\n";
+	}
+
+	starmade_pm($player, $message);
+}
+
+
+sub shop_category {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $item = shift(@_);
+	my $quantity = shift(@_);
+	my %config = %{shift(@_)};
+	my %player_info = %{shift(@_)};
+
+	my %avail_items;
+	
+	if (!$category) {
+		help($player);
+		return;
+	}
+	if (!$CATEGORY_CONF_FILE{$category}) {
+		starmade_pm($player, "'$category' is not a valid category");
+		help($player);
+		return;
+	}
+	if (!($config{$CATEGORY_CONF{$category}} && $config{$CATEGORY_CONF{$category}}=~/\S/)) {
+		starmade_pm($player, "$category purchase is not available at this location");
+		return;
+	}
+
+	%avail_items = %{get_avail_item_info($player, $config{$CATEGORY_CONF{$category}}, $CATEGORY_CONF_FILE{$category})};
+
+	shop_item($player, $item, $quantity, \%avail_items, \%player_info);
+
+	if (!$item) {
+		starmade_pm($player, "\nbuy with !buy $category '<$category>' <amount>\n");
+	}
+}
+
+sub get_avail_item_info {
+	my $player = shift(@_);
+	my $avail_items = shift(@_);
+	my $item_config = shift(@_);
+
+	my %items;
+	my %avail_items;
+	my @avail_item_list;
+
+	%items = %{stard_read_config($item_config)};
+	if (ref $avail_items eq 'ARRAY') {
+		foreach my $list (@{$avail_items}) {
+			push(@avail_item_list, split(",", $list));
+		}
+	}
+	else {
+		@avail_item_list = split(",", $avail_items);
+	}
+
+	foreach my $item (@avail_item_list) {
+		if ($items{$item}) {
+			$avail_items{$items{$item}{name}} = $items{$item};
+		}
+		else {
+			starmade_pm($player, "Purchase configuration for this location is broken! Please tell an admin exactly what you where doing when you saw this error.");
+			print "Error! $item is not defined in $item_config!\n";
+			exit 0;
+		}
+	}
+
+	return \%avail_items
+}
+
+sub shop_item {
+	my $player = shift(@_);
+	my $item = shift(@_);
+	my $quantity = shift(@_);
+	my %avail_items = %{shift(@_)};
+	my %player_info = %{shift(@_)};
+
+	if (!$quantity) {
+		$quantity = 1;
+	}
+	
+	my @list_order = sort(keys %avail_items);
+	
+	if (!$item) {
+		my $message = "This port offers the following items in this category:\n";
+		foreach my $item (@list_order) {
+			$message .= "######\n";
+			$message .= "Name: $item\n";
+			$message .= "Cost: $avail_items{$item}{price}\n";
+			$message .= "Desc: $avail_items{$item}{desc}\n";
+			$message .= "#\n";
+		}
+		starmade_pm($player, $message);
+		return;
+	}
+	else {
+		if ($avail_items{$item}) {
+			if (
+				$quantity > 1 && 
+				($avail_items{$item}{meta_item} || $avail_items{$item}{blueprint})
+			) {
+				starmade_pm($player, "You can only purchase one of this item at a time");
+				return;
+			}
+
+			player_pay($player, $avail_items{$item}{price} * $quantity);
+			
+			if ($avail_items{$item}{blueprint}) {
+				my $ship_name = $player . "s $item\_" . time;
+				if (!$player_info{faction}) {
+					$player_info{faction} = 0;
+				}
+				starmade_spawn_entity_pos(
+					$avail_items{$item}{blueprint},
+					$ship_name,
+					$player_info{sector},
+					$player_info{pos},
+					$player_info{faction},
+					0,
+				);
+			}
+			if ($avail_items{$item}{block_name}) {
+				if(!starmade_give_item($player, $avail_items{$item}{block_name}, $quantity)) {
+					starmade_give_credits($player, $avail_items{$item}{price} * $quantity);
+					starmade_pm($player, "Transaction failed. Please report this to an admin!");
+					print starmade_last_output();
+					return;
+				}
+			}
+			if ($avail_items{$item}{block_id}) {
+				if(!starmade_give_item_id($player, $avail_items{$item}{block_id}, $quantity)) {
+					starmade_give_credits($player, $avail_items{$item}{price} * $quantity);
+					starmade_pm($player, "Transaction failed. Please report this to an admin!");
+					print starmade_last_output();
+					return;
+				}
+			}
+			if ($avail_items{$item}{meta_item}) {
+				if(!starmade_give_metaitem($player, $avail_items{$item}{meta_item})) {
+					starmade_give_credits($player, $avail_items{$item}{price} * $quantity);
+					starmade_pm($player, "Transaction failed. Please report this to an admin!");
+					print starmade_last_output();
+					return;
+				}
+			}
+			starmade_pm($player, "You have purchased $quantity of '$item'.");
+		}
+		else {
+			starmade_pm($player, "There is no item available by the name of '$item'");
+		}
+		
+	}
+}
+
+sub player_pay {
+	my $player = shift(@_);
+	my $amount = shift(@_);
+
+	my %player_info = %{starmade_player_info($player)};
+
+	if ($player_info{credits} < $amount) {
+		starmade_pm($player, "You can't afford that item...");
+		exit 0;
+	}
+
+	if (!starmade_give_credits($player, -$amount)) {
+		starmade_pm($player, "Transaction Failed! Unable to take player's credits!");
+		exit 1;
+	}
+}
+
+
+
