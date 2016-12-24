@@ -35,7 +35,7 @@ sub general_reg {
 
 	my @admins = @{starmade_admin_list()};
 	if (!@admins) {
-		stard_cmd("/add_admin $player");
+		starmade_cmd("/add_admin $player");
 	}
 
 
