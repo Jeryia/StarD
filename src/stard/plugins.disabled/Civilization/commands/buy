@@ -10,6 +10,9 @@ use Starmade::Player;
 use Starmade::Sector;
 use Stard::Base;
 
+use lib("./lib");
+use civ_lib;
+
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -66,19 +69,8 @@ sub main {
 
 	my %player_info = %{starmade_player_info($player)};
 
-	Object: foreach my $object (keys %map) {
-		if ($map{$object}{sector} eq $player_info{sector}) {
-			%config = %{$map{$object}};
-			last Object;
-		}
-	}
-
-	if (!%config) {
-		starmade_pm($player, "You can not buy anything here.");
-		exit 0;
-	}
-	if (starmade_loc_distance("0 0 0", $player_info{pos}) > 750) {
-		starmade_pm($player, "You are not close enough to the station to trade with it.");
+	%config = get_station_options($player, \%player_info);
+	if (!%config ) {
 		exit 0;
 	}
 
