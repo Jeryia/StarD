@@ -184,6 +184,7 @@ sub starmade_repair_map {
 				stdout_log("Error despawning all...", 1);
 				return 0;
 			}
+			sleep 1;
 			starmade_spawn_entity($blueprint, $object, $sector, $owner, 0);
 		}
 
@@ -192,9 +193,8 @@ sub starmade_repair_map {
 			my @defenders = split(",", $map_config{$object}{defenders});
 			my @pos = (); 
 
-			foreach my $defender (@defenders) {
-				starmade_despawn_sector($defender, 'unused', 0, $sector);
-			}
+			starmade_despawn_mobs_bulk(\@defenders, $sector);
+
 
 			if ($map_config{$object}{defender_pos}) {
 				@pos = split(",", $map_config{$object}{defender_pos});
@@ -206,9 +206,7 @@ sub starmade_repair_map {
 			my @pirates = split(",", $map_config{$object}{pirates});
 			my @pos = (); 
 
-			foreach my $pirate (@pirates) {
-				starmade_despawn_sector($pirate, 'unused', 0, $sector);
-			}
+			starmade_despawn_mobs_bulk(\@pirates, $sector);
 
 			if ($map_config{$object}{pirate_pos}) {
 				@pos = split(",", $map_config{$object}{pirate_pos});
@@ -220,9 +218,7 @@ sub starmade_repair_map {
 			my @doodads = split(",", $map_config{$object}{doodads});
 			my @pos = ();
 
-			foreach my $doodad (@doodads) {
-				starmade_despawn_sector($doodad, 'unused', 0, $sector);
-			}
+			starmade_despawn_mobs_bulk(\@doodads, $sector);
 
 			if ($map_config{$object}{doodad_pos}) {
 				@pos = split(",", $map_config{$object}{doodad_pos});
@@ -324,6 +320,8 @@ sub starmade_remap_map_factions {
 	my %new_map = %map;
 
 	for my $object (keys %map) {
+		print "$object faction: $map{$object}{owner}\n";
+		print "faction_map: 1-> $faction_map{1}\n";
 		if ($map{$object}{owner} && $faction_map{$map{$object}{owner}}) {
 			print "map: $map{$object}{owner} -> $faction_map{$map{$object}{owner}}\n";
 			$new_map{$object}{owner} = $faction_map{$map{$object}{owner}};
