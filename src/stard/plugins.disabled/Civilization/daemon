@@ -24,7 +24,7 @@ my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
 my $MAP_FILE = "$CONFIG_DIR/civ.map";
 my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
 
-my $DATA_DIR= "./data"
+my $DATA_DIR= "./data";
 my $MAP_CREATED = "$DATA_DIR/map.created";
 
 starmade_stdlib_set_debug(2);
