@@ -8,7 +8,7 @@ use Starmade::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_search starmade_loc_distance starmade_location_add starmade_status starmade_wait_until_running);
+@EXPORT= qw(starmade_setup_lib_env starmade_search starmade_loc_distance starmade_location_add starmade_status starmade_wait_until_running starmade_random_pos);
 
 
 
@@ -71,6 +71,18 @@ sub starmade_location_add {
 	}
 	return join(" ", @return);
 };
+
+## starmade_random_pos
+# Provide a random position in to spawn units in the given sector
+# OUTPUT: position (space seperated list)
+sub random_pos {
+	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
+
+	return int(rand($sector_size * 2 - 500) - $sector_size)
+		. " " . int(rand($sector_size * 2 - 500) - $sector_size) 
+		. " " . int(rand($sector_size * 2 - 500) - $sector_size)
+	;
+}
 
 ## starmade_status
 # Check if the starmade server is running
