@@ -154,8 +154,8 @@ sub ai_messages {
 
 
 	# [AI] Setting callback Server(0) Ship[TC Cruiser MKI_1470000327736](10) Executing send callback: true
-	if ($message =~/^\[AI\] Setting callback Server\(\d+\) Ship\[(.*)\]\(\d+\) Executing send callback: true/
-	) {
+	# [AI] Setting callback Server(0) Ship[SS Minow](1475) Executing Active (Boolean) [false, true]->[false]; Current: false send callback: true
+	if ($message =~/^\[AI\] Setting callback Server\(\d+\) Ship\[(.*)\]\(\d+\) Executing/) {
 		my $entity = $1;
 		$GLOBAL_overheat_entity= $entity;
 		return;

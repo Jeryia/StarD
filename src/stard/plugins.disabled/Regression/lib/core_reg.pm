@@ -89,6 +89,15 @@ sub stard_core_reg {
 	sleep 1;
 	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'TC Cruiser MKI_1470000327736'\n"));
 	
+	# test overheating entity
+	$test_cmd = "entityOverheat";
+	$argfile = "./tmp/serverEvents/$test_cmd";
+	unlink($argfile);
+	ai_messages("[AI] Setting callback Server(0) Ship[SS Minow](1475) Executing Active (Boolean) [false, true]->[false]; Current: false send callback: true");
+	server_messages("[SERVER] MAIN CORE STARTED DESTRUCTION: in 900 seconds - started 1470514620375\n");
+	sleep 1;
+	test_result("stard_core - server_messages $test_cmd", ck_file_string($argfile, "$test_cmd 'SS Minow'\n"));
+	
 	# test player spawning for authenticated player
 	$test_cmd = "playerSpawn";
 	$argfile = "./tmp/serverEvents/$test_cmd";
