@@ -63,14 +63,73 @@ exit 0;
 
 sub main {
 	my $player = shift(@_);
+	my $action = shift(@_);
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
+	if ($action eq 'info') {
+		quests_info($player, $category, $quest);
+		exit 0;
+	}
+	if ($action eq 'get') {
+		quests_get($player, $category, $quest);
+		exit 0;
+	}
+	if ($action eq 'drop') {
+		quests_drop($player, $category, $quest);
+		exit 0;
+	}
+	help($player);
+}
+
+sub quests_info {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	
+	if (!$category) {
+		foreach my $category (keys %CATEGORY_CONF) {
+			print_active_quest_category($player, $category);
+		}
+	}
+	else {
+		print_active_quest_category($player, $category);
+	}
+}
+
+sub print_active_quest_category {
+	my $player = shift(@_);
+	my $category = shift(@_);
+
+	my @quests = @{quest_active_list($player, $category)};
+	my $message;
+	if (@quests) {
+		$message = "Current $category quests:\n";
+		for (my $i = 0; $i <= $#quests; $i++) {
+			my $quest = $quests[$i];
+			my $quest_info = %{quest_info($category, $quest)};
+			$message .= "######\n";
+			$message .= "Number: $i\n";
+			$message .= quest_info_string($category, $quest);
+			$message .= "#\n";
+		}
+	}
+	else {
+		$message = "No active quests in category: $category";
+	}
+	starmade_pm($player, $message);
+}
+
+sub quests_get {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
 
 	my %map = %{stard_read_config($MAP_FILE)};
 	my %config = ();
 
 	my %player_info = %{starmade_player_info($player)};
+
 
 	%config = %{get_station_options($player, \%player_info)};
 	if (!%config ) {
@@ -84,7 +143,7 @@ sub help {
 	my $player = shift(@_);
 
 	my @categories = keys %CATEGORY_CONF;
-	my $message = "Usage: !quest <category> <quest> \n";
+	my $message = "Usage: !quest <info|get|drop> <category> <quest> \n";
 	$message .= "Available Categories:\n";
 	foreach my $category (@categories) {
 		$message .="$category\n";
@@ -176,15 +235,7 @@ sub shop_quest {
 			my $quest = $list_order[$i];
 			$message .= "######\n";
 			$message .= "Number: $i\n";
-			$message .= "Name: $quest\n";
-			$message .= "Type: $avail_quests{$quest}{type}\n";
-			$message .= "Desc: $avail_quests{$quest}{desc}\n";
-			if ($avail_quests{$quest}{reward_hidden}) {
-				$message .= "Reward: Unknown\n";
-			}
-			else {
-				$message .= "Reward: $avail_quests{$quest}{reward_credits} Credits\n";
-			}
+			$message .= quest_info_string($category, $quest);
 			$message .= "#\n";
 		}
 		starmade_pm($player, $message);
@@ -203,4 +254,54 @@ sub shop_quest {
 			starmade_pm($player, "There is no quest available by the number or name of '$quest'");
 		}
 	}
+}
+
+sub quest_info_string {
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	
+	my %quest_info = %{quest_info($category, $quest)};
+
+	my $message = '';
+	$message .= "Name: $quest\n";
+	$message .= "Type: $quest_info{type}\n";
+	$message .= "Desc: $quest_info{objective_text}\n";
+	if ($quest_info{reward_hidden}) {
+		$message .= "Reward: Unknown\n";
+	}
+	else {
+		$message .= "Reward: $quest_info{reward_credits} Credits\n";
+	}
+	return $message;
+}
+
+
+sub quests_drop {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+	print "quest: $quest\n";
+	
+	my @active_quests;
+	
+	if (!($category && defined $quest)) {
+		help($player);
+		exit 0;
+	}
+	if (!$CATEGORY_CONF{$category}) {
+		starmade_pm($player, "Category: $category does not exist!");
+	}
+
+	@active_quests = @{quest_active_list($player, $category)};
+	if ($quest=~/\d/ && !($quest =~/\D/) && $quest <= $#active_quests) {
+		$quest = $active_quests[$quest];
+	}
+	if (!(
+		quest_active($player, $category, $quest)
+	)) {
+		starmade_pm($player, "Quest: $quest in Cagetory: $category does not exist!");
+	}
+	quest_remove($player, $category, $quest);
+	starmade_pm($player, "Quest: $quest has been dropped from category $category!");
 }
