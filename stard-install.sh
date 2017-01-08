@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # default settings
-VERSION="0.3.2"
+VERSION="0.3.3"
 INSTALLDIR='/var'
 STANDALONE=0
 
@@ -323,7 +323,13 @@ function install_stard {
 		echo "program wants to run 'make install'. If you are being asked for a password here, it's because it wants you to use your sudo password"
 		sudo make install || exit 1
 	else
-		cp -ar build/starmade $INSTALLDIR
+		rsync -ar --exclude starmade/stard/stard-launcher.conf build/starmade "$INSTALLDIR/"
+		cp -n build/starmade/stard/stard-launcher.conf "$INSTALLDIR/starmade/stard/"
+		for plugin in ./src/stard/plugins.disabled/*; do 
+			name=$(basename $plugin)
+			test -d "$INSTALLDIR/starmade/stard/plugins/$name" && cp -R "$INSTALLDIR/starmade/stard/plugins.disabled/$name" "$INSTALLDIR/stard/plugins/"
+			test -d "$INSTALLDIR/starmade/stard/plugins/$name" && rm -rf "$INSTALLDIR/starmade/stard/plugins.disabled/$name"
+		done
 	fi
 	
 	## install starmade
