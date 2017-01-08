@@ -80,11 +80,16 @@ build_stard:
 	chmod 644 \$(STARD_BUILD)/lib/*
 	chmod 755 \$(STARD_BUILD)/lib/perl
 	chmod 755 \$(STARD_BUILD)/lib/perl/*
-	chmod 755 \$(STARD_BUILD)/lib/python
-	chmod 755 \$(STARD_BUILD)/lib/python/*
 	chmod 644 \$(STARD_BUILD)/lib/perl/Stard/*
 	chmod 644 \$(STARD_BUILD)/lib/perl/Starmade/*
 " >> ./Makefile
+
+if [ -d "./src/stard/lib/python" ]; then
+	echo "
+	chmod 755 \$(STARD_BUILD)/lib/python
+	chmod 755 \$(STARD_BUILD)/lib/python/*
+	" >> ./Makefile
+fi
 
 if [ $STANDALONE -ne 1 ]; then
 	echo "	mv \$(STARD_BUILD)/stard.cfg \$(STARD_BUILD)/stard.cfg.newversion" >> ./Makefile
