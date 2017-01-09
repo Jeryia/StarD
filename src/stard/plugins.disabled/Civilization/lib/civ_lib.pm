@@ -50,6 +50,8 @@ my $DATA = "./data";
 my $PLAYER_DATA = "$DATA/players";
 my $FACTION_MAP_FILE = "$DATA/faction_map";
 
+my %FACTION_MAP_CACHE;
+
 my %blank_hash = ();
 
 ## trade_with_station
@@ -247,10 +249,15 @@ sub quest_success {
 		my %quest_info = %{quest_info($category, $quest_config{next_objective})};
 		starmade_pm($player, "New objective: $quest_info{objective_text}");
 	}
+
 	open(my $fh, ">>", "$PLAYER_DATA/$player/quest_c_$category");
 	flock($fh, 2);
 	print $fh "$quest\n";
 	close($fh);
+	if ($quest_config{escort}) {
+		sleep 10;
+		quest_despawn_escort($player, $quest_config{escort});
+	}
 }
 
 ## quest_failure
@@ -258,7 +265,7 @@ sub quest_success {
 # INPUT1: player
 # INPUT2: category
 # INPUT3: quest name
-sub quest_failed {
+sub quest_failure {
 	my $player = shift(@_);
 	my $category = shift(@_);
 	my $quest = shift(@_);
@@ -271,6 +278,10 @@ sub quest_failed {
 		starmade_give_credits($player, $quest_config{consolation_credits});
 		$message .= "  $quest_config{consolation_credits} Credits\n";
 	}
+	if ($quest_config{escort}) {
+		quest_despawn_escort($player, $quest_config{escort});
+	}
+
 	starmade_pm($player, $message);
 	quest_remove($player, $category, $quest);
 }
@@ -309,7 +320,7 @@ sub quest_start_actions {
 
 	my %quest_info = %{quest_info($category, $quest)};
 
-	my %player_info = %{player_info($player)};
+	my %player_info = %{starmade_player_info($player)};
 
 	for (my $i = 1; $quest_info{"intro_message$i"}; $i++) {
 		if ($quest_info{"intro_delay$i"}) {
@@ -334,7 +345,7 @@ sub quest_start_actions {
 		}
 	}
 	if ($quest_info{escort} && $quest_info{escort_fac} && $quest_info{escort_bp}) {
-		starmade_spawn_entity_pos($quest_info{escort_bp}, $quest_info{escort}, $player_info{sector}, starmade_random_pos(), $quest_info{escort_fac}, 1);
+		quest_spawn_escort($player, $player_info{sector}, $quest_info{escort}, $quest_info{escort_fac}, $quest_info{escort_bp});
 	}
 
 	# Must be last, as thie waits for the countdown to finish before continuing.
@@ -354,4 +365,106 @@ sub quest_start_actions {
 	}
 }
 
+sub quest_spawn_escort {
+	my $player = shift(@_);
+	my $sector = shift(@_);
+	my $escort = shift(@_);
+	my $esc_faction = shift(@_);
+	my $blueprint = shift(@_);
+
+	quest_despawn_escort($player, $escort);
+	select(undef, undef, undef, 0.2);
+
+	starmade_spawn_entity_pos($blueprint, "$escort\_$player", $sector, starmade_random_pos(), faction_map($esc_faction), 1);
+
+}
+
+sub quest_move_escort {
+	my $player = shift(@_);
+	my $sector = shift(@_);
+	my $escort = shift(@_);
+	my $esc_faction = shift(@_);
+	my $blueprint = shift(@_);
+
+	my %ships = %{starmade_search("$escort\_$player")};
+	if (
+		!$ships{"$escort\_$player"} ||
+		starmade_loc_distance($ships{"$escort\_$player"}, $sector) >= 2
+	) {
+		sleep 4;
+		quest_spawn_escort($player, $sector, $escort, $esc_faction, $blueprint);
+		return;
+	}
+
+}
+
+sub quest_despawn_escort {
+	my $player = shift(@_);
+	my $escort = shift(@_);
+
+	starmade_despawn_all("$escort\_$player", "all", "true");
+}
+
+sub faction_map {
+	my $faction = shift(@_);
+
+	if (!%FACTION_MAP_CACHE) {
+		%FACTION_MAP_CACHE = %{read_basic_config($FACTION_MAP_FILE)};
+	}
+	
+	if ($FACTION_MAP_CACHE{$faction}) {
+		return $FACTION_MAP_CACHE{$faction}
+	}
+	return $faction;
+}
+
+sub read_basic_config {
+	my $config_file = shift(@_);
+
+	my %config = ();
+	my $config_fh;
+	if (!open($config_fh, "<", $config_file)) {
+		print "Error opening $config_file: $!\n";
+		return \%config;
+	}
+	my @lines = <$config_fh>;
+	close($config_fh);
+	Line: foreach my $line (@lines) {
+		if ($line=~/^\s*(\S+)\s*=(.*)/) {
+			my $field = $1;
+			my $value = $2;
+			# trim out any whitespace at the beginning or end
+			$field=~s/^\s+//g;
+			$field=~s/\s+$//g;
+			$value=~s/^\s+//g;
+			$value=~s/\s+$//g;
+			$value=~s/^"//g;
+			$value=~s/"$//g;
+			$value=~s/^'//g;
+			$value=~s/'$//g;
+			
+			$config{$field} = $value;
+			$config{$field}=~s/^\s+//g;
+		};
+	};
+	return \%config;
+};
+
+## write_basic_config
+# Write out a hash to a config file
+# INPUT1: config file to write to
+# INPUT2: Hash to write to the config file (only supports 1d hash)
+# OUTPUT: success or failure (boolean)
+sub write_basic_config {
+	my $config_file = shift(@_);
+	my %config = %{shift(@_)};
+
+	open(my $config_fh, ">", $config_file) or return 0;
+
+	Line: foreach my $key (keys %config) {
+		print $config_fh "$key='$config{$key}'\n";
+	};
+	close($config_fh);
+	return 1;
+}
 1;
