@@ -80,6 +80,10 @@ sub main {
 					starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $quest_info{enemies_fac}, $new_sector, 1);
 				}
 			}
+			if ($quest_info{escort} && $quest_info{escort_fac} && $quest_info{escort_bp}) {
+				quest_move_escort($player, $new_sector, $quest_info{escort}, $quest_info{escort_fac}, $quest_info{escort_bp});
+			}
+
 
 			## Template specific
 			if (!$quest_info{template}) {
@@ -93,8 +97,22 @@ sub main {
 				destroy_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
 				next Quest;
 			}
+			if ($quest_info{template} eq 'escort') {
+				escort_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
+				next Quest;
+			}
 		}
 	}
+}
+
+sub escort_quests_actions {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my %quest_info = %{shift(@_)};
+	my $new_sector = shift(@_);
+	
+	goto_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
 }
 
 sub goto_quests_actions {
@@ -116,7 +134,6 @@ sub destroy_quests_actions {
 	my %quest_info = %{shift(@_)};
 	my $new_sector = shift(@_);
 
-	print "quest_sector: $quest_info{sector} eq $new_sector\n";
 	if ($quest_info{sector} && $quest_info{sector} eq $new_sector) {
 		if ($quest_info{objective} && $quest_info{objective_bp} && $quest_info{objective_fac}) {
 			starmade_spawn_entity($quest_info{objective_bp}, $quest_info{objective}, $new_sector, $quest_info{objective_fac}, 1);

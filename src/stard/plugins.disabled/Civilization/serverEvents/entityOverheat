@@ -76,6 +76,10 @@ sub main {
 					destroy_quests_actions($player, $category, $quest, \%quest_info, $entity);
 					next Quest;
 				}
+				if ($quest_info{template} eq 'escort') {
+					escort_quests_actions($player, $category, $quest, \%quest_info, $entity);
+					next Quest;
+				}
 				if (quest_entity_name($player, $quest_info{must_survive}) eq $entity) {
 					quest_failure($player, $category, $quest);
 					next Quest;
@@ -106,10 +110,7 @@ sub escort_quests_actions {
 	my %quest_info = %{shift(@_)};
 	my $entity = shift(@_);
 
-	$entity=~s/ENTITY_SPACESTATION_//g;
-	$entity=~s/ENTITY_SHIP_//g;
-
-	if ($quest_info{objective} eq $entity) {
+	if (quest_entity_name($player, "$quest_info{escort}_$player") eq $entity) {
 		quest_failure($player, $category, $quest);
 	}
 }
