@@ -1,0 +1,188 @@
+#!perl
+use strict;
+use warnings;
+
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Map;
+use Starmade::Message;
+use Starmade::Misc;
+use Starmade::Player;
+use Starmade::Faction;
+use Stard::Base;
+
+use lib ("./lib");
+
+my $stard_home = "./../..";
+my $starmade_home = "$stard_home/../StarMade/";
+
+
+starmade_setup_lib_env($stard_home);
+my $CONFIG_DIR = "./config";
+my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
+my $MAP_FILE = "$CONFIG_DIR/civ.map";
+my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
+
+my $DATA_DIR= "./data";
+my $MAP_CREATED = "$DATA_DIR/map.created";
+
+starmade_stdlib_set_debug(2);
+
+my $DATA = "./data";
+my $FACTION_MAP_FILE = "$DATA/faction_map";
+
+main();
+sub main {
+	load_blueprints();
+	starmade_wait_until_running();
+	mkdir("./data");
+
+
+	my %factions = %{stard_read_config($FACTION_CONFIG)};
+	my %sector_map = %{stard_read_config($MAP_FILE)};
+	my %faction_map;
+
+
+	setup_factions(\%factions);
+
+	%faction_map = %{read_basic_config($FACTION_MAP_FILE)};
+
+	%sector_map = %{starmade_remap_map_factions(\%sector_map, \%faction_map)};
+
+	if (! -e $MAP_CREATED) {
+		starmade_clean_map_area(\%sector_map, 'all');
+		open(my $fh, ">", $MAP_CREATED);
+		print $fh "1";
+		close($fh);
+	}
+
+	print "repairing map!\n";
+	starmade_repair_map(\%sector_map);
+}
+
+sub load_blueprints {
+	my $demand_restart = 0;
+	
+	opendir(my $dh, "./blueprints") or warn "Failed to open './blueprints': $!\n";
+	my @files;
+	while (readdir($dh)) {
+	        if ($_ ne '.' && $_ ne '..') {
+	                push(@files, $_);
+	        }
+	}
+	closedir($dh);
+	
+	FILE: foreach my $file (@files) {
+		if (-d "$starmade_home/blueprints/$file") {
+			next FILE;
+		}
+		system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/");
+		$demand_restart = 1;
+	}
+	while ($demand_restart) {
+		starmade_broadcast("Civilization plugin has installed new blueprints.");
+		starmade_broadcast("You will need to restart StarMade in order for Civilization to work correctly.");
+		sleep 300;
+	}
+}
+
+sub setup_factions {
+	my %factions = %{ shift(@_) };
+	my %faction_map = %{read_basic_config($FACTION_MAP_FILE)};
+	
+	my $write_new_map = 0;
+
+
+	## Ensure things look ok before proceeding
+	if (!%factions) {
+		print "Warning: no factions have been defined in in $FACTION_CONFIG!\n";
+		print "Run !stard restart to restart the civ daemon and try again!\n";
+		return;
+	}
+	foreach my $faction (keys %factions) {
+		if (!$factions{$faction}{placeholder_id}) {
+			stard_broadcast("Error: $faction has no defined placeholder_id in $FACTION_CONFIG!");
+			stard_broadcast("This is used to refer to the faction before it's created.");
+			stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
+			exit 1;
+		}
+	}
+
+	## setup the factions
+	foreach my $faction (keys %factions) {
+		my %faction_list = %{starmade_faction_list_bname()};
+		if (!$faction_list{$faction}) {
+			if (!starmade_faction_create($faction, '')) {
+				stard_broadcast("Civilivation mod failed to create faction '$faction'!");
+				stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
+				exit 1;
+			}
+			sleep 1;
+			%faction_list = %{starmade_faction_list_bname()};
+		}
+
+		if ($faction_list{$faction}{id} && ! ($faction_map{$factions{$faction}})) {
+			$faction_map{$factions{$faction}{placeholder_id}} = $faction_list{$faction}{id};
+			$write_new_map = 1;
+		}
+		else {
+			stard_broadcast("Civilivation mod failed to create faction '$faction'!");
+			stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
+			exit 1;
+		}
+	}
+	if ($write_new_map) {
+		write_basic_config($FACTION_MAP_FILE, \%faction_map);
+	}
+}
+
+sub read_basic_config {
+	my $config_file = shift(@_);
+
+	my %config = ();
+	my $config_fh;
+	if (!open($config_fh, "<", $config_file)) {
+		print "Error opening $config_file: $!\n";
+		return \%config;
+	}
+	my @lines = <$config_fh>;
+	close($config_fh);
+	Line: foreach my $line (@lines) {
+		if ($line=~/^\s*(\S+)\s*=(.*)/) {
+			my $field = $1;
+			my $value = $2;
+			# trim out any whitespace at the beginning or end
+			$field=~s/^\s+//g;
+			$field=~s/\s+$//g;
+			$value=~s/^\s+//g;
+			$value=~s/\s+$//g;
+			$value=~s/^"//g;
+			$value=~s/"$//g;
+			$value=~s/^'//g;
+			$value=~s/'$//g;
+			
+			$config{$field} = $value;
+			$config{$field}=~s/^\s+//g;
+		};
+	};
+	return \%config;
+};
+
+## write_basic_config
+# Write out a hash to a config file
+# INPUT1: config file to write to
+# INPUT2: Hash to write to the config file (only supports 1d hash)
+# OUTPUT: success or failure (boolean)
+sub write_basic_config {
+	my $config_file = shift(@_);
+	my %config = %{shift(@_)};
+
+	open(my $config_fh, ">", $config_file) or return 0;
+
+	Line: foreach my $key (keys %config) {
+		print $config_fh "$key='$config{$key}'\n";
+	};
+	close($config_fh);
+	return 1;
+}
