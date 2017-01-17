@@ -11,7 +11,9 @@ use Starmade::Sector;
 use Stard::Base;
 
 use lib("./lib");
-use civ_lib;
+use Civ::Base;
+use Civ::Quests;
+use Civ::Buy;
 
 #All rights reserved.
 #
@@ -30,31 +32,6 @@ my $stard_home = "./../..";
 
 starmade_setup_lib_env($stard_home);
 
-my $CONFIG_DIR = "./config";
-my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
-my $MAP_FILE = "$CONFIG_DIR/civ.map";
-my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
-
-## locations of the different configuration files for each category.
-my %CATEGORY_CONF_FILE;
-$CATEGORY_CONF_FILE{courier} = "$CONFIG_DIR/quests_courier.conf";
-$CATEGORY_CONF_FILE{pirate} = "$CONFIG_DIR/quests_pirate.conf";
-$CATEGORY_CONF_FILE{combat} = "$CONFIG_DIR/quests_combat.conf";
-$CATEGORY_CONF_FILE{campaign} = "$CONFIG_DIR/quests_campaign.conf";
-$CATEGORY_CONF_FILE{engineer} = "$CONFIG_DIR/quests_engineer.conf";
-
-my %CATEGORY_CONF;
-$CATEGORY_CONF{courier} = "quests_courier";
-$CATEGORY_CONF{pirate} = "quests_pirate";
-$CATEGORY_CONF{combat} = "quests_combat";
-$CATEGORY_CONF{campaign} = "quests_campaign";
-$CATEGORY_CONF{engineer} = "quests_engineer";
-
-
-my $DATA = "./data";
-my $FACTION_MAP_FILE = "$DATA/faction_map";
-
-
 main(@ARGV);
 exit 0;
 
@@ -67,7 +44,10 @@ sub main {
 	shift(@_);
 	my $new_sector = shift(@_);
 
-	for my $category (keys %CATEGORY_CONF_FILE) {
+	clear_quest_avail_cur($player);
+	clear_item_avail_cur($player);
+
+	for my $category (keys %Civ::Quests::CATEGORY_CONF_FILE) {
 		my @quests = @{quest_active_list($player, $category)};
 
 		Quest: foreach my $quest (@quests) {
@@ -77,13 +57,9 @@ sub main {
 				if ($quest_info{enemies} && $quest_info{enemies_fac} && $quest_info{enemies_pos} ) {
 					my @enemies = split(',', $quest_info{enemies});
 					my @enemies_pos = split(',', $quest_info{enemies_pos});
-					starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $quest_info{enemies_fac}, $new_sector, 1);
+					starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, map_faction($quest_info{enemies_fac}), $new_sector, 1);
 				}
 			}
-			if ($quest_info{escort} && $quest_info{escort_fac} && $quest_info{escort_bp}) {
-				quest_move_escort($player, $new_sector, $quest_info{escort}, $quest_info{escort_fac}, $quest_info{escort_bp});
-			}
-
 
 			## Template specific
 			if (!$quest_info{template}) {
@@ -101,6 +77,54 @@ sub main {
 				escort_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
 				next Quest;
 			}
+		}
+	}
+}
+
+sub generic_quests_actions {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my %quest_info = %{shift(@_)};
+	my $new_sector = shift(@_);
+	
+	# Enemies to spawn at the given sector
+	if ($quest_info{sector} && $quest_info{sector} eq $new_sector) {
+		if ($quest_info{enemies} && $quest_info{enemies_fac} && $quest_info{enemies_pos} ) {
+			my @enemies = split(',', $quest_info{enemies});
+			my @enemies_pos = split(',', $quest_info{enemies_pos});
+			starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $quest_info{enemies_fac}, $new_sector, 1);
+		}
+	}
+
+	# escort to spawn at the sector
+	if ($quest_info{escort} && $quest_info{escort_fac} && $quest_info{escort_bp}) {
+		quest_move_escort($player, $new_sector, $quest_info{escort}, $quest_info{escort_fac}, $quest_info{escort_bp});
+	}
+
+
+	# Randomly spawn attackers if quest requires it
+	Attackers: for (my $i =0; $quest_info{"random_attackers$i"}; $i++) {
+		my @enemies = split(",", $quest_info{"random_attackers$i"});
+		my @enemies_pos = ();
+		my $enemies_fac = -1;
+
+		if ($quest_info{"random_attackers$i\_fac"}) {
+			$enemies_fac = $quest_info{"random_attackers$i\_fac"}; 
+		}
+		if ($quest_info{"random_attackers$i\_pos"}) {
+			@enemies_pos = split(",", $quest_info{"random_attackers$i\_pos"});
+		}
+		if ($quest_info{"random_attackers$i\_chance"}) {
+			my $rand = int(rand(100));
+			if ($rand <= int($quest_info{"random_attackers$i\_chance"})) {
+				starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $enemies_fac, $new_sector, 1);
+				last Attackers;
+			}
+		}
+		else {
+			starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $enemies_fac, $new_sector, 1);
+			last Attackers;
 		}
 	}
 }

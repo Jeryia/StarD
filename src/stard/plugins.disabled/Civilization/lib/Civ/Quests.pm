@@ -1,4 +1,5 @@
 #!perl
+package Civ::Quests;
 use strict;
 use warnings;
 
@@ -9,6 +10,9 @@ use Starmade::Misc;
 use Starmade::Player;
 use Starmade::Sector;
 use Stard::Base;
+
+use lib("./lib");
+use Civ::Base;
 
 #All rights reserved.
 #
@@ -22,88 +26,33 @@ use Stard::Base;
 #
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-our $CONFIG_DIR = "./config";
-our $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
-our $MAP_FILE = "$CONFIG_DIR/civ.map";
-our $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
+require Exporter;
+our (@ISA, @EXPORT);
+@ISA = qw(Exporter);
+@EXPORT=qw(quest_active_list quest_active quest_add quest_remove quest_success quest_failed quest_info quest_entity_name quest_start_actions quest_spawn_escort quest_move_escort quest_despawn_escort get_avail_quest_list populate_quest_info_cache set_quest_avail_cur get_quest_avail_cur clear_quest_avail_cur);
+
 
 ## locations of the different configuration files for each category.
-our %CATEGORY_CONF_FILE;
-$CATEGORY_CONF_FILE{ship} = "$CONFIG_DIR/buy_ships.conf";
-$CATEGORY_CONF_FILE{blocks} = "$CONFIG_DIR/buy_blocks.conf";
-$CATEGORY_CONF_FILE{dock} = "$CONFIG_DIR/buy_docks.conf";
-
+#
 our %CATEGORY_CONF;
-$CATEGORY_CONF{ship} = "buy_ships";
-$CATEGORY_CONF{blocks} = "buy_blocks";
-$CATEGORY_CONF{dock} = "buy_docks";
+$CATEGORY_CONF{campaign} = "quests_campaign";
+$CATEGORY_CONF{combat} = "quests_combat";
+$CATEGORY_CONF{courier} = "quests_courier";
+$CATEGORY_CONF{engineer} = "quests_engineer";
+$CATEGORY_CONF{pirate} = "quests_pirate";
 
-
-my %QUEST_CATEGORY_CONF_FILE;
-$QUEST_CATEGORY_CONF_FILE{courier} = "$CONFIG_DIR/quests_courier.conf";
-$QUEST_CATEGORY_CONF_FILE{pirate} = "$CONFIG_DIR/quests_pirate.conf";
-$QUEST_CATEGORY_CONF_FILE{combat} = "$CONFIG_DIR/quests_combat.conf";
-$QUEST_CATEGORY_CONF_FILE{campaign} = "$CONFIG_DIR/quests_campaign.conf";
-$QUEST_CATEGORY_CONF_FILE{engineer} = "$CONFIG_DIR/quests_engineer.conf";
-
-my $DATA = "./data";
-my $PLAYER_DATA = "$DATA/players";
-my $FACTION_MAP_FILE = "$DATA/faction_map";
-
-my %FACTION_MAP_CACHE;
+our %CATEGORY_CONF_FILE;
+$CATEGORY_CONF_FILE{campaign} = "$Civ::Base::CONFIG_DIR/quests_campaign.conf";
+$CATEGORY_CONF_FILE{combat} = "$Civ::Base::CONFIG_DIR/quests_combat.conf";
+$CATEGORY_CONF_FILE{courier} = "$Civ::Base::CONFIG_DIR/quests_courier.conf";
+$CATEGORY_CONF_FILE{engineer} = "$Civ::Base::CONFIG_DIR/quests_engineer.conf";
+$CATEGORY_CONF_FILE{pirate} = "$Civ::Base::CONFIG_DIR/quests_pirate.conf";
 
 my %blank_hash = ();
 
-## trade_with_station
-# Get the available sector cofiguration, if it is availble and the player is 
-# close enough to the sector's station. The player will be informed if they 
-# cannot. Returns the map configuration for the given station, if ok.
-# INPUT1: player name who's attempting the trade
-# INPUT2: (optional) provide player info hash (from starmade_player_info())
-# OUTPUT: outputs the configuration for the given sector from the map.
-sub get_station_options {
-	my $player = shift(@_);
-	my %player_info;
 
-	if (@_) {
-		 %player_info = %{shift(@_)};
-	}
-	else {
-		%player_info = %{starmade_player_info($player)};
-	}
-
-	my %map = %{stard_read_config($MAP_FILE)};
-	my %config;
-	my $station_name;
-	my %sector_info;
-	my $station_pos;
-
-	Object: foreach my $object (keys %map) {
-		if ($map{$object}{sector} eq $player_info{sector}) {
-			%config = %{$map{$object}};
-			$station_name = $object;
-			last Object;
-		}
-	}
-
-	if (!%config) {
-		starmade_pm($player, "There is nothing availble in this sector.");
-		return \%blank_hash;
-	}
-	%sector_info = %{starmade_sector_info($player_info{sector})};
-	if ($sector_info{entity}{"ENTITY_SPACESTATION_$station_name"}{pos}) {
-		$station_pos = $sector_info{entity}{"ENTITY_SPACESTATION_$station_name"}{pos}
-	}
-	else {
-		starmade_pm($player, "The station appears to be missing!");
-		return \%blank_hash;
-	}
-	if (starmade_loc_distance($station_pos, $player_info{pos}) > 500) {
-		starmade_pm($player, "You are not close enough to the station to trade with it.");
-		return \%blank_hash;
-	}
-	return \%config;
-}
+### Cache variables
+my %QUEST_INFO_CACHE;
 
 ## quest_active_list
 # Get the list of quests the player is currently on.
@@ -115,7 +64,7 @@ sub quest_active_list {
 
 	my @quests = ();
 
-	open(my $fh, "<", "$PLAYER_DATA/$player/quest_$category") or return \@quests;
+	open(my $fh, "<", "$Civ::Base::PLAYER_DATA/$player/quest_$category") or return \@quests;
 	@quests = <$fh>;
 	close($fh);
 
@@ -157,7 +106,7 @@ sub quest_add {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	system('mkdir', '-p', "$PLAYER_DATA/$player/");
+	system('mkdir', '-p', "$Civ::Base::PLAYER_DATA/$player/");
 
 	if (!quest_info($category, $quest)) {
 		starmade_pm($player, "An error occurred when trying to accept the quest '$quest' of category.\n Please inform an admin what you where doing when you recieved this message");
@@ -165,7 +114,7 @@ sub quest_add {
 		return;
 	}
 
-	my $datafile = "$PLAYER_DATA/$player/quest_$category";
+	my $datafile = "$Civ::Base::PLAYER_DATA/$player/quest_$category";
 	open(my $lock_fh, "<", $datafile);
 	flock($lock_fh, 2);
 
@@ -178,7 +127,7 @@ sub quest_add {
 	}
 	push(@quests, $quest);
 
-	open(my $fh, ">", "$PLAYER_DATA/$player/quest_$category") or warn "failed to open '$PLAYER_DATA/$player/quest_$category': $!\n";
+	open(my $fh, ">", "$Civ::Base::PLAYER_DATA/$player/quest_$category") or warn "failed to open '$Civ::Base::PLAYER_DATA/$player/quest_$category': $!\n";
 	print $fh join("\n", @quests);
 	close($fh);
 	close($lock_fh);
@@ -195,7 +144,8 @@ sub quest_remove {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 	
-	my $datafile = "$PLAYER_DATA/$player/quest_$category";
+	my $datafile = "$Civ::Base::PLAYER_DATA/$player/quest_$category";
+
 
 	open(my $lock_fh, "<", $datafile);
 	flock($lock_fh, 2);
@@ -250,7 +200,7 @@ sub quest_success {
 		starmade_pm($player, "New objective: $quest_info{objective_text}");
 	}
 
-	open(my $fh, ">>", "$PLAYER_DATA/$player/quest_c_$category");
+	open(my $fh, ">>", "$Civ::Base::PLAYER_DATA/$player/quest_c_$category");
 	flock($fh, 2);
 	print $fh "$quest\n";
 	close($fh);
@@ -258,6 +208,7 @@ sub quest_success {
 		sleep 10;
 		quest_despawn_escort($player, $quest_config{escort});
 	}
+
 }
 
 ## quest_failure
@@ -265,7 +216,7 @@ sub quest_success {
 # INPUT1: player
 # INPUT2: category
 # INPUT3: quest name
-sub quest_failure {
+sub quest_failed {
 	my $player = shift(@_);
 	my $category = shift(@_);
 	my $quest = shift(@_);
@@ -282,6 +233,7 @@ sub quest_failure {
 		quest_despawn_escort($player, $quest_config{escort});
 	}
 
+
 	starmade_pm($player, $message);
 	quest_remove($player, $category, $quest);
 }
@@ -295,12 +247,10 @@ sub quest_info {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	my %quests = %{stard_read_config($QUEST_CATEGORY_CONF_FILE{$category})};
-	print "quests: \n";
+	populate_quest_info_cache($category);
 
-
-	if ($quests{$quest}) {
-		return $quests{$quest};
+	if ($QUEST_INFO_CACHE{$category} && $QUEST_INFO_CACHE{$category}{$quest}) {
+		return $QUEST_INFO_CACHE{$category}{$quest};
 	}
 	return \%blank_hash;
 }
@@ -336,9 +286,9 @@ sub quest_start_actions {
 			$quest_info{objective_bp} && 
 			$quest_info{objective_fac}
 		) {
-			starmade_spawn_entity_pos($quest_info{objective_bp}, $quest_info{objective}, $player_info{sector}, starmade_random_pos(), $quest_info{objective_fac}, 1);
+			starmade_spawn_entity_pos($quest_info{objective_bp}, $quest_info{objective}, $player_info{sector}, starmade_random_pos(), map_faction($quest_info{objective_fac}), 1);
 		}
-		if ($quest_info{enemies} && $quest_info{enemies_fac} && $quest_info{enemies_pos} ) {
+		if ($quest_info{enemies} && map_faction($quest_info{enemies_fac}) && $quest_info{enemies_pos} ) {
 			my @enemies = split(',', $quest_info{enemies});
 			my @enemies_pos = split(',', $quest_info{enemies_pos});
 			starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $quest_info{enemies_fac}, $player_info{sector}, 1);
@@ -372,10 +322,11 @@ sub quest_spawn_escort {
 	my $esc_faction = shift(@_);
 	my $blueprint = shift(@_);
 
+
 	quest_despawn_escort($player, $escort);
 	select(undef, undef, undef, 0.2);
 
-	starmade_spawn_entity_pos($blueprint, "$escort\_$player", $sector, starmade_random_pos(), faction_map($esc_faction), 1);
+	starmade_spawn_entity_pos($blueprint, "$escort\_$player", $sector, starmade_random_pos(), map_faction($esc_faction), 1);
 
 }
 
@@ -395,7 +346,6 @@ sub quest_move_escort {
 		quest_spawn_escort($player, $sector, $escort, $esc_faction, $blueprint);
 		return;
 	}
-
 }
 
 sub quest_despawn_escort {
@@ -405,66 +355,83 @@ sub quest_despawn_escort {
 	starmade_despawn_all("$escort\_$player", "all", "true");
 }
 
-sub faction_map {
-	my $faction = shift(@_);
 
-	if (!%FACTION_MAP_CACHE) {
-		%FACTION_MAP_CACHE = %{read_basic_config($FACTION_MAP_FILE)};
+sub get_avail_quest_list {
+	my $player = shift(@_);
+
+	my %station_options = %{get_station_options($player)};
+	my %potential_quests = ();
+	my %avail_quests = %{get_quest_avail_cur($player)};
+
+	if (%avail_quests) {
+		return \%avail_quests;
 	}
 	
-	if ($FACTION_MAP_CACHE{$faction}) {
-		return $FACTION_MAP_CACHE{$faction}
+	# Gather quests we may use at this location
+	foreach my $category (keys %CATEGORY_CONF) {
+		if ($station_options{$CATEGORY_CONF{$category}}) {
+			$potential_quests{$category} = expand_array($station_options{$CATEGORY_CONF{$category}});
+		}
 	}
-	return $faction;
+
+	# Check each quest to see if it if offered at this time.
+	foreach my $category (keys %CATEGORY_CONF) {
+		my @quests = ();
+		foreach my $quest (@{$potential_quests{$category}}) {
+			my %quest_info = %{quest_info($quest, $category)};
+			if (reqs_ok($player, \%quest_info)) {
+				push(@quests, $quest);
+			}
+		}
+		if (@quests) {
+			$avail_quests{$category} = \@quests;
+		}
+	}
+
+	set_quest_avail_cur($player, \%avail_quests);
+	return \%avail_quests;
 }
 
-sub read_basic_config {
-	my $config_file = shift(@_);
+sub populate_quest_info_cache {
+	my $category = shift(@_);
 
-	my %config = ();
-	my $config_fh;
-	if (!open($config_fh, "<", $config_file)) {
-		print "Error opening $config_file: $!\n";
-		return \%config;
+	if ($CATEGORY_CONF{$category} && !$QUEST_INFO_CACHE{$category}) {
+		$QUEST_INFO_CACHE{$category} = stard_read_config($CATEGORY_CONF_FILE{$category});
 	}
-	my @lines = <$config_fh>;
-	close($config_fh);
-	Line: foreach my $line (@lines) {
-		if ($line=~/^\s*(\S+)\s*=(.*)/) {
-			my $field = $1;
-			my $value = $2;
-			# trim out any whitespace at the beginning or end
-			$field=~s/^\s+//g;
-			$field=~s/\s+$//g;
-			$value=~s/^\s+//g;
-			$value=~s/\s+$//g;
-			$value=~s/^"//g;
-			$value=~s/"$//g;
-			$value=~s/^'//g;
-			$value=~s/'$//g;
-			
-			$config{$field} = $value;
-			$config{$field}=~s/^\s+//g;
-		};
-	};
-	return \%config;
-};
-
-## write_basic_config
-# Write out a hash to a config file
-# INPUT1: config file to write to
-# INPUT2: Hash to write to the config file (only supports 1d hash)
-# OUTPUT: success or failure (boolean)
-sub write_basic_config {
-	my $config_file = shift(@_);
-	my %config = %{shift(@_)};
-
-	open(my $config_fh, ">", $config_file) or return 0;
-
-	Line: foreach my $key (keys %config) {
-		print $config_fh "$key='$config{$key}'\n";
-	};
-	close($config_fh);
-	return 1;
 }
+
+sub set_quest_avail_cur {
+	my $player = shift(@_);
+	my %avail_quests = %{shift(@_)};
+
+
+	my %output = ();
+	foreach my $category (keys %avail_quests) {
+		$output{$category} = join(",", @{$avail_quests{$category}});
+	}
+
+	system('mkdir', '-p', "$Civ::Base::PLAYER_DATA/$player");
+	write_basic_config("$Civ::Base::PLAYER_DATA/$player/quest_avail_cur", \%output);
+}
+
+sub get_quest_avail_cur {
+	my $player = shift(@_);
+	my %avail_quests = ();
+
+	my %input = %{read_basic_config("$Civ::Base::PLAYER_DATA/$player/quest_avail_cur")};
+
+	foreach my $category (keys %input) {
+		my @quests = split("\n", @{$avail_quests{$category}});
+		$avail_quests{$category} = \@quests;
+	}
+
+	return \%avail_quests;
+}
+
+sub clear_quest_avail_cur {
+	my $player = shift(@_);
+
+	unlink("$Civ::Base::PLAYER_DATA/$player/quest_avail_cur");
+}
+
 1;

@@ -13,24 +13,14 @@ use Starmade::Faction;
 use Stard::Base;
 
 use lib ("./lib");
+use Civ::Base;
 
 my $stard_home = "./../..";
 my $starmade_home = "$stard_home/../StarMade/";
 
 
 starmade_setup_lib_env($stard_home);
-my $CONFIG_DIR = "./config";
-my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
-my $MAP_FILE = "$CONFIG_DIR/civ.map";
-my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
-
-my $DATA_DIR= "./data";
-my $MAP_CREATED = "$DATA_DIR/map.created";
-
 starmade_stdlib_set_debug(2);
-
-my $DATA = "./data";
-my $FACTION_MAP_FILE = "$DATA/faction_map";
 
 main();
 sub main {
@@ -39,20 +29,20 @@ sub main {
 	mkdir("./data");
 
 
-	my %factions = %{stard_read_config($FACTION_CONFIG)};
-	my %sector_map = %{stard_read_config($MAP_FILE)};
+	my %factions = %{stard_read_config($Civ::Base::FACTION_CONFIG)};
+	my %sector_map = %{stard_read_config($Civ::Base::MAP_FILE)};
 	my %faction_map;
 
 
 	setup_factions(\%factions);
 
-	%faction_map = %{read_basic_config($FACTION_MAP_FILE)};
+	%faction_map = %{read_basic_config($Civ::Base::FACTION_MAP_FILE)};
 
 	%sector_map = %{starmade_remap_map_factions(\%sector_map, \%faction_map)};
 
-	if (! -e $MAP_CREATED) {
+	if (! -e $Civ::Base::MAP_CREATED) {
 		starmade_clean_map_area(\%sector_map, 'all');
-		open(my $fh, ">", $MAP_CREATED);
+		open(my $fh, ">", $Civ::Base::MAP_CREATED);
 		print $fh "1";
 		close($fh);
 	}
@@ -89,20 +79,20 @@ sub load_blueprints {
 
 sub setup_factions {
 	my %factions = %{ shift(@_) };
-	my %faction_map = %{read_basic_config($FACTION_MAP_FILE)};
+	my %faction_map = %{read_basic_config($Civ::Base::FACTION_MAP_FILE)};
 	
 	my $write_new_map = 0;
 
 
 	## Ensure things look ok before proceeding
 	if (!%factions) {
-		print "Warning: no factions have been defined in in $FACTION_CONFIG!\n";
+		print "Warning: no factions have been defined in in $Civ::Base::FACTION_CONFIG!\n";
 		print "Run !stard restart to restart the civ daemon and try again!\n";
 		return;
 	}
 	foreach my $faction (keys %factions) {
 		if (!$factions{$faction}{placeholder_id}) {
-			stard_broadcast("Error: $faction has no defined placeholder_id in $FACTION_CONFIG!");
+			stard_broadcast("Error: $faction has no defined placeholder_id in $Civ::Base::FACTION_CONFIG!");
 			stard_broadcast("This is used to refer to the faction before it's created.");
 			stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
 			exit 1;
@@ -133,7 +123,7 @@ sub setup_factions {
 		}
 	}
 	if ($write_new_map) {
-		write_basic_config($FACTION_MAP_FILE, \%faction_map);
+		write_basic_config($Civ::Base::FACTION_MAP_FILE, \%faction_map);
 	}
 }
 

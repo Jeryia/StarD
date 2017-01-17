@@ -11,7 +11,8 @@ use Starmade::Sector;
 use Stard::Base;
 
 use lib("./lib");
-use civ_lib;
+use Civ::Base;
+use Civ::Quests;
 
 #All rights reserved.
 #
@@ -30,31 +31,6 @@ my $stard_home = "./../..";
 
 starmade_setup_lib_env($stard_home);
 
-my $CONFIG_DIR = "./config";
-my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
-my $MAP_FILE = "$CONFIG_DIR/civ.map";
-my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
-
-## locations of the different configuration files for each category.
-my %CATEGORY_CONF_FILE;
-$CATEGORY_CONF_FILE{courier} = "$CONFIG_DIR/quests_courier.conf";
-$CATEGORY_CONF_FILE{pirate} = "$CONFIG_DIR/quests_pirate.conf";
-$CATEGORY_CONF_FILE{combat} = "$CONFIG_DIR/quests_combat.conf";
-$CATEGORY_CONF_FILE{campaign} = "$CONFIG_DIR/quests_campaign.conf";
-$CATEGORY_CONF_FILE{engineer} = "$CONFIG_DIR/quests_engineer.conf";
-
-my %CATEGORY_CONF;
-$CATEGORY_CONF{courier} = "quests_courier";
-$CATEGORY_CONF{pirate} = "quests_pirate";
-$CATEGORY_CONF{combat} = "quests_combat";
-$CATEGORY_CONF{campaign} = "quests_campaign";
-$CATEGORY_CONF{engineer} = "quests_engineer";
-
-
-my $DATA = "./data";
-my $FACTION_MAP_FILE = "$DATA/faction_map";
-
-
 main(@ARGV);
 exit 0;
 
@@ -67,6 +43,10 @@ sub main {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
+	if (!$action) {
+		help($player);
+		exit 0;
+	}
 	if ($action eq 'info') {
 		quests_info($player, $category, $quest);
 		exit 0;
@@ -88,7 +68,7 @@ sub quests_info {
 	my $quest = shift(@_);
 	
 	if (!$category) {
-		foreach my $category (keys %CATEGORY_CONF) {
+		foreach my $category (keys %Civ::Quests::CATEGORY_CONF) {
 			print_active_quest_category($player, $category);
 		}
 	}
@@ -120,65 +100,54 @@ sub print_active_quest_category {
 	starmade_pm($player, $message);
 }
 
-sub quests_get {
-	my $player = shift(@_);
-	my $category = shift(@_);
-	my $quest = shift(@_);
-
-	my %map = %{stard_read_config($MAP_FILE)};
-	my %config = ();
-
-	my %player_info = %{starmade_player_info($player)};
-
-
-	%config = %{get_station_options($player, \%player_info)};
-	if (!%config ) {
-		exit 0;
-	}
-
-	quest_category($player, $category, $quest, \%config, \%player_info);
-}
-
 sub help {
 	my $player = shift(@_);
 
-	my @categories = keys %CATEGORY_CONF;
 	my $message = "Usage: !quest <info|get|drop> <category> <quest> \n";
-	$message .= "Available Categories:\n";
-	foreach my $category (@categories) {
-		$message .="$category\n";
-	}
 
 	starmade_pm($player, $message);
 }
 
 
-sub quest_category {
+sub quests_get {
 	my $player = shift(@_);
 	my $category = shift(@_);
 	my $quest = shift(@_);
-	my %config = %{shift(@_)};
-	my %player_info = %{shift(@_)};
 
 	my %avail_quests;
-	
-	if (!$category) {
-		help($player);
+
+	%avail_quests = %{get_avail_quest_list($player)};
+	my @categories = sort(keys %avail_quests);
+
+	if (!%avail_quests) {
+		starmade_pm($player, "There are no quests available at this location at this time.");
 		return;
 	}
-	if (!$CATEGORY_CONF_FILE{$category}) {
+	elsif (!$category) {
+		starmade_pm($player, "You must give a category!");
+		help($player);
+	}
+	elsif (!$Civ::Quests::CATEGORY_CONF_FILE{$category}) {
 		starmade_pm($player, "'$category' is not a valid category");
 		help($player);
-		return;
 	}
-	if (!($config{$CATEGORY_CONF{$category}} && $config{$CATEGORY_CONF{$category}}=~/\S/)) {
-		starmade_pm($player, "$category purchase is not available at this location");
-		return;
+	elsif (!$avail_quests{$category}) {
+		starmade_pm($player, "'$category' is not available at this location.");
+		help($player);
 	}
 
-	%avail_quests = %{get_avail_quest_info($player, $config{$CATEGORY_CONF{$category}}, $CATEGORY_CONF_FILE{$category})};
+	if (!$category || !$Civ::Quests::CATEGORY_CONF_FILE{$category} || $avail_quests{$category}) {
+		my $message .= "Available categories at this location:\n";
+		foreach my $category (@categories) {
+			my $quest_number = int(@{$avail_quests{$category}});
+			$message .="$category ($quest_number)\n";
+		}
+		starmade_pm($player, $message);
+		return;
+	}
+	
 
-	shop_quest($player, $category, $quest, \%avail_quests, \%player_info);
+	shop_quest($player, $category, $quest, \%avail_quests);
 
 	if (!(defined $quest)) {
 		starmade_pm($player, "\naccept a quest with !quest $category '<quest>'\n");
@@ -225,11 +194,11 @@ sub shop_quest {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 	my %avail_quests = %{shift(@_)};
-	my %player_info = %{shift(@_)};
 
-	my @list_order = sort(keys %avail_quests);
+	my @list_order = sort(@{$avail_quests{$category}});
+	my %quest_hash = map {$_ => 1} @list_order;
 	
-	if (!(defined$quest)) {
+	if (!(defined $quest)) {
 		my $message = "This port offers the following quests in this category:\n";
 		for (my $i =0; $i <= $#list_order; $i++) {
 			my $quest = $list_order[$i];
@@ -242,7 +211,7 @@ sub shop_quest {
 		return;
 	}
 	else {
-		if ($quest=~/\D/ && $avail_quests{$quest}) {
+		if ($quest=~/\D/ && $quest_hash{$quest}) {
 			starmade_pm($player, "You have accepted the quest '$quest'");
 			quest_add($player, $category, $quest);
 		}
@@ -281,15 +250,13 @@ sub quests_drop {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	print "quest: $quest\n";
-	
 	my @active_quests;
 	
 	if (!($category && defined $quest)) {
 		help($player);
 		exit 0;
 	}
-	if (!$CATEGORY_CONF{$category}) {
+	if (!$Civ::Quests::CATEGORY_CONF{$category}) {
 		starmade_pm($player, "Category: $category does not exist!");
 	}
 

@@ -11,7 +11,8 @@ use Starmade::Sector;
 use Stard::Base;
 
 use lib("./lib");
-use civ_lib;
+use Civ::Base;
+use Civ::Buy;
 
 #All rights reserved.
 #
@@ -30,27 +31,6 @@ my $stard_home = "./../..";
 
 starmade_setup_lib_env($stard_home);
 
-my $CONFIG_DIR = "./config";
-my $CONFIG_FILE = "$CONFIG_DIR/civ.conf";
-my $MAP_FILE = "$CONFIG_DIR/civ.map";
-my $FACTION_CONFIG = "$CONFIG_DIR/factions.conf";
-
-## locations of the different configuration files for each category.
-my %CATEGORY_CONF_FILE;
-$CATEGORY_CONF_FILE{ship} = "$CONFIG_DIR/buy_ships.conf";
-$CATEGORY_CONF_FILE{blocks} = "$CONFIG_DIR/buy_blocks.conf";
-$CATEGORY_CONF_FILE{dock} = "$CONFIG_DIR/buy_docks.conf";
-
-my %CATEGORY_CONF;
-$CATEGORY_CONF{ship} = "buy_ships";
-$CATEGORY_CONF{blocks} = "buy_blocks";
-$CATEGORY_CONF{dock} = "buy_docks";
-
-
-my $DATA = "./data";
-my $FACTION_MAP_FILE = "$DATA/faction_map";
-
-
 main(@ARGV);
 exit 0;
 
@@ -63,30 +43,13 @@ sub main {
 	my $item = shift(@_);
 	my $quantity = shift(@_);
 
-
-	my %map = %{stard_read_config($MAP_FILE)};
-	my %config = ();
-
-	my %player_info = %{starmade_player_info($player)};
-
-	%config = %{get_station_options($player, \%player_info)};
-	if (!%config ) {
-		exit 0;
-	}
-
-	shop_category($player, $category, $item, $quantity, \%config, \%player_info);
+	shop_category($player, $category, $item, $quantity);
 }
 
 sub help {
 	my $player = shift(@_);
 
-	my @categories = keys %CATEGORY_CONF;
 	my $message = "Usage: !buy <category> <item> <quantity>\n";
-	$message .= "Available Categories:\n";
-	foreach my $category (@categories) {
-		$message .="$category\n";
-	}
-
 	starmade_pm($player, $message);
 }
 
@@ -96,94 +59,79 @@ sub shop_category {
 	my $category = shift(@_);
 	my $item = shift(@_);
 	my $quantity = shift(@_);
-	my %config = %{shift(@_)};
-	my %player_info = %{shift(@_)};
 
 	my %avail_items;
-	
-	if (!$category) {
-		help($player);
+
+	%avail_items = %{get_avail_item_list($player)};
+	my @categories = sort(keys %avail_items);
+
+	if (!%avail_items) {
+		starmade_pm($player, "There are no items available at this location at this time.");
 		return;
 	}
-	if (!$CATEGORY_CONF_FILE{$category}) {
+	elsif (!$category) {
+		starmade_pm($player, "You must give a category!");
+		help($player);
+	}
+	elsif ($category && !$Civ::Buy::CATEGORY_CONF_FILE{$category}) {
 		starmade_pm($player, "'$category' is not a valid category");
 		help($player);
+	}
+	elsif (!$avail_items{$category}) {
+		starmade_pm($player, "'$category' is not available at this location.");
+		help($player);
+	}
+
+	if (!$category || !$Civ::Buy::CATEGORY_CONF_FILE{$category} || $avail_items{$category}) {
+		my $message .= "Available categories at this location:\n";
+		foreach my $category (@categories) {
+			my $item_number = int(@{$avail_items{$category}});
+			$message .="$category ($item_number)\n";
+		}
+
+		starmade_pm($player, $message);
 		return;
 	}
-	if (!($config{$CATEGORY_CONF{$category}} && $config{$CATEGORY_CONF{$category}}=~/\S/)) {
-		starmade_pm($player, "$category purchase is not available at this location");
-		return;
+	
+
+	shop_item($player, $category, $item, \%avail_items);
+
+	if (!(defined $item)) {
+		starmade_pm($player, "\naccept a item with !item $category '<item>'\n");
 	}
-
-	%avail_items = %{get_avail_item_info($player, $config{$CATEGORY_CONF{$category}}, $CATEGORY_CONF_FILE{$category})};
-
-	shop_item($player, $item, $quantity, \%avail_items, \%player_info);
-
-	if (!$item) {
-		starmade_pm($player, "\nbuy with !buy $category '<$category>' <amount>\n");
-	}
-}
-
-sub get_avail_item_info {
-	my $player = shift(@_);
-	my $avail_items = shift(@_);
-	my $item_config = shift(@_);
-
-	my %items;
-	my %avail_items;
-	my @avail_item_list;
-
-	%items = %{stard_read_config($item_config)};
-	if (ref $avail_items eq 'ARRAY') {
-		foreach my $list (@{$avail_items}) {
-			push(@avail_item_list, split(",", $list));
-		}
-	}
-	else {
-		@avail_item_list = split(",", $avail_items);
-	}
-
-	foreach my $item (@avail_item_list) {
-		if ($items{$item}) {
-			$avail_items{$items{$item}{name}} = $items{$item};
-		}
-		else {
-			starmade_pm($player, "Purchase configuration for this location is broken! Please tell an admin exactly what you where doing when you saw this error.");
-			print "Error! $item is not defined in $item_config!\n";
-			exit 0;
-		}
-	}
-
-	return \%avail_items
 }
 
 sub shop_item {
 	my $player = shift(@_);
+	my $category = shift(@_);
 	my $item = shift(@_);
 	my $quantity = shift(@_);
 	my %avail_items = %{shift(@_)};
-	my %player_info = %{shift(@_)};
+
 
 	if (!$quantity) {
 		$quantity = 1;
 	}
 	
-	my @list_order = sort(keys %avail_items);
+	my @list_order = sort(@{$avail_items{$category}});
+	my %item_hash = map {$_ => 1} @list_order;
 	
 	if (!$item) {
 		my $message = "This port offers the following items in this category:\n";
 		foreach my $item (@list_order) {
+			my %item_info = %{item_info($item, $category)};
 			$message .= "######\n";
-			$message .= "Name: $item\n";
-			$message .= "Cost: $avail_items{$item}{price}\n";
-			$message .= "Desc: $avail_items{$item}{desc}\n";
+			$message .= "Name: $item_info{name}\n";
+			$message .= "Cost: $item_info{price}\n";
+			$message .= "Desc: $item_info{desc}\n";
 			$message .= "#\n";
 		}
 		starmade_pm($player, $message);
 		return;
 	}
 	else {
-		if ($avail_items{$item}) {
+		if ($item_hash{$item}) {
+			my %item_info = %{item_info($item, $category)};
 			if (
 				$quantity > 1 && 
 				($avail_items{$item}{meta_item} || $avail_items{$item}{blueprint})
@@ -194,13 +142,14 @@ sub shop_item {
 
 			player_pay($player, $avail_items{$item}{price} * $quantity);
 			
-			if ($avail_items{$item}{blueprint}) {
-				my $ship_name = $player . "s $item\_" . time;
+			if ($item_info{blueprint}) {
+				my %player_info = %{starmade_player_info($player)};
+				my $ship_name = $player . "s $item_info{name}\_" . time;
 				if (!$player_info{faction}) {
 					$player_info{faction} = 0;
 				}
 				starmade_spawn_entity_pos(
-					$avail_items{$item}{blueprint},
+					$item_info{blueprint},
 					$ship_name,
 					$player_info{sector},
 					$player_info{pos},
@@ -208,25 +157,25 @@ sub shop_item {
 					0,
 				);
 			}
-			if ($avail_items{$item}{block_name}) {
-				if(!starmade_give_item($player, $avail_items{$item}{block_name}, $quantity)) {
-					starmade_give_credits($player, $avail_items{$item}{price} * $quantity);
+			if ($item_info{block_name}) {
+				if(!starmade_give_item($player, $item_info{block_name}, $quantity)) {
+					starmade_give_credits($player, $item_info{price} * $quantity);
 					starmade_pm($player, "Transaction failed. Please report this to an admin!");
 					print starmade_last_output();
 					return;
 				}
 			}
 			if ($avail_items{$item}{block_id}) {
-				if(!starmade_give_item_id($player, $avail_items{$item}{block_id}, $quantity)) {
-					starmade_give_credits($player, $avail_items{$item}{price} * $quantity);
+				if(!starmade_give_item_id($player, $item_info{block_id}, $quantity)) {
+					starmade_give_credits($player, $item_info{price} * $quantity);
 					starmade_pm($player, "Transaction failed. Please report this to an admin!");
 					print starmade_last_output();
 					return;
 				}
 			}
 			if ($avail_items{$item}{meta_item}) {
-				if(!starmade_give_metaitem($player, $avail_items{$item}{meta_item})) {
-					starmade_give_credits($player, $avail_items{$item}{price} * $quantity);
+				if(!starmade_give_metaitem($player, $item_info{meta_item})) {
+					starmade_give_credits($player, $item_info{price} * $quantity);
 					starmade_pm($player, "Transaction failed. Please report this to an admin!");
 					print starmade_last_output();
 					return;

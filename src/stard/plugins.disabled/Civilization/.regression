@@ -1,0 +1,144 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Regression;
+use Starmade::Sector;
+use Starmade::Player;
+
+use Civ::Base;
+use Civ::Buy;
+use Civ::Quests;
+
+
+my $stard_home = "../../";
+my $stard_plugins = "$stard_home/plugins";
+starmade_setup_lib_env($stard_home);
+starmade_stdlib_set_debug(1);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+	my $plugin = "Civilization";
+
+
+	my $reg_dir = "./.reg/";
+	my $config_dir = "./config";
+	my $station_sector = '100 100 -100';
+
+	# setup test environment
+	system('rsync', '-a', "$reg_dir", $config_dir);
+	system('../../bin/stard_daemons', 'restart');
+
+	# run tests
+	starmade_change_sector_for($player, $station_sector);
+	starmade_teleport_to($player, '200 0 0');
+	test_result("$plugin - close enough to trade", %{get_station_options($player)});
+
+	starmade_change_sector_for($player, $station_sector);
+	starmade_teleport_to($player, '600 0 0');
+	test_result("$plugin - too far to trade", !%{get_station_options($player)});
+
+	starmade_change_sector_for($player, '0 0 0');
+	starmade_teleport_to($player, '200 0 0');
+	test_result("$plugin - trade from other sector", !%{get_station_options($player)});
+
+	my $rep = reputation_get($player, 'begging');
+	reputation_add($player, 'begging', 1);
+	my $rep2 = reputation_get($player, 'begging');
+	test_result("$plugin - reputation_add", $rep2 - $rep == 1);
+
+	
+	$rep = reputation_get($player, 'begging');
+	reputation_add($player, 'begging', -$rep);
+	reputation_ok($player, 'begging', '==', 0 );
+	test_result("$plugin - reputation_ok >=", reputation_ok($player, 'begging', '>=', -1 ));
+	test_result("$plugin - reputation_ok <=", reputation_ok($player, 'begging', '<=', 1 ));
+	test_result("$plugin - reputation_ok >", reputation_ok($player, 'begging', '>', -1 ));
+	test_result("$plugin - reputation_ok <", reputation_ok($player, 'begging', '<', 1 ));
+	test_result("$plugin - reputation_ok ==", reputation_ok($player, 'begging', '==', 0 ));
+	test_result("$plugin - reputation_ok == not", !reputation_ok($player, 'begging', '==', 1 ));
+
+	
+	my %reqs;
+	$rep = reputation_get($player, 'begging');
+	reputation_add($player, 'begging', -$rep+2);
+	$reqs{need_reputation} = 'begging >= 1';
+	test_result("$plugin - reqs_ok", reqs_ok($player, \%reqs));
+
+	
+	# Buy lib
+	starmade_change_sector_for($player, $station_sector);
+	my %avail_items = %{get_avail_item_list($player)};
+	test_result("$plugin - get_avail_item_list", (@{$avail_items{blocks}}));
+	
+	clear_item_avail_cur($player);
+	test_result("$plugin - clear_item_avail_cur", !%{get_item_avail_cur($player)});
+
+	get_avail_item_list($player);
+	test_result("$plugin - get_item_avail_cur", (%{get_item_avail_cur($player)}));
+	
+	test_result("$plugin - item_info", (%{item_info('blocks', 'Cannon Barrel')}));
+
+
+	# Quests lib
+	quest_add($player, 'combat', 'Kill pirate at 23 54 2');
+	test_result("$plugin - quest_add", quest_active($player, 'combat', 'Kill pirate at 23 54 2'));
+	test_result("$plugin - not quest_active", !quest_active($player, 'combat', 'Kill pirate at 23 54'));
+
+	quest_remove($player, 'combat', 'Kill pirate at 23 54 2');
+	test_result("$plugin - quest_remove", !quest_active($player, 'combat', 'Kill pirate at 23 54 2'));
+
+	test_result("$plugin - quest_info",(%{quest_info('combat', 'Kill pirate at 23 54 2')}));
+	
+	test_result("$plugin - quest_entity_name", quest_entity_name($player, 'thing-%player%') eq "thing-$player");
+
+	
+	starmade_change_sector_for($player, '200 0 0');
+	quest_despawn_escort($player, 'test thing');
+	quest_spawn_escort($player, '200 0 0', 'test thing', 0, 'Isanth Type-Zero Bm');
+	my %sector_info = %{starmade_sector_info('200 0 0')};
+	test_result("$plugin - quest_spawn_escort", $sector_info{entity}{"test thing_$player"});
+
+	quest_despawn_escort($player, 'test thing');
+	%sector_info = %{starmade_sector_info('200 0 0')};
+	test_result("$plugin - quest_despawn_escort", !$sector_info{entity}{"test thing_$player"});
+
+	quest_spawn_escort($player, '200 0 0', 'test thing', 0, 'Isanth Type-Zero Bm');
+	quest_move_escort($player, '200 5 0', 'test thing', 0, 'Isanth Type-Zero Bm');
+	%sector_info = %{starmade_sector_info('200 5 0')};
+	test_result("$plugin - quest_despawn_escort", $sector_info{entity}{"test thing_$player"});
+	quest_despawn_escort($player, 'test thing');
+	
+
+
+	starmade_change_sector_for($player, $station_sector);
+	my %avail_quests = %{get_avail_quest_list($player)};
+	test_result("$plugin - get_avail_quest_list", (@{$avail_quests{combat}}));
+	
+	clear_quest_avail_cur($player);
+	test_result("$plugin - clear_quest_avail_cur", !%{get_quest_avail_cur($player)});
+
+	get_avail_quest_list($player);
+	test_result("$plugin - get_quest_avail_cur", (%{get_quest_avail_cur($player)}));
+
+
+	test_result("$plugin - !quest", test_command("quest", $player) == 0);
+	test_result("$plugin - !quest get", test_command("quest", $player) == 0);
+	test_result("$plugin - !quest get category", test_command("quest", $player, "combat") == 0);
+	test_result("$plugin - !quest get category 0", test_command("quest", $player, "combat", "0") == 0);
+	test_result("$plugin - !quest info", test_command("quest", $player, 'info') == 0);
+	test_result("$plugin - !quest drop", test_command("quest", $player, 'drop', '0') == 0);
+	
+	test_result("$plugin - !quest", test_command("buy", $player) == 0);
+	test_result("$plugin - !quest", test_command("buy", $player, "blocks") == 0);
+	test_result("$plugin - !quest", test_command("buy", $player, "blocks", "Shield_Capaciter") == 0);
+
+}
+
+
+
