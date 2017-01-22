@@ -32,18 +32,21 @@ sub main {
 
 	# setup test environment
 	system('rsync', '-a', "$reg_dir", $config_dir);
-	system('../../bin/stard_daemons', 'restart');
+	system('perl', './daemon');
 
 	# run tests
 	starmade_change_sector_for($player, $station_sector);
+	sleep 1;
 	starmade_teleport_to($player, '200 0 0');
 	test_result("$plugin - close enough to trade", %{get_station_options($player)});
 
 	starmade_change_sector_for($player, $station_sector);
+	sleep 1;
 	starmade_teleport_to($player, '600 0 0');
 	test_result("$plugin - too far to trade", !%{get_station_options($player)});
 
 	starmade_change_sector_for($player, '0 0 0');
+	sleep 1;
 	starmade_teleport_to($player, '200 0 0');
 	test_result("$plugin - trade from other sector", !%{get_station_options($player)});
 
@@ -73,6 +76,7 @@ sub main {
 	
 	# Buy lib
 	starmade_change_sector_for($player, $station_sector);
+	sleep 1;
 	my %avail_items = %{get_avail_item_list($player)};
 	test_result("$plugin - get_avail_item_list", (@{$avail_items{blocks}}));
 	
@@ -99,24 +103,26 @@ sub main {
 
 	
 	starmade_change_sector_for($player, '200 0 0');
+	sleep 1;
 	quest_despawn_escort($player, 'test thing');
 	quest_spawn_escort($player, '200 0 0', 'test thing', 0, 'Isanth Type-Zero Bm');
 	my %sector_info = %{starmade_sector_info('200 0 0')};
-	test_result("$plugin - quest_spawn_escort", $sector_info{entity}{"test thing_$player"});
+	test_result("$plugin - quest_spawn_escort", $sector_info{entity}{"ENTITY_SHIP_test thing_$player"});
 
 	quest_despawn_escort($player, 'test thing');
 	%sector_info = %{starmade_sector_info('200 0 0')};
-	test_result("$plugin - quest_despawn_escort", !$sector_info{entity}{"test thing_$player"});
+	test_result("$plugin - quest_despawn_escort", !$sector_info{entity}{"ENTITY_SHIP_test thing_$player"});
 
 	quest_spawn_escort($player, '200 0 0', 'test thing', 0, 'Isanth Type-Zero Bm');
 	quest_move_escort($player, '200 5 0', 'test thing', 0, 'Isanth Type-Zero Bm');
 	%sector_info = %{starmade_sector_info('200 5 0')};
-	test_result("$plugin - quest_despawn_escort", $sector_info{entity}{"test thing_$player"});
+	test_result("$plugin - quest_move_escort", $sector_info{entity}{"ENTITY_SHIP_test thing_$player"});
 	quest_despawn_escort($player, 'test thing');
 	
 
 
 	starmade_change_sector_for($player, $station_sector);
+	sleep 1;
 	my %avail_quests = %{get_avail_quest_list($player)};
 	test_result("$plugin - get_avail_quest_list", (@{$avail_quests{combat}}));
 	
