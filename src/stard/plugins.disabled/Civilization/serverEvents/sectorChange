@@ -52,14 +52,8 @@ sub main {
 
 		Quest: foreach my $quest (@quests) {
 			my %quest_info = %{quest_info($category, $quest)};
-			print "$quest: $quest_info{sector}\n";
-			if ($quest_info{sector} && $quest_info{sector} eq $new_sector) {
-				if ($quest_info{enemies} && $quest_info{enemies_fac} && $quest_info{enemies_pos} ) {
-					my @enemies = split(',', $quest_info{enemies});
-					my @enemies_pos = split(',', $quest_info{enemies_pos});
-					starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, map_faction($quest_info{enemies_fac}), $new_sector, 1);
-				}
-			}
+
+			generic_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
 
 			## Template specific
 			if (!$quest_info{template}) {

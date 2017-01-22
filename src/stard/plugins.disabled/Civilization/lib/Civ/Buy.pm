@@ -56,15 +56,15 @@ sub get_avail_item_list {
 	# Gather items we may use at this location
 	foreach my $category (keys %CATEGORY_CONF) {
 		if ($station_options{$CATEGORY_CONF{$category}}) {
-			$potential_items{$category} = @{expand_array($station_options{$CATEGORY_CONF{$category}})};
+			$potential_items{$category} = expand_array($station_options{$CATEGORY_CONF{$category}});
 		}
 	}
 
 	# Check each item to see if it if offered at this time.
-	foreach my $category (keys %CATEGORY_CONF) {
+	Category: foreach my $category (keys %potential_items) {
 		my @items = ();
 		foreach my $item (@{$potential_items{$category}}) {
-			my %item_info = %{item_info($item, $category)};
+			my %item_info = %{item_info($category, $item)};
 			if (reqs_ok($player, \%item_info)) {
 				push(@items, $item);
 			}
@@ -110,7 +110,7 @@ sub set_item_avail_cur {
 
 	my %output = ();
 	foreach my $category (keys %avail_items) {
-		$output{$category} = join("\n", @{$avail_items{$category}});
+		$output{$category} = join(",", @{$avail_items{$category}});
 	}
 
 	system('mkdir', '-p', "$Civ::Base::PLAYER_DATA/$player");
@@ -124,8 +124,7 @@ sub get_item_avail_cur {
 	my %input = %{read_basic_config("$Civ::Base::PLAYER_DATA/$player/item_avail_cur")};
 
 	foreach my $category (keys %input) {
-		my @items = split(",", $input{$category});
-		$avail_items{$category} = \@items;
+		$avail_items{$category} =  expand_array($input{$category});
 	}
 
 	return \%avail_items;

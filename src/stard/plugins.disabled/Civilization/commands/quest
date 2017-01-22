@@ -136,7 +136,7 @@ sub quests_get {
 		help($player);
 	}
 
-	if (!$category || !$Civ::Quests::CATEGORY_CONF_FILE{$category} || $avail_quests{$category}) {
+	if (!$category || !$Civ::Quests::CATEGORY_CONF_FILE{$category} || !$avail_quests{$category}) {
 		my $message .= "Available categories at this location:\n";
 		foreach my $category (@categories) {
 			my $quest_number = int(@{$avail_quests{$category}});
@@ -164,14 +164,7 @@ sub get_avail_quest_info {
 	my @avail_quest_list;
 
 	%quests = %{stard_read_config($quest_config)};
-	if (ref $avail_quests eq 'ARRAY') {
-		foreach my $list (@{$avail_quests}) {
-			push(@avail_quest_list, split(",", $list));
-		}
-	}
-	else {
-		@avail_quest_list = split(",", $avail_quests);
-	}
+	@avail_quest_list = @{expand_array($avail_quests)};
 
 	
 

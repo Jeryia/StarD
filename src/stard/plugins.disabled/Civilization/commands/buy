@@ -82,10 +82,10 @@ sub shop_category {
 		help($player);
 	}
 
-	if (!$category || !$Civ::Buy::CATEGORY_CONF_FILE{$category} || $avail_items{$category}) {
+	if (!$category || !$Civ::Buy::CATEGORY_CONF_FILE{$category} || !$avail_items{$category}) {
 		my $message .= "Available categories at this location:\n";
 		foreach my $category (@categories) {
-			my $item_number = int(@{$avail_items{$category}});
+			my $item_number = @{$avail_items{$category}};
 			$message .="$category ($item_number)\n";
 		}
 
@@ -94,7 +94,7 @@ sub shop_category {
 	}
 	
 
-	shop_item($player, $category, $item, \%avail_items);
+	shop_item($player, $category, $item, $quantity, \%avail_items);
 
 	if (!(defined $item)) {
 		starmade_pm($player, "\naccept a item with !item $category '<item>'\n");
@@ -114,12 +114,17 @@ sub shop_item {
 	}
 	
 	my @list_order = sort(@{$avail_items{$category}});
-	my %item_hash = map {$_ => 1} @list_order;
+	my %item_hash;
+
+	foreach my $item (@list_order) {
+		my %item_info = %{item_info($category, $item)};
+		$item_hash{$item_info{name}} = $item;
+	}
 	
 	if (!$item) {
 		my $message = "This port offers the following items in this category:\n";
 		foreach my $item (@list_order) {
-			my %item_info = %{item_info($item, $category)};
+			my %item_info = %{item_info($category, $item)};
 			$message .= "######\n";
 			$message .= "Name: $item_info{name}\n";
 			$message .= "Cost: $item_info{price}\n";
@@ -131,7 +136,7 @@ sub shop_item {
 	}
 	else {
 		if ($item_hash{$item}) {
-			my %item_info = %{item_info($item, $category)};
+			my %item_info = %{item_info($category, $item_hash{$item})};
 			if (
 				$quantity > 1 && 
 				($avail_items{$item}{meta_item} || $avail_items{$item}{blueprint})

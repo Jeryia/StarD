@@ -57,7 +57,7 @@ sub main {
 					next Quest;
 				}
 				if (quest_entity_name($player, $quest_info{must_survive}) eq $entity) {
-					quest_failure($player, $category, $quest);
+					quest_failed($player, $category, $quest);
 					next Quest;
 				}
 				
@@ -87,6 +87,6 @@ sub escort_quests_actions {
 	my $entity = shift(@_);
 
 	if (quest_entity_name($player, "$quest_info{escort}_$player") eq $entity) {
-		quest_failure($player, $category, $quest);
+		quest_failed($player, $category, $quest);
 	}
 }

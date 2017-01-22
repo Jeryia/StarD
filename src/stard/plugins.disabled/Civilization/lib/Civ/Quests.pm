@@ -211,7 +211,7 @@ sub quest_success {
 
 }
 
-## quest_failure
+## quest_failed
 # Reward the player for the completed quest
 # INPUT1: player
 # INPUT2: category
@@ -303,7 +303,7 @@ sub quest_start_actions {
 		starmade_countdown($quest_info{failure_countdown}, $quest_info{failure_countdown_name});
 		sleep $quest_info{failure_countdown};
 		if (quest_active($player, $category, $quest)) {
-			quest_failure($player, $category, $quest);
+			quest_failed($player, $category, $quest);
 		}
 	}
 	if ($quest_info{success_countdown} && $quest_info{success_countdown_name}) {
@@ -421,8 +421,7 @@ sub get_quest_avail_cur {
 	my %input = %{read_basic_config("$Civ::Base::PLAYER_DATA/$player/quest_avail_cur")};
 
 	foreach my $category (keys %input) {
-		my @quests = split("\n", @{$avail_quests{$category}});
-		$avail_quests{$category} = \@quests;
+		$avail_quests{$category} = expand_array($input{$category});;
 	}
 
 	return \%avail_quests;
