@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # default settings
-VERSION="0.3.3"
+VERSION="0.3.4"
 INSTALLDIR='/var'
 STANDALONE=0
 

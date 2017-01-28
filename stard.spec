@@ -1,5 +1,5 @@
 Name:		stard
-Version:	0.3.1
+Version:	0.3.4
 Release:	1%{?dist}
 Summary:	Starmade daemon and plugin scripts
 
