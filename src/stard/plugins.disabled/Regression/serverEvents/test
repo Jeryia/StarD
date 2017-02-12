@@ -28,7 +28,6 @@ starmade_setup_lib_env($stard_home);
 my $prog = $0;
 my $basename = basename($prog);
 
-starmade_broadcast("stard event trigger: $basename @ARGV");
 mkdir("./tmp");
 mkdir("./tmp/serverEvents");
 open(my $fh, ">>", "./tmp/serverEvents/$basename");

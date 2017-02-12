@@ -17,6 +17,7 @@ use sector_reg;
 use map_reg;
 use plugin_reg;
 use multiplexer_reg;
+use interactive_reg;
 
 $| = 1;
 #All rights reserved.
@@ -99,9 +100,12 @@ sub main {
 	elsif ($test eq 'multiplexer') {
 		multiplexer_reg($player);
 	}
+	elsif ($test eq 'interactive') {
+		interactive_reg($player);
+	}
 	else {
 		starmade_pm($player, "Error, requested regression suite not found: $test");
-		starmade_pm($player, "Available suites:\nall\ncore\ngeneral\nplayer\nfaction\nsector\nmap\nmultiplexer\nplugin");
+		starmade_pm($player, "Available suites:\nall\ncore\ngeneral\nplayer\nfaction\nsector\nmap\nmultiplexer\nplugin\ninteractive");
 		exit 0;
 	};
 	starmade_broadcast("All tests passed!");

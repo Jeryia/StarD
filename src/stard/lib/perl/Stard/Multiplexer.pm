@@ -227,8 +227,13 @@ sub server_messages {
 		plugin_server_event("playerSpawn", $player, $account);
 		return;
 	};
+
 	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia; id(3)(2)f(0)]
-	if ($message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+); .*\]/) {
+	# [SERVER][SPAWN] SPAWNING NEW CHARACTER FOR PlS[Jeryia2 ; id(198)(2)f(0)]
+	if (
+		$message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+); .*\]/ ||
+		$message =~/^\[SERVER\]\[SPAWN\] SPAWNING NEW CHARACTER FOR PlS\[(\S+) ; id/
+	) {
 		my $player = $1;
 		plugin_server_event("playerSpawn", $player);
 		return;
@@ -270,7 +275,7 @@ sub server_messages {
 		return;
 	};
 	# [SERVER][ChannelRouter] Faction Changed by PlS[Jeryia [Jeryia]*; id(3)(2)f(10041)] to 10041
-if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+\]\*?; id\(\d+\)\(\d+\)f\(\d+\)\] to (-?\d+)/) {
+	if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+\]\*?; id\(\d+\)\(\d+\)f\(\d+\)\] to (-?\d+)/) {
 		my $player = $1;
 		my $faction_id = $2;
 		if ($faction_id) {
@@ -287,14 +292,20 @@ if ($message =~/^\[SERVER\]\[ChannelRouter\] Faction Changed by PlS\[(\S+) \[\S+
 	};
 	# [SERVER] received object faction change request 10038 for object SpaceStation[ENTITY_SPACESTATION_Ares Mining Outpost_1443893697034(310)]
 	if (
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\((-?\d+\))\]/ ||
-		$message =~/^\[SERVER\] received object faction change request -?(\d+) for object (\S+)\[(.+)\]\((-?\d+\))/
+		$message =~/^\[SERVER\] received object faction change request (-?\d+) for object (\S+)\[(.+)\((-?\d+\))\]/ ||
+		$message =~/^\[SERVER\] received object faction change request (-?\d+) for object (\S+)\[(.+)\]\((-?\d+\))/
 	) {
 	 	my $faction_id = $1;
 		my $type = $2;
 		my $entity = $3;
 		my $id = $4;
-		plugin_server_event("entityFaction", $entity, $faction_id);
+		if ($faction_id) {
+			plugin_server_event("entityFaction", $entity, $faction_id);
+		}
+		else {
+			plugin_server_event("entityUnFaction", $entity);
+		}
+
 		return;
 	};
 }
