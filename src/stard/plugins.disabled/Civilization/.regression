@@ -28,10 +28,12 @@ sub main {
 
 	my $reg_dir = "./.reg/";
 	my $config_dir = "./config";
+	my $config_backup_dir = "./.config_bak";
 	my $station_sector = '100 100 -100';
 
 	# setup test environment
-	system('rsync', '-a', "$reg_dir", $config_dir);
+	system('mv', $config_dir, $config_backup_dir);
+	system('rsync', '-a', $reg_dir, $config_dir);
 	system('perl', './daemon');
 
 	# run tests
@@ -99,26 +101,8 @@ sub main {
 
 	test_result("$plugin - quest_info",(%{quest_info('combat', 'Kill pirate at 23 54 2')}));
 	
-	test_result("$plugin - quest_entity_name", quest_entity_name($player, 'thing-%player%') eq "thing-$player");
-
 	
 	starmade_change_sector_for($player, '200 0 0');
-	sleep 1;
-	quest_despawn_escort($player, 'test thing');
-	quest_spawn_escort($player, '200 0 0', 'test thing', 0, 'Isanth Type-Zero Bm');
-	my %sector_info = %{starmade_sector_info('200 0 0')};
-	test_result("$plugin - quest_spawn_escort", $sector_info{entity}{"ENTITY_SHIP_test thing_$player"});
-
-	quest_despawn_escort($player, 'test thing');
-	%sector_info = %{starmade_sector_info('200 0 0')};
-	test_result("$plugin - quest_despawn_escort", !$sector_info{entity}{"ENTITY_SHIP_test thing_$player"});
-
-	quest_spawn_escort($player, '200 0 0', 'test thing', 0, 'Isanth Type-Zero Bm');
-	quest_move_escort($player, '200 5 0', 'test thing', 0, 'Isanth Type-Zero Bm');
-	%sector_info = %{starmade_sector_info('200 5 0')};
-	test_result("$plugin - quest_move_escort", $sector_info{entity}{"ENTITY_SHIP_test thing_$player"});
-	quest_despawn_escort($player, 'test thing');
-	
 
 
 	starmade_change_sector_for($player, $station_sector);
@@ -133,6 +117,7 @@ sub main {
 	test_result("$plugin - get_quest_avail_cur", (%{get_quest_avail_cur($player)}));
 
 
+	# command testing
 	test_result("$plugin - !quest", test_command("quest", $player) == 0);
 	test_result("$plugin - !quest get", test_command("quest", $player) == 0);
 	test_result("$plugin - !quest get category", test_command("quest", $player, "combat") == 0);
@@ -144,6 +129,12 @@ sub main {
 	test_result("$plugin - !quest", test_command("buy", $player, "blocks") == 0);
 	test_result("$plugin - !quest", test_command("buy", $player, "blocks", "Shield_Capaciter") == 0);
 
+	# event testing
+	starmade_despawn_sector('','all', 'false', $station_sector);
+	if ($config_dir=~/\w+/) {
+		system('rm', '-rf', $config_dir);
+	}
+	system('mv', $config_backup_dir, $config_dir);
 }
 
 
