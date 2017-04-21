@@ -75,12 +75,12 @@ sub starmade_location_add {
 ## starmade_random_pos
 # Provide a random position in to spawn units in the given sector
 # OUTPUT: position (space seperated list)
-sub random_pos {
+sub starmade_random_pos {
 	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
 
-	return int(rand($sector_size * 2 - 500) - $sector_size)
-		. " " . int(rand($sector_size * 2 - 500) - $sector_size) 
-		. " " . int(rand($sector_size * 2 - 500) - $sector_size)
+	return int(rand($sector_size) - ($sector_size/2))
+		. " " . int(rand($sector_size) - ($sector_size/2)) 
+		. " " . int(rand($sector_size) - ($sector_size/2))
 	;
 }
 
