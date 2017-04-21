@@ -1,0 +1,267 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Misc;
+use Starmade::Player;
+use Starmade::Sector;
+use Stard::Base;
+
+use lib("./lib");
+use Civ::Base;
+use Civ::Quests;
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+starmade_setup_lib_env($stard_home);
+
+main(@ARGV);
+exit 0;
+
+#########################################################
+
+
+sub main {
+	my $player = shift(@_);
+	my $action = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+	if (!$action) {
+		help($player);
+		exit 0;
+	}
+	if ($action eq 'info') {
+		quests_info($player, $category, $quest);
+		exit 0;
+	}
+	if ($action eq 'get') {
+		quests_get($player, $category, $quest);
+		exit 0;
+	}
+	if ($action eq 'drop') {
+		quests_drop($player, $category, $quest);
+		exit 0;
+	}
+	help($player);
+}
+
+sub quests_info {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	
+	if (!$category) {
+		foreach my $category (keys %Civ::Quests::CATEGORY_CONF) {
+			print_active_quest_category($player, $category);
+		}
+	}
+	else {
+		print_active_quest_category($player, $category);
+	}
+}
+
+sub print_active_quest_category {
+	my $player = shift(@_);
+	my $category = shift(@_);
+
+	my @quests = @{quest_active_list($player, $category)};
+	my $message;
+	if (@quests) {
+		$message = "Current $category quests:\n";
+		for (my $i = 0; $i <= $#quests; $i++) {
+			my $quest = $quests[$i];
+			my $quest_info = %{quest_info($category, $quest)};
+			$message .= "######\n";
+			$message .= "Number: $i\n";
+			$message .= quest_info_string($category, $quest);
+			$message .= "#\n";
+		}
+	}
+	else {
+		$message = "No active quests in category: $category";
+	}
+	starmade_pm($player, $message);
+}
+
+sub help {
+	my $player = shift(@_);
+
+	my $message = "Usage: !quest <info|get|drop> <category> <quest> \n";
+
+	starmade_pm($player, $message);
+}
+
+
+sub quests_get {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+	my %avail_quests;
+
+	%avail_quests = %{get_avail_quest_list($player)};
+	my @categories = sort(keys %avail_quests);
+
+	if (!%avail_quests) {
+		starmade_pm($player, "There are no quests available at this location at this time.");
+		return;
+	}
+	elsif (!$category) {
+		starmade_pm($player, "You must give a category!");
+		help($player);
+	}
+	elsif (!$Civ::Quests::CATEGORY_CONF_FILE{$category}) {
+		starmade_pm($player, "'$category' is not a valid category");
+		help($player);
+	}
+	elsif (!$avail_quests{$category}) {
+		starmade_pm($player, "'$category' is not available at this location.");
+		help($player);
+	}
+
+	if (!$category || !$Civ::Quests::CATEGORY_CONF_FILE{$category} || !$avail_quests{$category}) {
+		my $message .= "Available categories at this location:\n";
+		foreach my $category (@categories) {
+			my $quest_number = int(@{$avail_quests{$category}});
+			$message .="$category ($quest_number)\n";
+		}
+		starmade_pm($player, $message);
+		return;
+	}
+	
+
+	shop_quest($player, $category, $quest, \%avail_quests);
+
+	if (!(defined $quest)) {
+		starmade_pm($player, "\naccept a quest with !quest $category '<quest>'\n");
+	}
+}
+
+sub get_avail_quest_info {
+	my $player = shift(@_);
+	my $avail_quests = shift(@_);
+	my $quest_config = shift(@_);
+
+	my %quests;
+	my %avail_quests;
+	my @avail_quest_list;
+
+	%quests = %{stard_read_config($quest_config)};
+	@avail_quest_list = @{expand_array($avail_quests)};
+
+	
+
+	foreach my $quest (@avail_quest_list) {
+		if ($quests{$quest}) {
+			$avail_quests{$quest} = $quests{$quest};
+		}
+		else {
+			starmade_pm($player, "Purchase configuration for this location is broken! Please tell an admin exactly what you where doing when you saw this error.");
+			print "Error! $quest is not defined in $quest_config!\n";
+			exit 0;
+		}
+	}
+
+	return \%avail_quests
+}
+
+sub shop_quest {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my %avail_quests = %{shift(@_)};
+
+	my @list_order = sort(@{$avail_quests{$category}});
+	my %quest_hash = map {$_ => 1} @list_order;
+	
+	if (!(defined $quest)) {
+		my $message = "This port offers the following quests in this category:\n";
+		for (my $i =0; $i <= $#list_order; $i++) {
+			my $quest = $list_order[$i];
+			$message .= "######\n";
+			$message .= "Number: $i\n";
+			$message .= quest_info_string($category, $quest);
+			$message .= "#\n";
+		}
+		starmade_pm($player, $message);
+		return;
+	}
+	else {
+		if ($quest=~/\D/ && $quest_hash{$quest}) {
+			starmade_pm($player, "You have accepted the quest '$quest'");
+			quest_add($player, $category, $quest);
+		}
+		elsif (!($quest =~/\D/) && $list_order[$quest]) {
+			starmade_pm($player, "You have accepted the quest '$list_order[$quest]'");
+			quest_add($player, $category, $list_order[$quest]);
+		}
+		else {
+			starmade_pm($player, "There is no quest available by the number or name of '$quest'");
+		}
+	}
+}
+
+sub quest_info_string {
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	
+	my %quest_info = %{quest_info($category, $quest)};
+
+	my $message = '';
+	$message .= "Name: $quest\n";
+	$message .= "Type: $quest_info{type}\n";
+	$message .= "Desc: $quest_info{objective_text}\n";
+	if ($quest_info{reward_hidden}) {
+		$message .= "Reward: Unknown\n";
+	}
+	else {
+		$message .= "Reward: $quest_info{reward_credits} Credits\n";
+	}
+	return $message;
+}
+
+
+sub quests_drop {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+	my @active_quests;
+	
+	if (!($category && defined $quest)) {
+		help($player);
+		exit 0;
+	}
+	if (!$Civ::Quests::CATEGORY_CONF{$category}) {
+		starmade_pm($player, "Category: $category does not exist!");
+	}
+
+	@active_quests = @{quest_active_list($player, $category)};
+	if ($quest=~/\d/ && !($quest =~/\D/) && $quest <= $#active_quests) {
+		$quest = $active_quests[$quest];
+	}
+	if (!(
+		quest_active($player, $category, $quest)
+	)) {
+		starmade_pm($player, "Quest: $quest in Cagetory: $category does not exist!");
+	}
+	quest_remove($player, $category, $quest);
+	starmade_pm($player, "Quest: $quest has been dropped from category $category!");
+}

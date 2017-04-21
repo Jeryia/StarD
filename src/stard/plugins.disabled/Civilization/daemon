@@ -1,0 +1,129 @@
+#!perl
+use strict;
+use warnings;
+
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Map;
+use Starmade::Message;
+use Starmade::Misc;
+use Starmade::Player;
+use Starmade::Faction;
+use Stard::Base;
+
+use lib ("./lib");
+use Civ::Base;
+
+my $stard_home = "./../..";
+my $starmade_home = "$stard_home/../StarMade/";
+
+
+starmade_setup_lib_env($stard_home);
+starmade_stdlib_set_debug(2);
+
+main();
+sub main {
+	load_blueprints();
+	starmade_wait_until_running();
+	mkdir("./data");
+
+
+	my %factions = %{stard_read_config($Civ::Base::FACTION_CONFIG)};
+	my %sector_map = %{stard_read_config($Civ::Base::MAP_FILE)};
+	my %faction_map;
+
+
+	setup_factions(\%factions);
+
+	%faction_map = %{read_basic_config($Civ::Base::FACTION_MAP_FILE)};
+
+	%sector_map = %{starmade_remap_map_factions(\%sector_map, \%faction_map)};
+
+	if (! -e $Civ::Base::MAP_CREATED) {
+		starmade_clean_map_area(\%sector_map, 'all');
+		open(my $fh, ">", $Civ::Base::MAP_CREATED);
+		print $fh "1";
+		close($fh);
+	}
+
+	print "repairing map!\n";
+	starmade_repair_map(\%sector_map);
+}
+
+sub load_blueprints {
+	my $demand_restart = 0;
+	
+	opendir(my $dh, "./blueprints") or warn "Failed to open './blueprints': $!\n";
+	my @files;
+	while (readdir($dh)) {
+	        if ($_ ne '.' && $_ ne '..') {
+	                push(@files, $_);
+	        }
+	}
+	closedir($dh);
+	
+	FILE: foreach my $file (@files) {
+		if (-d "$starmade_home/blueprints/$file") {
+			next FILE;
+		}
+		system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/");
+		$demand_restart = 1;
+	}
+	while ($demand_restart) {
+		starmade_broadcast("Civilization plugin has installed new blueprints.");
+		starmade_broadcast("You will need to restart StarMade in order for Civilization to work correctly.");
+		sleep 300;
+	}
+}
+
+sub setup_factions {
+	my %factions = %{ shift(@_) };
+	my %faction_map = %{read_basic_config($Civ::Base::FACTION_MAP_FILE)};
+	
+	my $write_new_map = 0;
+
+
+	## Ensure things look ok before proceeding
+	if (!%factions) {
+		print "Warning: no factions have been defined in in $Civ::Base::FACTION_CONFIG!\n";
+		print "Run !stard restart to restart the civ daemon and try again!\n";
+		return;
+	}
+	foreach my $faction (keys %factions) {
+		if (!$factions{$faction}{placeholder_id}) {
+			stard_broadcast("Error: $faction has no defined placeholder_id in $Civ::Base::FACTION_CONFIG!");
+			stard_broadcast("This is used to refer to the faction before it's created.");
+			stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
+			exit 1;
+		}
+	}
+
+	## setup the factions
+	foreach my $faction (keys %factions) {
+		my %faction_list = %{starmade_faction_list_bname()};
+		if (!$faction_list{$faction}) {
+			if (!starmade_faction_create($faction, '')) {
+				stard_broadcast("Civilivation mod failed to create faction '$faction'!");
+				stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
+				exit 1;
+			}
+			sleep 1;
+			%faction_list = %{starmade_faction_list_bname()};
+		}
+
+		if ($faction_list{$faction}{id} && ! ($faction_map{$factions{$faction}})) {
+			$faction_map{$factions{$faction}{placeholder_id}} = $faction_list{$faction}{id};
+			$write_new_map = 1;
+		}
+		else {
+			stard_broadcast("Civilivation mod failed to create faction '$faction'!");
+			stard_broadcast("Run !stard restart to restart the civ daemon and try again!");
+			exit 1;
+		}
+	}
+	if ($write_new_map) {
+		write_basic_config($Civ::Base::FACTION_MAP_FILE, \%faction_map);
+	}
+}
+

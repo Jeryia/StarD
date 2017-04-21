@@ -1,0 +1,10 @@
+[test station]
+	blueprint=Isanth Type-Zero Bm
+	sector=100 100 -100
+	owner=1
+	defenders=Isanth Type-Zero Bm
+	defender_pos=1986 1192 579
+	buy_blocks=Shield Capaciter,Cannon Barrel
+	buy_ships=Isanth Type-Zero Bm
+	buy_docks=Isanth Type-Zero Bc
+	quests_combat=Kill pirate at 23 54 2

@@ -1,0 +1,216 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Misc;
+use Starmade::Player;
+use Starmade::Sector;
+use Stard::Base;
+
+use lib("./lib");
+use Civ::Base;
+use Civ::Buy;
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+starmade_setup_lib_env($stard_home);
+
+main(@ARGV);
+exit 0;
+
+#########################################################
+
+
+sub main {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $item = shift(@_);
+	my $quantity = shift(@_);
+
+	shop_category($player, $category, $item, $quantity);
+}
+
+sub help {
+	my $player = shift(@_);
+
+	my $message = "Usage: !buy <category> <item> <quantity>\n";
+	starmade_pm($player, $message);
+}
+
+
+sub shop_category {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $item = shift(@_);
+	my $quantity = shift(@_);
+
+	my %avail_items;
+
+	%avail_items = %{get_avail_item_list($player)};
+	my @categories = sort(keys %avail_items);
+
+	if (!%avail_items) {
+		starmade_pm($player, "There are no items available at this location at this time.");
+		return;
+	}
+	elsif (!$category) {
+		starmade_pm($player, "You must give a category!");
+		help($player);
+	}
+	elsif ($category && !$Civ::Buy::CATEGORY_CONF_FILE{$category}) {
+		starmade_pm($player, "'$category' is not a valid category");
+		help($player);
+	}
+	elsif (!$avail_items{$category}) {
+		starmade_pm($player, "'$category' is not available at this location.");
+		help($player);
+	}
+
+	if (!$category || !$Civ::Buy::CATEGORY_CONF_FILE{$category} || !$avail_items{$category}) {
+		my $message .= "Available categories at this location:\n";
+		foreach my $category (@categories) {
+			my $item_number = @{$avail_items{$category}};
+			$message .="$category ($item_number)\n";
+		}
+
+		starmade_pm($player, $message);
+		return;
+	}
+	
+
+	shop_item($player, $category, $item, $quantity, \%avail_items);
+
+	if (!(defined $item)) {
+		starmade_pm($player, "\naccept a item with !item $category '<item>'\n");
+	}
+}
+
+sub shop_item {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $item = shift(@_);
+	my $quantity = shift(@_);
+	my %avail_items = %{shift(@_)};
+
+
+	if (!$quantity) {
+		$quantity = 1;
+	}
+	
+	my @list_order = sort(@{$avail_items{$category}});
+	my %item_hash;
+
+	foreach my $item (@list_order) {
+		my %item_info = %{item_info($category, $item)};
+		$item_hash{$item_info{name}} = $item;
+	}
+	
+	if (!$item) {
+		my $message = "This port offers the following items in this category:\n";
+		foreach my $item (@list_order) {
+			my %item_info = %{item_info($category, $item)};
+			$message .= "######\n";
+			$message .= "Name: $item_info{name}\n";
+			$message .= "Cost: $item_info{price}\n";
+			$message .= "Desc: $item_info{desc}\n";
+			$message .= "#\n";
+		}
+		starmade_pm($player, $message);
+		return;
+	}
+	else {
+		if ($item_hash{$item}) {
+			my %item_info = %{item_info($category, $item_hash{$item})};
+			if (
+				$quantity > 1 && 
+				($avail_items{$item}{meta_item} || $avail_items{$item}{blueprint})
+			) {
+				starmade_pm($player, "You can only purchase one of this item at a time");
+				return;
+			}
+
+			player_pay($player, $avail_items{$item}{price} * $quantity);
+			
+			if ($item_info{blueprint}) {
+				my %player_info = %{starmade_player_info($player)};
+				my $ship_name = $player . "s $item_info{name}\_" . time;
+				if (!$player_info{faction}) {
+					$player_info{faction} = 0;
+				}
+				starmade_spawn_entity_pos(
+					$item_info{blueprint},
+					$ship_name,
+					$player_info{sector},
+					$player_info{pos},
+					$player_info{faction},
+					0,
+				);
+			}
+			if ($item_info{block_name}) {
+				if(!starmade_give_item($player, $item_info{block_name}, $quantity)) {
+					starmade_give_credits($player, $item_info{price} * $quantity);
+					starmade_pm($player, "Transaction failed. Please report this to an admin!");
+					print starmade_last_output();
+					return;
+				}
+			}
+			if ($avail_items{$item}{block_id}) {
+				if(!starmade_give_item_id($player, $item_info{block_id}, $quantity)) {
+					starmade_give_credits($player, $item_info{price} * $quantity);
+					starmade_pm($player, "Transaction failed. Please report this to an admin!");
+					print starmade_last_output();
+					return;
+				}
+			}
+			if ($avail_items{$item}{meta_item}) {
+				if(!starmade_give_metaitem($player, $item_info{meta_item})) {
+					starmade_give_credits($player, $item_info{price} * $quantity);
+					starmade_pm($player, "Transaction failed. Please report this to an admin!");
+					print starmade_last_output();
+					return;
+				}
+			}
+			starmade_pm($player, "You have purchased $quantity of '$item'.");
+		}
+		else {
+			starmade_pm($player, "There is no item available by the name of '$item'");
+		}
+		
+	}
+}
+
+sub player_pay {
+	my $player = shift(@_);
+	my $amount = shift(@_);
+
+	my %player_info = %{starmade_player_info($player)};
+
+	if ($player_info{credits} < $amount) {
+		starmade_pm($player, "You can't afford that item...");
+		exit 0;
+	}
+
+	if (!starmade_give_credits($player, -$amount)) {
+		starmade_pm($player, "Transaction Failed! Unable to take player's credits!");
+		exit 1;
+	}
+}
+
+
+
