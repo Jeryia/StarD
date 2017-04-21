@@ -2,6 +2,7 @@
 package Civ::Quests;
 use strict;
 use warnings;
+use File::Basename;
 
 use lib("../../lib/perl");
 use Starmade::Base;
@@ -13,6 +14,7 @@ use Stard::Base;
 
 use lib("./lib");
 use Civ::Base;
+use Civ::Object;
 
 #All rights reserved.
 #
@@ -29,7 +31,7 @@ use Civ::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT=qw(quest_active_list quest_active quest_add quest_remove quest_success quest_failed quest_info quest_entity_name quest_start_actions quest_spawn_escort quest_move_escort quest_despawn_escort get_avail_quest_list populate_quest_info_cache set_quest_avail_cur get_quest_avail_cur clear_quest_avail_cur);
+@EXPORT=qw(quest_active_list quest_active quest_add quest_set_start_sector quest_get_start_sector quest_remove quest_success quest_completed_before quest_failed quest_list_objects quest_remove_all_objects quest_create_object quest_remove_object quest_clear_object quest_move_object quest_get_object_id quest_info quest_entity_name quest_start_actions get_avail_quest_list populate_quest_info_cache set_quest_avail_cur get_quest_avail_cur clear_quest_avail_cur quest_processed_quest_info);
 
 
 ## locations of the different configuration files for each category.
@@ -64,14 +66,14 @@ sub quest_active_list {
 
 	my @quests = ();
 
-	open(my $fh, "<", "$Civ::Base::PLAYER_DATA/$player/quest_$category") or return \@quests;
-	@quests = <$fh>;
-	close($fh);
-
-	foreach my $quest (@quests) {
-		$quest=~s/^\s//g;
-		$quest=~s/\s$//g;
+	my $quests_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category";
+	opendir(my $dh, $quests_dir) or return \@quests;
+	while (my $file = readdir($dh)) {
+		if ( $file ne '.' && $file ne '..') {
+			push(@quests, $file);
+		}
 	}
+	close($dh);
 	return \@quests;
 }
 
@@ -86,14 +88,12 @@ sub quest_active {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	my @quests = @{quest_active_list($player, $category)};
+	my $quest_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest";
 
-	foreach my $active_quest (@quests) {
-		if ($quest eq $active_quest) {
-			return 1;
-		}
+	if ( -d $quest_dir ) {
+		return 1;
 	}
-	return 0;
+	return 0
 }
 
 ## quest_add
@@ -106,32 +106,62 @@ sub quest_add {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	system('mkdir', '-p', "$Civ::Base::PLAYER_DATA/$player/");
-
+	my $quest_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest";
 	if (!quest_info($category, $quest)) {
 		starmade_pm($player, "An error occurred when trying to accept the quest '$quest' of category.\n Please inform an admin what you where doing when you recieved this message");
 		print "Error: quest: '$quest' does not exist in category '$category'\n";
 		return;
 	}
+	system('mkdir', '-p', $quest_dir);
+	my %player_info = %{starmade_player_info($player)};
+	quest_set_start_sector($player, $category, $quest, $player_info{sector});
 
-	my $datafile = "$Civ::Base::PLAYER_DATA/$player/quest_$category";
-	open(my $lock_fh, "<", $datafile);
-	flock($lock_fh, 2);
-
-	my @quests = @{quest_active_list($player, $category)};
-	foreach my $active_quest (@quests) {
-		if ($active_quest eq $quest) {
-			close($lock_fh);
-			return;
-		}
-	}
-	push(@quests, $quest);
-
-	open(my $fh, ">", "$Civ::Base::PLAYER_DATA/$player/quest_$category") or warn "failed to open '$Civ::Base::PLAYER_DATA/$player/quest_$category': $!\n";
-	print $fh join("\n", @quests);
-	close($fh);
-	close($lock_fh);
 	quest_start_actions($player, $category, $quest);
+}
+
+
+## quest_set_start_sector
+# Sets the starting sector of the given quest. (Where the player got the quest)
+# INPUT1: player name
+# INPUT2: quest category
+# INPUT3: quest name
+# INPUT4: sector (space seperated list, ie '3 14 -5')
+sub quest_set_start_sector {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my $sector = shift(@_);
+
+	my $file = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/start_sector";
+	open(my $fh, ">", "$file") or warn "failed to open '$file': $!\n";
+	flock($fh, 2) or die "Failed to lock '$file'!\n";
+	print $fh "$sector";
+	close($fh);
+}
+
+## quest_get_start_sector
+# Gets the starting sector of the given quest. (Where the player got the quest)
+# INPUT1: player name
+# INPUT2: quest category
+# INPUT3: quest name
+# INPUT4: sector (space seperated list, ie '3 14 -5')
+sub quest_get_start_sector {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+	my $sector;
+	my $fh;
+
+	my $file = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/start_sector";
+	if (!open($fh, "<", "$file")) {
+		warn "failed to open '$file': $!\n";
+		return;
+	}
+	flock($fh, 1) or die "Failed to lock '$file':$!\n";
+	($sector) = <$fh>;
+	close($fh);
+	return $sector;
 }
 
 ## quest_remove
@@ -144,26 +174,15 @@ sub quest_remove {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 	
-	my $datafile = "$Civ::Base::PLAYER_DATA/$player/quest_$category";
 
+	my $quest_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest";
+	my $quest_objects_dir = "$quest_dir/objects";
 
-	open(my $lock_fh, "<", $datafile);
-	flock($lock_fh, 2);
+	quest_remove_all_objects($player, $category, $quest);
+	rmdir($quest_objects_dir);
 
-	my @quests = @{quest_active_list($player, $category)};
-	for (my $i = 0; $i <= $#quests; $i++) {
-		my $active_quest = $quests[$i];
-		if ($active_quest eq $quest) {
-			splice(@quests, $i);
-		}
-	}
-
-	open(my $fh, ">", $datafile) or warn "failed to open '$datafile': $!\n";
-	if (@quests) {
-		print $fh join("\n", @quests);
-	}
-	close($fh);
-	close($lock_fh);
+	unlink("$quest_dir/start_sector");
+	rmdir("$quest_dir");
 }
 
 ## quest_success
@@ -176,7 +195,7 @@ sub quest_success {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	my %quest_config = %{quest_info($category, $quest)};
+	my %quest_config = %{quest_processed_quest_info($player, $category, $quest)};
 
 	my $message = '';
 
@@ -185,18 +204,33 @@ sub quest_success {
 	}
 	else {
 		$message = "Quest '$quest' has been completed successfully!\n";
+		$message   .= "Your Rewards:\n";
 	}
 	if ($quest_config{reward_credits}) {
-		$message   .= "Your Rewards:\n";
 		starmade_give_credits($player, $quest_config{reward_credits});
 		$message .= "  $quest_config{reward_credits} Credits\n";
 	}
+	if ($quest_config{reward_reputation}) {
+		my @rep_rewards = @{expand_array($quest_config{reward_reputation})};
+		foreach my $rep_reward (@rep_rewards) {
+			if ($rep_reward=~/(.*):(-?\d+)/) {
+				my $rep = $1;
+				my $amount = $2;
+				reputation_add($player, $rep, $amount);
+				$message .= "  $amount $rep reputation\n";
+			}
+			else {
+				print "Invalid reward_reputation: $rep_reward\n";
+			}
+		}
+	}
+
 	starmade_pm($player, $message);
 	quest_remove($player, $category, $quest);
 
 	if ($quest_config{next_objective}) {
 		quest_add($player, $category, $quest_config{next_objective});
-		my %quest_info = %{quest_info($category, $quest_config{next_objective})};
+		my %quest_info = %{quest_processed_quest_info($player, $category, $quest_config{next_objective})};
 		starmade_pm($player, "New objective: $quest_info{objective_text}");
 	}
 
@@ -204,11 +238,27 @@ sub quest_success {
 	flock($fh, 2);
 	print $fh "$quest\n";
 	close($fh);
-	if ($quest_config{escort}) {
-		sleep 10;
-		quest_despawn_escort($player, $quest_config{escort});
-	}
+}
 
+sub quest_completed_before {
+	my $player = shift(@_);
+	my $quest = shift(@_);
+	my $category = shift(@_);
+
+	my @quests;
+
+	open(my $fh, "<", "$Civ::Base::PLAYER_DATA/$player/quest_c_$category") or return 0;
+	flock($fh, 1);
+	@quests = <$fh>;
+	close($fh);
+	
+	foreach my $c_quest (@quests) {
+		chomp $c_quest;
+		if ($c_quest eq $quest) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
 ## quest_failed
@@ -229,13 +279,176 @@ sub quest_failed {
 		starmade_give_credits($player, $quest_config{consolation_credits});
 		$message .= "  $quest_config{consolation_credits} Credits\n";
 	}
-	if ($quest_config{escort}) {
-		quest_despawn_escort($player, $quest_config{escort});
-	}
 
 
 	starmade_pm($player, $message);
 	quest_remove($player, $category, $quest);
+}
+
+sub quest_list_objects {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+
+	my $quest_objects_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/objects";
+
+	my @objects = ();
+	opendir(my $dh, "$quest_objects_dir") or return \@objects;
+
+	while (readdir $dh) {
+		if ($_ ne '.' && $_ ne '..') {
+			push(@objects, $_);
+		}
+	}
+	return \@objects;
+}
+
+sub quest_remove_all_objects {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+
+	my @objects = @{quest_list_objects($player, $category, $quest)};	
+
+	foreach my $object (@objects) {
+		quest_remove_object($player, $category, $quest, $object);
+	}
+}
+
+
+sub quest_create_object {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my $object_tag = shift(@_);
+	my $object_type = shift(@_);
+	my $sector = shift(@_);
+	my $pos = shift(@_);
+
+	my $quest_objects_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/objects";
+	my $object = create_ship_object($player, $object_type, $sector, $pos);
+
+	system("mkdir", "-p", "$quest_objects_dir");
+	if ( $object ) {
+		link("$Civ::Base::PLAYER_DATA/$player/objects/$object", "$quest_objects_dir/$object_tag") or return 0;
+		return 1;
+	}
+	return 0;
+}
+
+
+## quest_remove_object
+# remove the quest object.
+# INPUT1: player name
+# INPUT2: quest category
+# INPUT3: quest name
+# INPUT4: object tag (this identifies the object for the quest).
+sub quest_remove_object {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my $object_tag = shift(@_);
+
+	my $quest_objects_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/objects";
+	my $object_id = quest_get_object_id($player, $category, $quest, $object_tag);
+
+	if ( $object_id && remove_ship_object($player, $object_id)) {
+		unlink("$quest_objects_dir/$object_tag");
+		return 1;
+	}
+	return 0;
+}
+
+## quest_clear_object
+# remove the quest object without removing it from starmade
+# INPUT1: player name
+# INPUT2: quest category
+# INPUT3: quest name
+# INPUT4: object tag (this identifies the object for the quest).
+sub quest_clear_object {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my $object_tag = shift(@_);
+
+	my $quest_objects_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/objects";
+	my $object_id = quest_get_object_id($player, $category, $quest, $object_tag);
+
+	if ( $object_id && clear_ship_object($player, $object_id)) {
+		unlink("$quest_objects_dir/$object_tag");
+		return 1;
+	}
+	return 0;
+}
+
+## quest_move_object
+# remove the quest object.
+## quest_move_object
+# remove the quest object.
+# INPUT1: player name
+# INPUT2: quest category
+# INPUT3: quest name
+# INPUT4: object tag
+# INPUT5: sector to move object to.
+sub quest_move_object {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my $object_tag = shift(@_);
+	my $sector = shift(@_);
+	
+	my $object_id = quest_get_object_id($player, $category, $quest, $object_tag);
+	my $object_name = get_object_name($player, $object_id);
+	my %quest_info = %{quest_info($category, $quest)};
+
+	if (!($quest_info{$object_tag})) {
+		return 0;
+	}
+
+	my %ships = %{starmade_search($object_name)};
+	if (
+		$ships{$object_name} ||
+		starmade_loc_distance($ships{$object_name}, $sector) >= 2
+	) {
+		quest_remove_object($player, $object_id);
+		sleep 4;
+		quest_create_object(
+			$player, 
+			$category, 
+			$quest, 
+			$sector, 
+			$object_tag,
+			$quest_info{$object_tag},
+			$sector,
+		);
+	}
+	return 1;
+}
+
+## quest_get_object_id
+# INPUT1: player
+# INPUT2: category
+# INPUT3: quest
+# INPUT4: object tag
+sub quest_get_object_id {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	my $object_tag = shift(@_);
+
+
+	my $quest_objects_dir = "$Civ::Base::PLAYER_DATA/$player/active_quests_$category/$quest/objects";
+	my $object_id;
+	if ( -l "$quest_objects_dir/$object_tag" ) {
+		$object_id = basename(readlink("$quest_objects_dir/$object_tag"));
+	}
+	else {
+		unlink("$quest_objects_dir/$object_tag");
+		return 0;
+	}
+
+	return $object_id;
 }
 
 ## quest_info
@@ -268,7 +481,7 @@ sub quest_start_actions {
 	my $category = shift(@_);
 	my $quest = shift(@_);
 
-	my %quest_info = %{quest_info($category, $quest)};
+	my %quest_info = %{quest_processed_quest_info($player, $category, $quest)};
 
 	my %player_info = %{starmade_player_info($player)};
 
@@ -280,81 +493,31 @@ sub quest_start_actions {
 	}
 	
 	if (!$quest_info{sector} || $quest_info{sector} eq $player_info{sector} ) {
-		if (
-			$quest_info{template} eq 'destroy' &&
-			$quest_info{objective} && 
-			$quest_info{objective_bp} && 
-			$quest_info{objective_fac}
-		) {
-			starmade_spawn_entity_pos($quest_info{objective_bp}, $quest_info{objective}, $player_info{sector}, starmade_random_pos(), map_faction($quest_info{objective_fac}), 1);
+		for (my $i = 1; defined $quest_info{"sector_spawn$i"}; $i++) {
+			quest_create_object($player, $category, $quest, "sector_spawn$i", $quest_info{"sector_spawn$i"}, $quest_info{sector});
 		}
-		if ($quest_info{enemies} && map_faction($quest_info{enemies_fac}) && $quest_info{enemies_pos} ) {
-			my @enemies = split(',', $quest_info{enemies});
-			my @enemies_pos = split(',', $quest_info{enemies_pos});
-			starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $quest_info{enemies_fac}, $player_info{sector}, 1);
+		if ($quest_info{victory_on_arrival}) {
+			quest_success($player, $category, $quest);
 		}
 	}
-	if ($quest_info{escort} && $quest_info{escort_fac} && $quest_info{escort_bp}) {
-		quest_spawn_escort($player, $player_info{sector}, $quest_info{escort}, $quest_info{escort_fac}, $quest_info{escort_bp});
+	for (my $i = 1; $quest_info{"escort$i"}; $i++) {
+		quest_create_object($player, $category, $quest, "escort$i", $quest_info{"escort$i"}, $player_info{sector});
 	}
 
 	# Must be last, as thie waits for the countdown to finish before continuing.
-	if ($quest_info{failure_countdown} && $quest_info{failure_countdown_name}) {
-		starmade_countdown($quest_info{failure_countdown}, $quest_info{failure_countdown_name});
+	if ($quest_info{failure_countdown}) {
 		sleep $quest_info{failure_countdown};
 		if (quest_active($player, $category, $quest)) {
 			quest_failed($player, $category, $quest);
 		}
 	}
-	if ($quest_info{success_countdown} && $quest_info{success_countdown_name}) {
-		starmade_countdown($quest_info{failure_countdown}, $quest_info{failure_countdown_name});
+	if ($quest_info{victory_countdown}) {
 		sleep $quest_info{failure_countdown};
 		if (quest_active($player, $category, $quest)) {
 			quest_success($player, $category, $quest);
 		}
 	}
 }
-
-sub quest_spawn_escort {
-	my $player = shift(@_);
-	my $sector = shift(@_);
-	my $escort = shift(@_);
-	my $esc_faction = shift(@_);
-	my $blueprint = shift(@_);
-
-
-	quest_despawn_escort($player, $escort);
-	select(undef, undef, undef, 0.2);
-
-	starmade_spawn_entity_pos($blueprint, "$escort\_$player", $sector, starmade_random_pos(), map_faction($esc_faction), 1);
-
-}
-
-sub quest_move_escort {
-	my $player = shift(@_);
-	my $sector = shift(@_);
-	my $escort = shift(@_);
-	my $esc_faction = shift(@_);
-	my $blueprint = shift(@_);
-
-	my %ships = %{starmade_search("$escort\_$player")};
-	if (
-		!$ships{"$escort\_$player"} ||
-		starmade_loc_distance($ships{"$escort\_$player"}, $sector) >= 2
-	) {
-		sleep 4;
-		quest_spawn_escort($player, $sector, $escort, $esc_faction, $blueprint);
-		return;
-	}
-}
-
-sub quest_despawn_escort {
-	my $player = shift(@_);
-	my $escort = shift(@_);
-
-	starmade_despawn_all("$escort\_$player", "all", "true");
-}
-
 
 sub get_avail_quest_list {
 	my $player = shift(@_);
@@ -377,11 +540,16 @@ sub get_avail_quest_list {
 	# Check each quest to see if it if offered at this time.
 	foreach my $category (keys %CATEGORY_CONF) {
 		my @quests = ();
-		foreach my $quest (@{$potential_quests{$category}}) {
-			my %quest_info = %{quest_info($quest, $category)};
-			if (reqs_ok($player, \%quest_info)) {
-				push(@quests, $quest);
+		Quest: foreach my $quest (@{$potential_quests{$category}}) {
+			my %quest_info = %{quest_processed_quest_info($player, $category, $quest)};
+
+			if ($quest_info{not_repeatable} && quest_completed_before($player, $quest, $category)) {
+				next Quest;
 			}
+			if (!reqs_ok($player, \%quest_info)) {
+				next Quest;
+			}
+			push(@quests, $quest);
 		}
 		if (@quests) {
 			$avail_quests{$category} = \@quests;
@@ -431,6 +599,70 @@ sub clear_quest_avail_cur {
 	my $player = shift(@_);
 
 	unlink("$Civ::Base::PLAYER_DATA/$player/quest_avail_cur");
+}
+
+sub quest_processed_quest_info {
+	my $player = shift(@_);
+	my $category = shift(@_);
+	my $quest = shift(@_);
+	
+	my $distance = 0;
+	my $start_sector;
+	my %quest_info = %{quest_info($category, $quest)};
+
+	if ( $quest_info{sector} && $quest_info{sector} =~/-?\d+\s+-?\d+\s+-?\d+/) {
+		$start_sector = quest_get_start_sector($player, $category, $quest);
+		if ( !$start_sector) {
+			my %player_info = %{starmade_player_info($player)};
+			$start_sector = $player_info{sector};
+		}
+		$distance = starmade_loc_distance($start_sector, $quest_info{sector});
+	}
+
+	foreach my $key (keys %quest_info) {
+		$quest_info{$key}=~s/\$distance/$distance/g;
+		
+		while ($quest_info{$key}=~/\$(\w+)\W/) {
+			my $ref = $1;
+			if ($quest_info{$ref}) {
+				$quest_info{$key}=~s/\$$ref/$quest_info{$ref}/g;
+			}
+			else {
+				$quest_info{$key}=~s/\$$ref/\%<INVALID>$ref\%/g;
+				print "Error! Invalid reference '\$$ref' in quest category: '$category', quest: '$quest'\n";
+			}
+		}
+
+		if ($quest_info{$key} =~/(-?\d+\.?\d*) \* (-?\d+\.?\d*)/) {
+			my $num1 = $1;
+			my $num2 = $2;
+			my $answer = int($num1 * $num2);
+			
+			$quest_info{$key} =~s/$num1 \* $num2/$answer/g;
+		}
+		if ($quest_info{$key} =~/(-?\d+\.?\d*) \/ (-?\d+\.?\d*)/) {
+			my $num1 = $1;
+			my $num2 = $2;
+			my $answer = int($num1 / $num2);
+			
+			$quest_info{$key} =~s/$num1 \/ $num2/$answer/g;
+		}
+		if ($quest_info{$key} =~/(-?\d+\.?\d*) \+ (-?\d+\.?\d*)/) {
+			my $num1 = $1;
+			my $num2 = $2;
+			my $answer = int($num1 + $num2);
+			
+			$quest_info{$key} =~s/$num1 \+ $num2/$answer/g;
+		}
+		if ($quest_info{$key} =~/(-?\d+\.?\d*) \- (-?\d+\.?\d*)/) {
+			my $num1 = $1;
+			my $num2 = $2;
+			my $answer = int($num1 - $num2);
+			
+			$quest_info{$key} =~s/$num1 \- $num2/$answer/g;
+		}
+	}
+	return \%quest_info;
 }
 
 1;

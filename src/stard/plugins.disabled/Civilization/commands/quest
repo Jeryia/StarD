@@ -87,10 +87,9 @@ sub print_active_quest_category {
 		$message = "Current $category quests:\n";
 		for (my $i = 0; $i <= $#quests; $i++) {
 			my $quest = $quests[$i];
-			my $quest_info = %{quest_info($category, $quest)};
 			$message .= "######\n";
 			$message .= "Number: $i\n";
-			$message .= quest_info_string($category, $quest);
+			$message .= quest_info_string($player, $category, $quest);
 			$message .= "#\n";
 		}
 	}
@@ -197,7 +196,7 @@ sub shop_quest {
 			my $quest = $list_order[$i];
 			$message .= "######\n";
 			$message .= "Number: $i\n";
-			$message .= quest_info_string($category, $quest);
+			$message .= quest_info_string($player, $category, $quest);
 			$message .= "#\n";
 		}
 		starmade_pm($player, $message);
@@ -219,10 +218,12 @@ sub shop_quest {
 }
 
 sub quest_info_string {
+	my $player = shift(@_);
 	my $category = shift(@_);
 	my $quest = shift(@_);
+
 	
-	my %quest_info = %{quest_info($category, $quest)};
+	my %quest_info = %{quest_processed_quest_info($player, $category, $quest)};
 
 	my $message = '';
 	$message .= "Name: $quest\n";

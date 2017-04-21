@@ -48,8 +48,8 @@ sub main {
 		my @quests = @{quest_active_list($player, $category)};
 
 		Quest: foreach my $quest (@quests) {
-			my %quest_info = %{quest_info($category, $quest)};
-			if (!$quest_info{no_fail_on_death}) {
+			my %quest_info = %{quest_processed_quest_info($player, $category, $quest)};
+			if ($quest_info{fail_on_death}) {
 				quest_failed($player, $category, $quest);
 			}
 		}

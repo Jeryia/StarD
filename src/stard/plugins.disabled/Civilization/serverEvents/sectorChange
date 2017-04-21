@@ -51,29 +51,14 @@ sub main {
 		my @quests = @{quest_active_list($player, $category)};
 
 		Quest: foreach my $quest (@quests) {
-			my %quest_info = %{quest_info($category, $quest)};
+			my %quest_info = %{quest_processed_quest_info($player, $category, $quest)};
 
 			generic_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
 
-			## Template specific
-			if (!$quest_info{template}) {
-				next Quest;
-			}
-			if ($quest_info{template} eq 'goto') {
-				goto_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
-				next Quest;
-			}
-			if ($quest_info{template} eq 'destroy') {
-				destroy_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
-				next Quest;
-			}
-			if ($quest_info{template} eq 'escort') {
-				escort_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
-				next Quest;
-			}
 		}
 	}
 }
+
 
 sub generic_quests_actions {
 	my $player = shift(@_);
@@ -82,79 +67,38 @@ sub generic_quests_actions {
 	my %quest_info = %{shift(@_)};
 	my $new_sector = shift(@_);
 	
-	# Enemies to spawn at the given sector
+	# escort to spawn at the sector
+	for (my $i = 1; $quest_info{"escort$i"}; $i++) {
+		quest_move_object($player, $category, $quest, "escort$i", $new_sector);
+	}
+
 	if ($quest_info{sector} && $quest_info{sector} eq $new_sector) {
-		if ($quest_info{enemies} && $quest_info{enemies_fac} && $quest_info{enemies_pos} ) {
-			my @enemies = split(',', $quest_info{enemies});
-			my @enemies_pos = split(',', $quest_info{enemies_pos});
-			starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $quest_info{enemies_fac}, $new_sector, 1);
+		for (my $i = 1; defined $quest_info{"sector_spawn$i"}; $i++) {
+			quest_create_object($player, $category, $quest, "sector_spawn$i", $quest_info{"sector_spawn$i"}, $new_sector);
+		}
+		if ($quest_info{victory_on_arrival}) {
+			quest_success($player, $category, $quest);
 		}
 	}
-
-	# escort to spawn at the sector
-	if ($quest_info{escort} && $quest_info{escort_fac} && $quest_info{escort_bp}) {
-		quest_move_escort($player, $new_sector, $quest_info{escort}, $quest_info{escort_fac}, $quest_info{escort_bp});
-	}
-
 
 	# Randomly spawn attackers if quest requires it
 	Attackers: for (my $i =0; $quest_info{"random_attackers$i"}; $i++) {
-		my @enemies = split(",", $quest_info{"random_attackers$i"});
-		my @enemies_pos = ();
-		my $enemies_fac = -1;
+		my @enemies = @{expand_array($quest_info{"random_attackers$i"})};
 
-		if ($quest_info{"random_attackers$i\_fac"}) {
-			$enemies_fac = $quest_info{"random_attackers$i\_fac"}; 
-		}
-		if ($quest_info{"random_attackers$i\_pos"}) {
-			@enemies_pos = split(",", $quest_info{"random_attackers$i\_pos"});
-		}
 		if ($quest_info{"random_attackers$i\_chance"}) {
 			my $rand = int(rand(100));
 			if ($rand <= int($quest_info{"random_attackers$i\_chance"})) {
-				starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $enemies_fac, $new_sector, 1);
+				foreach my $enemy (@enemies) {
+					quest_create_object($player, $category, $quest, "escort$i", $quest_info{"escort$i"}, $new_sector);
+				}
 				last Attackers;
 			}
 		}
 		else {
-			starmade_spawn_mobs_bulk(\@enemies, \@enemies_pos, $enemies_fac, $new_sector, 1);
+			foreach my $enemy (@enemies) {
+				quest_create_object($player, $category, $quest, "escort$i", $quest_info{"escort$i"}, $new_sector);
+			}
 			last Attackers;
-		}
-	}
-}
-
-sub escort_quests_actions {
-	my $player = shift(@_);
-	my $category = shift(@_);
-	my $quest = shift(@_);
-	my %quest_info = %{shift(@_)};
-	my $new_sector = shift(@_);
-	
-	goto_quests_actions($player, $category, $quest, \%quest_info, $new_sector);
-}
-
-sub goto_quests_actions {
-	my $player = shift(@_);
-	my $category = shift(@_);
-	my $quest = shift(@_);
-	my %quest_info = %{shift(@_)};
-	my $new_sector = shift(@_);
-
-	if ($quest_info{objective} && $quest_info{objective} eq $new_sector) {
-		quest_success($player, $category, $quest);
-	}
-}
-
-sub destroy_quests_actions {
-	my $player = shift(@_);
-	my $category = shift(@_);
-	my $quest = shift(@_);
-	my %quest_info = %{shift(@_)};
-	my $new_sector = shift(@_);
-
-	if ($quest_info{sector} && $quest_info{sector} eq $new_sector) {
-		if ($quest_info{objective} && $quest_info{objective_bp} && $quest_info{objective_fac}) {
-			starmade_spawn_entity($quest_info{objective_bp}, $quest_info{objective}, $new_sector, $quest_info{objective_fac}, 1);
 		}
 	}
 }
