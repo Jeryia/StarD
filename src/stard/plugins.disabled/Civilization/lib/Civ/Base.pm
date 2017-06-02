@@ -26,7 +26,7 @@ use Stard::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT=qw(get_station_options reqs_ok reputation_ok reputation_get reputation_add expand_array populate_map_cache read_basic_config write_basic_config map_faction populate_faction_map_cache);
+@EXPORT=qw(get_station_options reqs_ok reputation_ok reputation_get reputation_add populate_map_cache read_basic_config write_basic_config map_faction populate_faction_map_cache);
 
 
 our $CONFIG_DIR = "./config";
@@ -212,21 +212,6 @@ sub reputation_add {
 	close($fh_r);
 
 	return 0;
-}
-
-sub expand_array {
-	my $array = shift(@_);
-	my @return = ();
-
-	if (ref $array eq 'ARRAY') {
-		foreach my $item (@{$array}) {
-			push(@return, split(',', $item));
-		}
-	}
-	else {
-		push(@return, split(',', $array));
-	}
-	return \@return;
 }
 
 sub populate_map_cache {
