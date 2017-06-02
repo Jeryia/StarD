@@ -23,7 +23,11 @@ ifeq (\$(USERID), 0)
 	useradd -c 'Privilege-separated starmade server' -s /bin/bash -r -d \$(STARMADEDIR) \$(USER) 2> /dev/null || :
 	service stard stop || :
 endif
-	cp -pfr \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
+	rsync -pr --exclude './plugins' --exclude './plugins.disabled' \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
+
+	mkdir -p \$(DESTDIR)\$(STARMADEDIR)/stard/plugins/Base
+	\$(DESTDIR)\$(STARMADEDIR)/stard/bin/stard_update_plugin \$(STARMADE_BUILD)/stard/plugins/*
+	\$(DESTDIR)\$(STARMADEDIR)/stard/bin/stard_update_plugin \$(STARMADE_BUILD)/stard/plugins.disabled/*
 
 	cp -pf \$(BUILD_DIR)/sbin/stard \$(DESTDIR)\$(SBINDIR)/
 	cp -pf \$(BUILD_DIR)/sbin/stard-backup \$(DESTDIR)\$(SBINDIR)/
