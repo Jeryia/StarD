@@ -14,7 +14,7 @@ our (@ISA, @EXPORT);
 
 ## starmade_sector_chmod
 # Change the properties of a sector
-# INPUT1: sector to put the player (space delimited list)
+# INPUT1: sector to modify
 # INPUT2: add/remove
 # INPUT3: setting (peace, protected, noenter, noexit, noindications, nofploss)
 # OUTPUT: 1 if success, 0 if failure
