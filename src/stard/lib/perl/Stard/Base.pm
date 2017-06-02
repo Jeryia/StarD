@@ -33,7 +33,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(stard_read_config get_stard_conf_field stard_setup_lib_env stard_lib_validate_env get_exec_prefix get_stard_home get_stard_plugins_dir get_stard_plugins_log);
+@EXPORT = qw(stard_read_config get_stard_conf_field stard_setup_lib_env stard_lib_validate_env get_exec_prefix get_stard_home get_stard_plugins_dir get_stard_plugins_log expand_array);
 
 
 my %exec_prefix_table;
@@ -204,5 +204,25 @@ sub get_stard_plugins_dir {
 sub get_stard_plugins_log {
 	return $stard_plugin_log;
 }
+
+## expand_array
+# Take a string or array reference, and arraify any comma seperated lists in it.
+# INPUT1: string or array ref
+# OUTPUT: expanded array
+sub expand_array {
+	my $array = shift(@_);
+	my @return = ();
+
+	if (ref $array eq 'ARRAY') {
+		foreach my $item (@{$array}) {
+			push(@return, split(',', $item));
+		}
+	}
+	else {
+		push(@return, split(',', $array));
+	}
+	return \@return;
+}
+
 
 1;
