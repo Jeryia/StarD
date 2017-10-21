@@ -7,6 +7,7 @@ use Carp;
 use Starmade::Base;
 use Starmade::Sector;
 use Starmade::Map;
+use Starmade::Misc;
 use Stard::Log;
 
 
