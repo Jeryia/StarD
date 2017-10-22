@@ -17,7 +17,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_clean_map_area starmade_setup_map starmade_repair_map starmade_recenter_map starmade_remap_map_factions);
+@EXPORT= qw(starmade_setup_lib_env starmade_clean_map_area starmade_setup_map starmade_repair_map starmade_recenter_map starmade_remap_map_factions starmade_spawn_mobs_bulk);
 
 
 
@@ -42,6 +42,10 @@ sub starmade_clean_map_area {
 	my $clean_level = $_[1];
 
 	Object: foreach my $object (keys %map_config) {
+		if (!$map_config{$object}{sector}) {
+			next Object;
+		}
+
 		my $sector = $map_config{$object}{sector};
 
 		starmade_cmd("/load_sector_range $sector $sector");
