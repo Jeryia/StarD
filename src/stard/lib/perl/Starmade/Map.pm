@@ -6,7 +6,8 @@ use Carp;
 
 use Starmade::Base;
 use Starmade::Sector;
-use Starmade::Map;
+use Starmade::Misc;
+use Starmade::Message;
 use Stard::Log;
 
 
@@ -16,7 +17,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_clean_map_area starmade_setup_map starmade_repair_map starmade_recenter_map starmade_remap_map_factions);
+@EXPORT= qw(starmade_setup_lib_env starmade_clean_map_area starmade_setup_map starmade_repair_map starmade_recenter_map starmade_remap_map_factions starmade_spawn_mobs_bulk);
 
 
 
@@ -41,6 +42,9 @@ sub starmade_clean_map_area {
 	my $clean_level = $_[1];
 
 	Object: foreach my $object (keys %map_config) {
+		if (!$map_config{$object}{sector}) {
+			next Object;
+		}
 		my $sector = $map_config{$object}{sector};
 
 		starmade_cmd("/load_sector_range $sector $sector");
@@ -106,7 +110,6 @@ sub starmade_setup_map {
 	
 	
 		starmade_cmd("/load_sector_range $sector $sector");
-	
 		stdout_log("Deleting all entities that start with '$object' just to be sure of no naming collisions", 6);
 		# Get rid of anything that already has the name (as names need to be unique).
 		if (!starmade_despawn_all($object, "all", "0")) {
@@ -255,19 +258,18 @@ sub starmade_spawn_mobs_bulk {
                 my $ship = $ships[$i];
 
                 my $name = "$ship-$sector\_$i";
-                if (@ship_pos) {
-                        my $pos = $ship_pos[$i];
-                        if (!starmade_spawn_entity_pos($ship, $name, $sector, $pos, $faction, $ai)) {
-                                print starmade_last_output();
-                                stdout_log("Error spawning ship '$ship' with '$name'...", 1);
-                        };
-                }
-                else {
-                        if (!starmade_spawn_entity($ship, $name, $sector, $faction, $ai)) {
-                                print starmade_last_output();
-                                stdout_log("Error spawning ship '$ship' with '$name'...", 1);
-                        };
-                };
+		my $pos;
+		if (@ship_pos && $ship_pos[$i]) {
+		       	$pos = $ship_pos[$i];
+		}
+		else {
+			$pos = starmade_random_pos();
+		}
+		print "starmade_spawn_entity_pos($ship, $name, $sector, $pos, $faction, $ai)\n";
+		if (!starmade_spawn_entity_pos($ship, $name, $sector, $pos, $faction, $ai)) {
+			print starmade_last_output();
+			stdout_log("Error spawning ship '$ship' with '$name'...", 1);
+		};
         };
 }
 
