@@ -176,7 +176,9 @@ sub starmade_player_list {
 			$player_list{$name}{smname} = $smname;
 			$player_list{$name}{sector} = $sector;
 			$player_list{$name}{ip} = $ip;
-			starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{pos} = $pos");
+			if ($pos) {
+				starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{pos} = $pos");
+			}
 			if ($control) {
 				starmade_if_debug(1, "starmade_player_list: return(multiline): %HASH{$name}{control} = $control");
 			}
