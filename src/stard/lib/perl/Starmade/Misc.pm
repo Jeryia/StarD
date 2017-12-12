@@ -78,9 +78,9 @@ sub starmade_location_add {
 sub starmade_random_pos {
 	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
 
-	return int(rand($sector_size) - ($sector_size/2))
-		. " " . int(rand($sector_size) - ($sector_size/2)) 
-		. " " . int(rand($sector_size) - ($sector_size/2))
+	return int(rand($sector_size * 2 - 500) - $sector_size)
+		. " " . int(rand($sector_size * 2 - 500) - $sector_size) 
+		. " " . int(rand($sector_size * 2 - 500) - $sector_size)
 	;
 }
 
