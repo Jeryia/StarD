@@ -53,6 +53,7 @@ sub starmade_setup_lib_env {
 	$starmade_home = "$stard_home/..";
 	$starmade_server = "$starmade_home/StarMade";
 	stard_setup_lib_env($stard_home);
+	@starmade_cmd = ();
 
 	push(@starmade_cmd, "/usr/bin/java", "-jar");
 	push(@starmade_cmd, "$stard_home/" . get_stard_conf_field('stard_connect_cmd'));
@@ -147,7 +148,6 @@ sub starmade_cmd {
 	foreach my $entry (@args) {
 		$entry = starmade_escape_chars($entry);
 	};
-
 
 	# fork a subprocess to launch the starmade command
 	pipe(READ, WRITE);
