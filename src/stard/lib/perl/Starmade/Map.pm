@@ -47,7 +47,7 @@ sub starmade_clean_map_area {
 		if ($clean_level eq "full") {
 			# Clean out what's already in the system (pirate stations, trade outputs, and hoolagens)
 			if (!starmade_despawn_sector("", "all", "0", $sector)) {
-				starmade_boardcast("Error Despawning Sector $sector.\n");
+				starmade_broadcast("Error Despawning Sector $sector.\n");
 				print starmade_last_output();
 				stdout_log("Error Despawning Sector $sector... Aborting game start", 1);
 				return 0;
