@@ -176,6 +176,11 @@ sub server_messages {
 	stard_lib_validate_env();
 	my @plugins = @{get_active_plugin_list()};
 
+	# [SERVER] MAIN CORE STARTED DESTRUCTION [ENTITY_SHIP_MOB_Marauder EMP Frigate_1513132118990_0] (3, 4, 6) in 900 seconds - started 1513132128310 caused by PlS[Jeryia ; id(431)(2)f(10005)]
+	if ($message =~/^\[SERVER\] MAIN CORE STARTED DESTRUCTION \[(.+)\] \(-?\d+, -?\d+, -?\d+\) in \d+ seconds - started \d+ caused by PlS\[(\w+) ;/) {
+		plugin_server_event("entityOverheat", $1, $2);
+	}
+
 	# [SERVER] MAIN CORE STARTED DESTRUCTION: in 900 seconds - started 1470514620375
 	if ($message =~/^\[SERVER\] MAIN CORE STARTED DESTRUCTION: in \d+ seconds - started \d+/) {
 		if ($GLOBAL_overheat_entity) {
