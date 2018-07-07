@@ -74,7 +74,7 @@ sub plugin_server_event {
 
 		## prepare to fork, and fork
 		my $daemon = Proc::Daemon->new(
-		        work_dir => "$stard_plugins/$plugin",
+			work_dir => "$stard_plugins/$plugin",
 			child_STDOUT => "+>>$stard_plugin_log/$plugin-log/event-$command.log",
 			child_STDERR => "+>>$stard_plugin_log/$plugin-log/event-$command.log"
 		);
@@ -178,7 +178,10 @@ sub server_messages {
 
 	# [SERVER] MAIN CORE STARTED DESTRUCTION [ENTITY_SHIP_MOB_Marauder EMP Frigate_1513132118990_0] (3, 4, 6) in 900 seconds - started 1513132128310 caused by PlS[Jeryia ; id(431)(2)f(10005)]
 	if ($message =~/^\[SERVER\] MAIN CORE STARTED DESTRUCTION \[(.+)\] \(-?\d+, -?\d+, -?\d+\) in \d+ seconds - started \d+ caused by PlS\[(\w+) ;/) {
-		plugin_server_event("entityOverheat", $1, $2);
+		my $entity = $1;
+		$entity=~s/ENTITY_SHIP_//g;
+		$entity=~s/ENTITY_SPACESTATION_//g;
+		plugin_server_event("entityOverheat", $entity, $2);
 	}
 
 	# [SERVER] MAIN CORE STARTED DESTRUCTION: in 900 seconds - started 1470514620375
@@ -189,7 +192,7 @@ sub server_messages {
 		}
 		return;
 	};
-        # [SERVER][SEGMENTCONTROLLER] PERMANENTLY DELETING ENTITY: ENTITY_SPACESTATION_Beta_base_1443297379.ent
+	# [SERVER][SEGMENTCONTROLLER] PERMANENTLY DELETING ENTITY: ENTITY_SPACESTATION_Beta_base_1443297379.ent
 	if (
 		$message =~/^\[SERVER\]\[SEGMENTCONTROLLER\] PERMANENTLY DELETING ENTITY: ENTITY_(.+)\.ent/
 	) {
