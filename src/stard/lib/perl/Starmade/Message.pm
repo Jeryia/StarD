@@ -21,16 +21,19 @@ sub starmade_broadcast {
 	starmade_if_debug(1, "starmade_broadcast($message)");
 	starmade_validate_env();
 
+	my $ret =1;
 	print $message;
 	print "\n";
-	$message = fix_newlines($message);
-	my $out = join("",starmade_cmd("/chat $message"));
-	if ($out =~/\Qbroadcasted as server message:\E/) {
-		starmade_if_debug(2, "starmade_broadcast: return: 1");
-		return 1;
-	};
-	starmade_if_debug(1, "starmade_broadcast: return: 0");
-	return 0;
+	my @lines = split("\n", $message);
+	foreach my $line (@lines) {
+		my $out = join("",starmade_cmd("/chat $line"));
+		if (!($out =~/\Qbroadcasted as server message:\E/)) {
+			$ret = 0;
+		};
+		sleep .1;
+	}
+	starmade_if_debug(2, "starmade_broadcast: return: $ret");
+	return $ret;
 };
 
 
@@ -45,22 +48,23 @@ sub starmade_pm {
 
 	starmade_if_debug(1, "starmade_pm($player, $message)");
 	starmade_validate_env();
+	my $ret = 1;
 	if ($player =~/\S/) {
-		$message = fix_newlines($message);
-		my $out = join("",starmade_cmd("/pm $player $message"));
-		if ($out =~/\Qsend to $player as server message:\E/) {
-			starmade_if_debug(1, "starmade_pm: return: 1");
-			return 1;
-		};
+		my @lines = split("\n", $message);
+		foreach my $line (@lines) {
+			my $out = join("",starmade_cmd("/pm $player $line"));
+			if (!($out =~/\Qsend to $player as server message:\E/)) {
+				$ret = 0;
+			}
+			sleep .1;
+		}
 	}
 	else {
 		print $message;
 		print "\n";
-		starmade_if_debug(1, "starmade_pm: return: 1");
-		return 1;
 	}
-	starmade_if_debug(1, "starmade_pm: return: 0");
-	return 0;
+	starmade_if_debug(1, "starmade_pm: return: $ret");
+	return $ret;
 };
 
 ## starmade_countdown
@@ -81,27 +85,5 @@ sub starmade_countdown {
 	}
 	return 0;
 }
-
-## fix_newlines
-# As starmade does not recognize the new line character, we simulate it with 
-# spaces, as lines wrap in chat
-# INPUT1: message
-# OUTPUT: modified message
-sub fix_newlines {
-	my $message = $_[0];
-
-	# length of line required to cause it to wrap
-	my $line_len = 300;
-	my @lines = split("\n", $message);
-
-	# Iterate over all but the last one
-	for (my $line_num = 0; $line_num < $#lines; $line_num++) {
-		my $len = length($lines[$line_num]);
-		my $whitespace = " " x ($line_len - $len);
-		$lines[$line_num] .= $whitespace;
-	}
-	return join("", @lines);
-}
-
 
 1;
