@@ -1,0 +1,585 @@
+#!perl
+use strict;
+use warnings;
+
+use Cwd;
+use Storable qw(nstore retrieve);
+use lib("../../lib/perl");
+use Starmade::Base;
+use Starmade::Message;
+use Starmade::Player;
+use Starmade::Faction;
+use Starmade::Sector;
+use Starmade::Misc;
+
+use Stard::Base;
+use lib("./lib");
+
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## setup environment
+my $stard_home = "./../..";
+
+starmade_setup_lib_env($stard_home);
+
+my $FACTION1_NAME = "SIM FACTION 1";
+my $FACTION2_NAME = "SIM FACTION 2";
+my $SECTOR = "500 -500 500";
+
+main(@ARGV);
+exit 0;
+#########################################################
+
+
+
+
+sub main {
+	my $player = shift(@_);
+	my $action = shift(@_);
+	my @args = @_;
+
+	starmade_run_if_admin($player);
+
+	if (!$action) {
+		usage($player);
+	}
+
+	if ($action eq 'duel') {
+		duel($player, @args);
+	}
+	elsif ($action eq 'reset') {
+		sim_reset($player, @args);
+	}
+	elsif ($action eq 'start') {
+		sim_start($player, @args);
+	}
+	elsif ($action eq 'stop') {
+		sim_reset($player);
+	}
+	elsif ($action eq 'results') {
+		print_results($player, get_results());
+	}
+	else {
+		starmade_pm($player, "unknown action: $action");
+		usage($player);
+	}
+};
+
+sub duel {
+	my $player = shift(@_);
+	my $ship1 = shift(@_);
+	my $ship2 = shift(@_);
+	my $distance = 4000;
+	if (@_) {
+		$distance = shift(@_);
+	}
+	my @f1_ships = ($ship1);
+	my @f2_ships = ($ship2);
+	
+	if (!($ship1 and $ship2)) {
+		usage($player);
+	}
+
+	if (!in_catalog($ship1)) {
+		starmade_pm($player, "Error: $ship1 is not in the catalog!");
+		return 0;
+	}
+	if (!in_catalog($ship2)) {
+		starmade_pm($player, "Error: $ship2 is not in the catalog!");
+		return 0;
+	}
+	if (!do_simulation($player, \@f1_ships, \@f2_ships, $distance, 'duel', 10)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+sub sim_reset {
+	my $player = shift(@_);
+	if (@_ and $_[0] eq 'hard') {
+		unlink('./data/faction_ids');
+		unlink('./data/results');
+		rmdir('./data');
+		starmade_pm($player, "Previous results cleared");
+	}
+	if (!unlock_simulation()) {
+		starmade_pm($player, "Error: Failed to end the current simulation!");
+		return 0;
+	}
+	if (!setup_environment($player)) {
+		starmade_pm($player, "Error: Failed to setup simulation environmnent! See logs for more information.");
+		return 0;
+	}
+	starmade_pm($player, "All simulations terminated.");
+}
+
+sub sim_start {
+	my $player = shift(@_);
+	my @tests = @_;
+
+	my %test_config = %{stard_read_config("./tests.cfg")};
+	
+	if (!@tests) {
+		my $message = "usage: !sim start <list of tests>\n";
+		$message .= "Available tests:\n";
+		$message .= join("\n", sort(keys%test_config));
+		$message .= "New tests can be configured in: " . cwd() . "tests.cfg";
+		
+		starmade_pm($player, $message);
+		exit(0);
+	}
+	if ($tests[0] eq 'all') {
+		@tests = sort(keys(%test_config));
+	}
+	print "tests to run: @tests\n";
+	my %results = %{get_results()};
+	foreach my $test (@tests) {
+		print "Running test: $test\n";
+		if (!$test_config{$test}) {
+			starmade_pm($player, "Error: test: '$test' does not exist! Type '!sim start' to see a list of available tests");
+		}
+		my @f1_ships = ();
+		my @f2_ships = ();
+		my $distance = 4000;
+		my $timeout = 10;
+		my $test_num = 3;
+		if (!$test_config{$test}{faction1_ships}) {
+			starmade_pm("Error: test: '$test' does not have faction1_ships defined!");
+			exit 1;
+		}
+		if (!$test_config{$test}{faction2_ships}) {
+			starmade_pm("Error: test: '$test' does not have faction2_ships defined!");
+			exit 1;
+		}
+		if ( (ref $test_config{$test}{faction1_ships}) eq 'ARRAY') {
+			@f1_ships = @{$test_config{$test}{faction1_ships}};
+		}
+		else {
+			@f1_ships = ($test_config{$test}{faction1_ships});
+		}
+		if ( (ref $test_config{$test}{faction2_ships}) eq 'ARRAY') {
+			@f2_ships = @{$test_config{$test}{faction2_ships}};
+		}
+		else {
+			@f2_ships = ($test_config{$test}{faction2_ships});
+		}
+		if ($test_config{$test}{distance}) {
+			$distance = $test_config{$test}{distance};
+		}
+		if ($test_config{$test}{timeout}) {
+			$timeout = $test_config{$test}{timeout};
+		}
+		if ($test_config{$test}{tests}) {
+			$test_num = $test_config{$test}{tests};
+		}
+		my $draw = 0;
+		my $vic_f1 = 0;
+		my $vic_f2 = 0;
+		for (my $i =0; $i < $test_num; $i++) {
+			print "iteration: $i\n";
+			my $victory = do_simulation($player, \@f1_ships, \@f2_ships, $distance, $test, $timeout);
+			if ($victory == 0) {
+				$draw++;
+			}
+			elsif ($victory == 1) {
+				$vic_f1++;
+			}
+			elsif ($victory == 2) {
+				$vic_f2++;
+			}
+			else {
+				exit 1;
+			}
+			print "";
+		}
+		$results{$test}{draw} = "$draw";
+		$results{$test}{faction1} = "$vic_f1";
+		$results{$test}{faction2} = "$vic_f2";
+		$results{$test}{date} = `date '+%Y-%m-%d_T%H:%M:%S'`;
+		store_results(\%results);
+	}
+	print_results($player, \%results)
+}
+
+sub do_simulation {
+	my $player = shift(@_);
+	my @f1_ships = @{shift(@_)};
+	my @f2_ships = @{shift(@_)};
+	my $distance = shift(@_);
+	my $test_name = shift(@_);
+	my $timeout = shift(@_);
+	
+	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
+	if ($distance > $sector_size) {
+		$distance = $sector_size *.9;
+	}
+
+	my $lock = lock_simulation();
+	if (!$lock) {
+		starmade_pm($player, "A Simulation is already running! run '!sim stop' to end it");
+		return -1;
+	}
+	if (!setup_environment($player)) {
+		starmade_pm($player, "Error: Failed to setup simulation environmnent! See logs for more information.");
+		return -1;
+	}
+
+	starmade_change_sector_for($player, $SECTOR) or return 0;
+	starmade_teleport_to($player, '0 0 ' . (500 + $distance /2));
+	starmade_god_mode($player, 1);
+	if (!start_simulation(\@f1_ships, \@f2_ships, $distance)) {
+		starmade_pm($player, "Error: Simulation failed... Check logs for more information");
+		return -1;
+	}
+	starmade_pm($player, "Simulation '$test_name' has started!");
+
+	my $victory = watch_simulation($timeout);
+	if (!$victory) {
+		starmade_pm($player, "$test_name: Simulation was a draw!");
+		return 0;
+	}
+	if ($victory == 1) {
+		starmade_pm($player, "$test_name: $FACTION1_NAME was victorius!");
+		return 1;
+	}
+	if ($victory == 2) {
+		starmade_pm($player, "$test_name: $FACTION2_NAME was victorius!");
+		return 2;
+	}
+	starmade_pm($player, "$test_name: Simulation state unknown(timeout)...");
+	simulation_end();
+	unlock_simulation($lock);
+	return 1;
+}
+
+sub start_simulation {
+	my @f1_ships = @{shift(@_)};
+	my @f2_ships = @{shift(@_)};
+	my $distance = shift(@_);
+
+	my ($faction1_id, $faction2_id) = get_sim_factions();
+	if (!starmade_faction_mod_relations($faction1_id, $faction2_id, 'ally')) {
+		print "Error: could not set faction relations to ally between the sim factions!\n";
+		return 0;
+	}
+
+	foreach my $ship (@f1_ships) {
+		if (!in_catalog($ship)) {
+			starmade_broadcast("SIM: configuration failure '$ship' is not in the ship catalog");
+			return 0;
+		}
+		if (!create_sim_group($ship,$faction1_id,$distance/2, $SECTOR)) {
+			print "Error: Could not create simulation group 1!\n";
+			return 0;
+		}
+	}
+	foreach my $ship (@f2_ships) {
+		if (!in_catalog($ship)) {
+			starmade_broadcast("SIM: configuration failure '$ship' is not in the ship catalog");
+			return 0;
+		}
+		if (!create_sim_group($ship,$faction2_id,-$distance/2, $SECTOR)) {
+			print "Error: Could not create simulation group 2!\n";
+			return 0;
+		}
+	}
+	# Wait to let the game load everything
+	sleep 2;
+
+	if (!starmade_faction_mod_relations($faction1_id, $faction2_id, 'enemy')) {
+		print "Error: Failed to set relations to enemy between the sim factions!";
+		return 0;
+	}
+	return 1;
+}
+
+sub simulation_end {
+	my ($faction1_id, $faction2_id) = get_sim_factions();
+	if (!starmade_faction_mod_relations($faction1_id, $faction2_id, 'ally')) {
+		print "Error: could not set faction relations to ally between the sim factions!\n";
+		return 0;
+	}
+	return 1;
+}
+
+sub lock_simulation {
+	system('touch', ".lock");
+	open(my $lock, "<", ".lock") or return 0;
+	flock($lock, 6) or return 0;
+	open(my $fh, ">", ".lock") or return 0;
+	print $fh $$;
+	close($fh);
+	return $lock;
+}
+sub unlock_simulation {
+	if (@_) {
+		my $fh = shift(@_);
+		close($fh);
+	}
+	else {
+		open(my $fh, "<", ".lock") or return 1;
+		my $pid = <$fh>;
+		close($fh);
+		$pid =~s/\s//g;
+		if ($pid =~/^\d+$/) {
+			kill('KILL', $pid);
+		}
+	}
+	unlink ".lock";
+	return 1;
+}
+
+sub setup_environment {
+	my $player = shift(@_);
+
+
+	if ( ! -d './data') {
+		starmade_despawn_sector('', 'all', 0, $SECTOR);
+		mkdir './data' or return 0;
+	}
+	if (!setup_factions()) {
+		print "Error! Faction setup failed! Aborting setup!\n";
+		return 0;
+	}
+
+	if (!setup_sector($SECTOR)) {
+		print "Error! Sector setup failed! Aborting setup!\n";
+		return 0;
+	}
+	return 1;
+}
+
+sub setup_factions {
+	if (sim_factions_ok()) {
+		return 1;
+	}
+
+	if (!clear_sim_factions()) {
+		print "Error! Failed to clean up old factions!\n";
+		return 0;
+	}
+	if (!create_sim_factions()) {
+		print "Error! Failed to create factions!\n";
+		return 0;
+	}
+	return 1;
+}
+
+sub clear_sim_factions {
+	my ($faction1_id, $faction2_id) = get_sim_factions();
+	if ($faction1_id) {
+		starmade_faction_delete($faction1_id);
+	}
+	if ($faction2_id) {
+		starmade_faction_delete($faction2_id);
+	}
+	my %factions = %{starmade_faction_list_bname()};
+	while ($factions{$FACTION1_NAME} or $factions{$FACTION2_NAME}) {
+		if ($factions{$FACTION1_NAME}) {
+			starmade_faction_delete($factions{$FACTION1_NAME}{id});
+		}
+		if ($factions{$FACTION2_NAME}) {
+			starmade_faction_delete($factions{$FACTION2_NAME}{id});
+		}
+		sleep .1;
+		%factions = %{starmade_faction_list_bname()};
+	}
+	return 1
+}
+
+sub create_sim_factions {
+	starmade_faction_create($FACTION1_NAME,'') or return 0;
+	starmade_faction_create($FACTION2_NAME,'') or return 0;
+
+	my $faction1_id;
+	my $faction2_id;
+	
+	my %factions = %{starmade_faction_list_bname()};
+
+	if ($factions{$FACTION1_NAME}) {
+		$faction1_id = $factions{$FACTION1_NAME}{id};
+	}
+	else {
+		return 0;
+	}
+
+	if ($factions{$FACTION2_NAME}) {
+		$faction2_id = $factions{$FACTION2_NAME}{id};
+	}
+	else {
+		return 0;
+	}
+	set_sim_factions($faction1_id, $faction2_id);
+	return 1;
+}
+
+sub get_sim_factions {
+	open(my $fh, "<", "./data/faction_ids") or return (0,0);
+	flock($fh, 1) or return (0,0);
+	my @tmp = <$fh>;
+	my @factions = split("\n", join('', @tmp));
+	close($fh);
+
+	return @factions;
+}
+sub set_sim_factions {
+	my $faction1_id = shift(@_);
+	my $faction2_id = shift(@_);
+
+	open(my $fh, ">", "./data/faction_ids") or return 0;
+	flock($fh, 2) or return 0;
+	print $fh "$faction1_id\n$faction2_id";
+	close($fh);
+
+	return 1;
+}
+
+sub sim_factions_ok {
+	my ($faction1_id, $faction2_id) = get_sim_factions();
+	
+	if ( (not $faction1_id) or (not $faction2_id)) {
+		return 0;
+	}
+	my %factions = %{starmade_faction_list_bid()};
+	if ((not $factions{$faction1_id}) or (not $factions{$faction2_id})) {
+		return 0;
+	}
+	return 1;
+}
+
+sub setup_sector {
+
+	starmade_despawn_sector('SIM_', 'all', 0, $SECTOR);
+	starmade_sector_chmod($SECTOR, 'add', 'noexit');
+	starmade_sector_chmod($SECTOR, 'add', 'noenter');
+	return 1;
+}
+
+sub create_sim_group {
+	my $spawn_string = shift(@_);
+	my $faction = shift(@_);
+	my $distance = shift(@_);
+	my $sector = shift(@_);
+
+	my @tmp = split(':', $spawn_string);
+	
+	my $blueprint = shift(@tmp);
+	my $number = 1;
+	if (@tmp) {
+		$number = shift(@tmp);
+	}
+	
+	my $pos = "$distance 0 0";
+	my $ok = 0;
+	for (my $j = 0; (!$ok) and $j < 5; $j++) {
+		for (my $i = 0; $i < $number; $i++) {
+			my $spawn_name = "SIM_f${faction}_${blueprint}_$i";
+			starmade_despawn_sector($spawn_name, 'all', 0, $SECTOR);
+			if (!starmade_spawn_entity_pos($blueprint, $spawn_name, $sector, $pos,$faction, 1)) {
+				return 0;
+			}
+		}
+		my %sector_info = %{starmade_sector_info($SECTOR)};
+		$ok = 1;
+		for (my $i = 0; $i < $number; $i++) {
+			my $spawn_name = "SIM_f${faction}_${blueprint}_$i";
+			if (
+				!($sector_info{entity}{"ENTITY_SHIP_$spawn_name"} and $sector_info{entity}{"ENTITY_SHIP_$spawn_name"}{faction} == $faction)
+				and !($sector_info{entity}{"ENTITY_SPACESTATION_$spawn_name"} and $sector_info{entity}{"ENTITY_SPACESTATION_$spawn_name"}{faction} == $faction)
+			) {
+				$ok = 0;
+			}
+		}
+
+	}
+	return $ok;
+}
+
+
+sub watch_simulation {
+	my $timeout = shift(@_);
+	my ($faction1_id, $faction2_id) = get_sim_factions();
+	
+	my $poll_time = 5;
+
+	my $time = 0;
+	while ($time <= ($timeout * 60)) {
+		sleep $poll_time;
+		my %sector_info = %{starmade_sector_info($SECTOR)};
+		my $faction1_entities = 0;
+		my $faction2_entities = 0;
+		foreach my $entity (keys %{$sector_info{entity}}) {
+			if ($sector_info{entity}{$entity}{faction} == $faction1_id) {
+				$faction1_entities++;
+			}
+			if ($sector_info{entity}{$entity}{faction} == $faction2_id) {
+				$faction2_entities++;
+			}
+		}
+		$time += $poll_time;
+		if ($faction1_entities > 0 and $faction2_entities == 0) {
+			return 1;
+		}
+		if ($faction1_entities == 0 and $faction2_entities > 0) {
+			return 2;
+		}
+		if ($faction1_entities == 0 and $faction2_entities == 0) {
+			return 0;
+		}
+	}
+	return 0;
+}
+
+
+sub get_results {
+	my $RESULTS_FILE = "./data/results";
+	if ( -f $RESULTS_FILE) {
+		return retrieve($RESULTS_FILE);
+	}
+	return {};
+}
+sub store_results {
+	my $results = shift(@_);
+	my $RESULTS_FILE = "./data/results";
+	nstore($results, $RESULTS_FILE);
+}
+
+sub print_results {
+	my $player = shift(@_);
+	my %results = %{shift(@_)};
+	my $message = "Results:\n";
+	foreach my $test (sort keys %results) {
+		$message .= "[$test]\n";
+		foreach my $key ( sort(keys(%{$results{$test}})) ) {
+			$message .= "    $key = $results{$test}{$key}\n";
+		}
+	}
+	starmade_pm($player, $message);
+}
+
+## usage
+# Print help information
+# INPUT1: player to send help message to
+sub usage {
+	my $player = $_[0];
+	my $message = "Usage: !sim <action>\n";
+	$message .= "Description: Run AI simulations\n";
+	$message .= "Actions:\n";
+	$message .= "  duel <blueprint1> <blueprint2> <distance>: start a duel between two ship blueprints to see who will win\n";
+	$message .= "  reset [hard]: reset dueling area (stops any current simulation). If used with hard it will also recreate the factions\n";
+	$message .= "  start <test name>: start a configured simulation test\n";
+	$message .= "  stop: Stops all current simulations\n";
+	starmade_pm($player, $message);
+	exit 0;
+}
