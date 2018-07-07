@@ -71,6 +71,24 @@ sub starmade_sector_info {
 			starmade_if_debug(1, "starmade_sector_info: return(multiline): %HASH{entity}{$name}{faction} = $faction_id");
 			starmade_if_debug(1, "starmade_sector_info: return(multiline): %HASH{entity}{$name}{pos} = $pos");
 		}
+		# StarMade 0.201.x and newer
+		# RETURN: [SERVER, LOADED SECTOR INFO: Sector[212](5, 5, 5); Permission[Peace,Protected,NoEnter,NoExit,NoIndication,NoFpLoss]: 010000; Seed: -4194436728658746121; Type: VOID;, 0]
+		if ($line=~/RETURN: \[SERVER, LOADED SECTOR INFO: Sector\[\d+\]\(-?\d+, -?\d+, -?\d+\); Permission\[(\S+)\]: (\d+); Seed: \S+; Type: (\S+);, 0\]/) {
+			my @perm_keys = split(',', $1);
+			my @perm_values = split('', $2);
+			my $type = $3;
+
+			for (my $i = 0; $i <= $#perm_keys; $i++) {
+				my $perm_name = lc $perm_keys[$i];
+				my $perm_value = int $perm_values[$i];
+				$sector_info{general}{info}{$perm_name} = $perm_value;
+				starmade_if_debug(1, "starmade_sector_info: return(multiline): %HASH{general}{info}{$perm_name} = $perm_value");
+			}
+
+			$sector_info{general}{info}{type} = $type;
+			starmade_if_debug(1, "starmade_sector_info: return(multiline): %HASH{general}{info}{type} = $type");
+		}
+		# StarMade 0.200.x and lower
 		if ($line=~/RETURN: \[SERVER, LOADED SECTOR INFO: Sector\[\d+\]\(\S+, \S+, \S+\); Protected: (\S+); Peace: (\S+); Seed: \S+; Type: \S+;, \d+\]/) {
 			my $protected = $1;
 			my $peace = $2;
@@ -83,7 +101,7 @@ sub starmade_sector_info {
 			$sector_info{general}{info}{peace} = int($peace);
 			starmade_if_debug(1, "starmade_sector_info: return(multiline): %HASH{general}{info}{protected} = $protected");
 			starmade_if_debug(1, "starmade_sector_info: return(multiline): %HASH{general}{info}{peace} = $peace");
-		};
+		}
 	};
 	return \%sector_info;
 };
