@@ -8,9 +8,10 @@ use Starmade::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_search starmade_loc_distance starmade_location_add starmade_status starmade_wait_until_running starmade_random_pos);
+@EXPORT= qw(starmade_search starmade_loc_distance starmade_location_add starmade_random_pos starmade_status starmade_wait_until_running in_bp_catalog in_bp_catalog_lazy get_bp_catalog);
 
 
+my %SHIP_BP_CATALOG_CACHE = ();
 
 ## starmade_search 
 # Locate ships/stations that start with the given pattern
@@ -78,9 +79,9 @@ sub starmade_location_add {
 sub starmade_random_pos {
 	my $sector_size = get_starmade_conf_field('SECTOR_SIZE');
 
-	return int(rand($sector_size) - ($sector_size/2))
-		. " " . int(rand($sector_size) - ($sector_size/2)) 
-		. " " . int(rand($sector_size) - ($sector_size/2))
+	return int(rand($sector_size * 2 - 500) - $sector_size)
+		. " " . int(rand($sector_size * 2 - 500) - $sector_size) 
+		. " " . int(rand($sector_size * 2 - 500) - $sector_size)
 	;
 }
 
@@ -109,8 +110,68 @@ sub starmade_wait_until_running {
 	};
 }
 
+## in_bp_catalog
+# Check if given ship is in the catalog
+# INPUT1: blueprint name
+# OUTPUT: 1 if in catalog, 0 if not
+sub in_bp_catalog {
+	my $ship = shift(@_);
+	my ($blueprint) = split(':', $ship);
 
+	get_bp_catalog();
+	
+	return $SHIP_BP_CATALOG_CACHE{$blueprint};
+}
 
+## in_bp_catalog_lazy
+# Check if given ship is in the catalog. Checks the blueprints folder, so it 
+# won't know if the blueprint is actually loaded on the server, just that 
+# it's in the blueprints folder. This is a lot less overhead at the cost of
+# the edge case mentioned above.
+# INPUT1: blueprint name
+# OUTPUT: 1 if in catalog, 0 if not
+sub in_bp_catalog_lazy {
+	my $blueprint = shift(@_);
+	my $server_home = get_server_home();
+	if ( -d "$server_home/../StarMade/blueprints/$blueprint" ) {
+		return 1;
+	}
+	return 0;
+}
+
+## get_bp_catalog
+# Get the current ship blueprint catalog
+# OUTPUT: (hash) blueprint catalog entries. format: $HASH{name} = 1
+sub get_bp_catalog {
+	if (!%SHIP_BP_CATALOG_CACHE) {
+		refresh_bp_catalog_cache();
+	}
+	return \%SHIP_BP_CATALOG_CACHE
+}
+
+## refresh_bp_catalog_cache
+# Refresh the cache of the blueprint catalog.
+sub refresh_bp_catalog_cache {
+	my @list = @{_starmade_catalog_list()};
+	foreach my $ship (@list) {
+		$SHIP_BP_CATALOG_CACHE{$ship} = 1;
+	}
+	return \%SHIP_BP_CATALOG_CACHE
+}
+
+## _starmade_catalog_list
+# get the list of ships from the starmade catalog
+sub _starmade_catalog_list {
+	my @output = starmade_cmd("/list_ships");
+	my @list;
+	#RETURN: [SERVER, [CATALOG] [Isanth Type-Zero Mp, Isanth Type-Zero Cc], 0]
+	for my $line (@output) {
+		if ($line =~/RETURN: \[SERVER, \[CATALOG\] \[(.*)\], 0\]/) {
+			@list = split(", ", $1);
+		}
+	}
+	return \@list;
+}
 
 1;
 
