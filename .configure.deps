@@ -141,18 +141,6 @@ else
 	exit 1
 fi
 
-echo -n "perl-Proc::Daemon... "
-$PERL -e "use Proc::Daemon" 
-RET=$?
-if [ $RET -eq 0 ]; then
-	echo "ok"
-else
-	echo "not ok"
-	echo "FAILED to locate perl module Proc::Daemon... aborting."
-	echo "Look into installing this package from your distro's repositories"
-	exit 1
-fi
-
 echo -n "perl-XML::Merge... "
 $PERL -e "use XML::Merge" 
 RET=$?
