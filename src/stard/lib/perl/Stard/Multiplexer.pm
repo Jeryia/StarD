@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Cwd;
 use Text::ParseWords;
-use Proc::Daemon;
 use POSIX;
 
 use lib("./lib");
@@ -72,24 +71,7 @@ sub plugin_server_event {
 		stdout_log("Found $plugin server event $command. Spawning...", 6);
 
 
-		## prepare to fork, and fork
-		my $daemon = Proc::Daemon->new(
-			work_dir => "$stard_plugins/$plugin",
-			child_STDOUT => "+>>$stard_plugin_log/$plugin-log/event-$command.log",
-			child_STDERR => "+>>$stard_plugin_log/$plugin-log/event-$command.log"
-		);
-		my $fork = $daemon->Init();
-		unless ($fork) {
-			my $exec = get_exec_prefix($command_exec);
-
-			if ($exec) {
-				exec($exec, "serverEvents/$command", @args);
-			}
-			else {
-				exec("serverEvents/$command", @args);
-			};
-			exit 0;
-		}
+		spawn_daemon("$stard_plugins/$plugin", "$stard_plugin_log/$plugin-log/event-$command.log", "serverEvents/$command", @args);
 	}
 	if (!$commands_executed) {
 		stdout_log("No plugins found using server event '$command'", 5);
@@ -120,23 +102,9 @@ sub plugin_command {
 			next Plugin;
 		}
 		$commands_executed++;
-		my $exec = get_exec_prefix($command_exec);
 		stdout_log("Spawning server command '$command $player @args'", 6);
 
-		my $daemon = Proc::Daemon->new(
-			work_dir => "$stard_plugins/$plugin",
-			child_STDOUT => "+>>$stard_plugin_log/$plugin-log/cmd-$command.log",
-			child_STDERR => "+>>$stard_plugin_log/$plugin-log/cmd-$command.log"
-		);
-		my $fork = $daemon->Init();
-		unless($fork) {
-			if ($exec) {
-				exec($exec, "commands/$command", $player, @args);
-			}
-			else {
-				exec("commands/$command", $player, @args);
-			};
-		};
+		spawn_daemon("$stard_plugins/$plugin", "$stard_plugin_log/$plugin-log/cmd-$command.log", "commands/$command", $player, @args);
 	};
 
 	if (! $commands_executed) {
@@ -349,6 +317,42 @@ sub chat_messages {
 	};
 };
 
+## spawn_daemon
+# Spawns the given process as a daemon (unattached to the main process)
+# INPUT1: directory to spawn process in as it's working directory
+# INPUT2: where to send logs
+# INPUT3-*: command with arguments
+sub spawn_daemon {
+	my $chdir  = shift(@_);
+	my $log  = shift(@_);
+	my $cmd  = shift(@_);
+	my @args = @_;
+
+	my $pid = fork();
+
+	if (!$pid) {
+		my $pid2 = fork();
+		if (!$pid2) {
+			my $old_stdin = *STDIN;
+			my $old_stdout = *STDOUT;
+			my $old_stderr = *STDERR;
+			open(STDOUT, '>>', $log) or die "Failed to open '$log': $!\n";
+			open(STDERR, '>>', $log) or die "Failed to open '$log': $!\n";
+			open(STDIN, '<', '/dev/null') or die "Failed to open '$log': $!\n";
+
+			chdir($chdir) or die "Failed to change directory to '$chdir': $!\n";
+			my $exec = get_exec_prefix($cmd);
+			if ($exec) {
+				exec($exec, $cmd, @args) or die "Failed to exec '$exec': $!\n";
+			}
+			else {
+				exec($cmd, @args) or die "Failed to exec '$cmd': $!\n";
+			};
+		}
+		exit 0;
+	}
+	wait;
+}
 
 
 1;

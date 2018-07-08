@@ -183,14 +183,6 @@ function install_dependancies {
 		dep_list="$dep_list perl(Config::IniFiles)"
 	fi
 
-	perl -e "use Proc::Daemon" > /dev/null 2>&1
-	RET=$?
-	if [ $RET -ne 0 ]; then
-		apt_packages="$apt_packages libproc-daemon-perl"
-		yum_packages="$yum_packages perl-Proc-Daemon"
-		dep_list="$dep_list perl(Proc::Daemon)"
-	fi
-
 	perl -e "use Text::ParseWords" > /dev/null 2>&1
 	RET=$?
 	if [ $RET -ne 0 ]; then
