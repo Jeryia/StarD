@@ -33,7 +33,7 @@ sub main {
 
 	# setup test environment
 	system('mv', $config_dir, $config_backup_dir);
-	system('rsync', '-a', $reg_dir, $config_dir);
+	system('cp', '-ar', $reg_dir, $config_dir);
 	system('perl', './daemon');
 
 	# run tests
