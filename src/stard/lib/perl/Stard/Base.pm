@@ -147,12 +147,27 @@ sub stard_read_config {
 			if ($debug_level >= 2) {
 				print "stard_read_config: return(multiline): $key2 = '$config{$key1}{$key2}'\n";
 			}
-			$config{$key1}{$key2}=~s/^\s+//g;
-			$config{$key1}{$key2}=~s/\s+$//g;
-			$config{$key1}{$key2}=~s/^'//;
-			$config{$key1}{$key2}=~s/'$//;
-			$config{$key1}{$key2}=~s/^"//;
-			$config{$key1}{$key2}=~s/"$//;
+			if (ref $config{$key1}{$key2} eq "ARRAY") {
+				my @array = ();
+				foreach my $value (@{$config{$key1}{$key2}}) {
+					$value=~s/^\s+//g;
+					$value=~s/\s+$//g;
+					$value=~s/^'//;
+					$value=~s/'$//;
+					$value=~s/^"//;
+					$value=~s/"$//;
+					push(@array, $value);
+				}
+				$config{$key1}{$key2} = \@array;
+			}
+			else {
+				$config{$key1}{$key2}=~s/^\s+//g;
+				$config{$key1}{$key2}=~s/\s+$//g;
+				$config{$key1}{$key2}=~s/^'//;
+				$config{$key1}{$key2}=~s/'$//;
+				$config{$key1}{$key2}=~s/^"//;
+				$config{$key1}{$key2}=~s/"$//;
+			}
 		}
 	}
 	return \%config;

@@ -52,6 +52,9 @@ sub xml_merge {
 	open($w_fh, ">", $orig_file) or return 0;
 	my @new_contents;
 	Line: foreach my $line (@contents) {
+		if (!($line=~/\S/)) {
+			next Line;
+		}
 		if ($line=~/^<\?xml/) {
 			next Line;
 		}

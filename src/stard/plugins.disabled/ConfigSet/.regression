@@ -35,6 +35,7 @@ sub main {
 	# run tests	
 	test_result("$plugin - returns 0", system("./prerun") == 0);
 
+	print "diff $merge_dir/test.xml $reg_dir/final.xml\n";
 	test_result("$plugin - xml merge", system("diff", "$config_dir/test.xml", "$reg_dir/final.xml") == 0);
 	test_result("$plugin - cfg merge", system("diff", "$config_dir/test.cfg", "$reg_dir/final.cfg") == 0);
 

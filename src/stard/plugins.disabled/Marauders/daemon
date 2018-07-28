@@ -32,7 +32,7 @@ FILE: foreach my $file (@files) {
 	if (-d "$starmade_home/blueprints/$file") {
 		next FILE;
 	}
-	system('rsync', '-arv', "./blueprints/$file", "$starmade_home/blueprints/");
+	system('cp', '-ar', "./blueprints/$file", "$starmade_home/blueprints/");
 	$demand_restart = 1;
 }
 

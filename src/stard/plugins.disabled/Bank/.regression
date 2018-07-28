@@ -29,6 +29,8 @@ sub main {
 
 
 	# check if deposit removed money from the player's account
+	starmade_give_credits($player, -2100000000);
+	starmade_give_credits($player, -2100000000);
 	starmade_give_credits($player, $bank_credits);
 	%player_info = %{starmade_player_info($player)};
 	$last_credits = $player_info{credits};
