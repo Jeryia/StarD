@@ -33,7 +33,7 @@ use Starmade::Message;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw(starmade_setup_lib_env starmade_run_if_admin starmade_is_admin starmade_admin_list starmade_player_list starmade_player_info starmade_change_sector_for starmade_teleport_to starmade_god_mode starmade_invisibility_mode starmade_give_credits starmade_give_item starmade_give_metaitem starmade_give_item_id starmade_give_all_items starmade_set_spawn_player);
+@EXPORT = qw(starmade_setup_lib_env starmade_run_if_admin starmade_is_admin starmade_admin_list starmade_player_list starmade_player_info starmade_change_sector_for starmade_teleport_to starmade_god_mode starmade_invisibility_mode starmade_give_credits starmade_give_item starmade_give_metaitem starmade_give_item_id starmade_give_all_items starmade_set_spawn_player starmade_player_get_invetory starmade_player_get_invetory_bid);
 
 use Starmade::Base;
 
@@ -502,4 +502,71 @@ sub starmade_set_spawn_player {
 	return 1;
 };
 
+## starmade_player_get_invetory
+# Set the player's current position to be that player's spawn sector
+# INPUT1: name of player
+# OUTPUT: player's inventory in hash format: %HASH{inv slot}{entry} = value
+sub starmade_player_get_invetory {
+	my $player = $_[0];
+
+	starmade_if_debug(1, "starmade_player_get_invetory($player)");
+	starmade_validate_env();
+	my @lines = starmade_cmd("/player_get_invetory", $player);
+	my %inventory = ();
+	foreach my $line (@lines) {
+		# RETURN: [SERVER, [INVENTORY] Jeryia:  SLOT: 50; MULTI: false; TYPE: 16; META: -1; COUNT: 4204, 0]
+		if ($line=~/RETURN: \[SERVER, \[INVENTORY\] \S+:  SLOT: (\d+); MULTI: (\S+); TYPE: (-?\d+); META: (-?\d+); COUNT: (\d+), 0\]/) {
+			my $slot = $1;
+			my $multi = $2;
+			my $type = $3;
+			my $meta = $5;
+			my $count = $6;
+			$inventory{$slot}{multi} = $multi;
+			$inventory{$slot}{type} = $type;
+			$inventory{$slot}{meta} = $meta;
+			$inventory{$slot}{count} = $count;
+			starmade_if_debug(1, "starmade_set_spawn_player: return(multiline): \%HASH{$slot}{multi} = $inventory{$slot}{multi}");
+			starmade_if_debug(1, "starmade_set_spawn_player: return(multiline): \%HASH{$slot}{type} = $inventory{$slot}{type}");
+			starmade_if_debug(1, "starmade_set_spawn_player: return(multiline): \%HASH{$slot}{meta} = $inventory{$slot}{meta}");
+			starmade_if_debug(1, "starmade_set_spawn_player: return(multiline): \%HASH{$slot}{count} = $inventory{$slot}{count}");
+		}
+	}
+	return \%inventory;
+};
+
+## starmade_player_get_invetory_bid
+# Set the player's current position to be that player's spawn sector
+# INPUT1: name of player
+# OUTPUT: player's inventory in hash format: %HASH{item id}{entry} = value, and %HASH{item id:meta id}{entry} = value
+sub starmade_player_get_invetory_bid {
+	my $player = $_[0];
+
+	starmade_if_debug(1, "starmade_player_get_invetory($player)");
+	my %inventory = %{starmade_player_get_invetory($player)};
+	my %inv_bid = ();
+	foreach my $slot (keys %inventory) {
+		my $item_id = $inventory{$slot}{type};
+		my $meta_id = "$inventory{$slot}{type}:$inventory{$slot}{meta}";
+		foreach my $value (keys %{$inventory{$slot}}) {
+			if ($inv_bid{$item_id}{$value}) {
+				if ($value eq 'count') {
+					$inv_bid{$item_id}{$value} += $inventory{$slot}{$value};
+				}
+				else {
+					$inv_bid{$item_id}{$value} .= ",$inventory{$slot}{$value}";
+				}
+			}
+			else {
+				$inv_bid{$item_id}{$value} = $inventory{$slot}{$value};
+			}
+			if ($inv_bid{$meta_id}{$value} and $value eq 'count') {
+				$inv_bid{$meta_id}{$value} += $inventory{$slot}{$value};
+			}
+			else {
+				$inv_bid{$meta_id}{$value} = $inventory{$slot}{$value};
+			}
+		}
+	}
+	return \%inv_bid;
+}
 1;
