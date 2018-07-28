@@ -90,11 +90,11 @@ sub duel {
 		usage($player);
 	}
 
-	if (!in_catalog($ship1)) {
+	if (!in_bp_catalog($ship1)) {
 		starmade_pm($player, "Error: $ship1 is not in the catalog!");
 		return 0;
 	}
-	if (!in_catalog($ship2)) {
+	if (!in_bp_catalog($ship2)) {
 		starmade_pm($player, "Error: $ship2 is not in the catalog!");
 		return 0;
 	}
@@ -236,7 +236,7 @@ sub do_simulation {
 	}
 
 	starmade_change_sector_for($player, $SECTOR) or return 0;
-	starmade_teleport_to($player, '0 0 ' . (500 + $distance /2));
+	starmade_teleport_to($player, '0 0 ' . (-(500 + $distance /2)));
 	starmade_god_mode($player, 1);
 	if (!start_simulation(\@f1_ships, \@f2_ships, $distance)) {
 		starmade_pm($player, "Error: Simulation failed... Check logs for more information");
@@ -275,7 +275,7 @@ sub start_simulation {
 	}
 
 	foreach my $ship (@f1_ships) {
-		if (!in_catalog($ship)) {
+		if (!in_bp_catalog($ship)) {
 			starmade_broadcast("SIM: configuration failure '$ship' is not in the ship catalog");
 			return 0;
 		}
@@ -285,7 +285,7 @@ sub start_simulation {
 		}
 	}
 	foreach my $ship (@f2_ships) {
-		if (!in_catalog($ship)) {
+		if (!in_bp_catalog($ship)) {
 			starmade_broadcast("SIM: configuration failure '$ship' is not in the ship catalog");
 			return 0;
 		}
@@ -498,7 +498,7 @@ sub create_sim_group {
 				!($sector_info{entity}{"ENTITY_SHIP_$spawn_name"} and $sector_info{entity}{"ENTITY_SHIP_$spawn_name"}{faction} == $faction)
 				and !($sector_info{entity}{"ENTITY_SPACESTATION_$spawn_name"} and $sector_info{entity}{"ENTITY_SPACESTATION_$spawn_name"}{faction} == $faction)
 			) {
-				$ok = 0;
+				$ok = 1;
 			}
 		}
 
