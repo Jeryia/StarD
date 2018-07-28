@@ -96,6 +96,11 @@ sub general_reg {
 	test_result("starmade_loc_distance:dec1", starmade_loc_distance("0 0 0", "0 0 0.1") == 0.1);
 	test_result("starmade_loc_distance:dec2", starmade_loc_distance("0 0 0", "0 0.1 0") == 0.1);
 	test_result("starmade_loc_distance:dec3", starmade_loc_distance("0 0 0", "0.1 0 0") == 0.1);
+
+        my @query = @{starmade_sql_query('SELECT * FROM ENTITIES', 0)};
+        test_result("starmade_sql_query: headers", $query[1][1]);
+        @query = @{starmade_sql_query('SELECT * FROM ENTITIES', 1)};
+        test_result("starmade_sql_query: no headers", $query[1][1]);
 	starmade_broadcast("\n\n");
 	print "\n\n";
 }

@@ -173,6 +173,36 @@ sub _starmade_catalog_list {
 	return \@list;
 }
 
+## starmade_sql_query
+# Run the given sql query
+# INPUT1: query to run
+# INPUT2: skip header (boolean) 1 to not provide the sql headers, 0 to provide them
+# OUTPUT: 2d array hash in format of: $array[row #][entry #]
+sub starmade_sql_query {
+	my $query = shift(@_);
+	my $skip_headers = shift(@_);
+
+	starmade_if_debug(1, "starmade_sql_query('$query', $skip_headers)");
+	starmade_validate_env();
+	my @lines = starmade_cmd('/sql_query', $query);
+	my @return = ();
+	my $header = 0;
+	Line: foreach my $line (@lines) {
+		if ($line=~/^RETURN: \[SERVER, SQL#\d+: "(.*)", 0]$/) {
+			if (not $header and $skip_headers) {
+				$header++;
+				next Line;
+			}
+			my $result = $1;
+			my @entries = split('";"', $result);
+			push(@return, \@entries);
+			starmade_if_debug(1, "starmade_search: return(multiline): \@ARRAY[] = '" . join(',', @entries) . "'");
+		}
+	}
+	return \@return;
+}
+
+
 1;
 
 
