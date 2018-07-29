@@ -32,11 +32,7 @@ sub interactive_reg {
 	my $test_cmd;
 	my $argfile;
 
-	if (!starmade_broadcast("###Running Interactive Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
-
+	prep_test_category('Interactive', 10);
 	
 	$test_cmd = "playerLogout";
 	$argfile = "./tmp/serverEvents/$test_cmd";

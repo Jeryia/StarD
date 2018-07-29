@@ -27,11 +27,7 @@ sub general_reg {
 	my $input;
 	my $echo;
 
-
-	if (!starmade_broadcast("###Running General Tests###")) {
-		print "Failed to broadcast message :(\n";
-		exit 1;
-	}
+	prep_test_category('General', 17);
 
 	my @admins = @{starmade_admin_list()};
 	if (!@admins) {

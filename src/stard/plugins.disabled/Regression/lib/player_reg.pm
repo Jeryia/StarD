@@ -19,12 +19,9 @@ my $stard_home = "../..";
 # INPUT1: name of the player who requested the testing.
 sub player_reg {
 	my $player = $_[0];
-	if (!starmade_broadcast("###Running Player Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
+	prep_test_category('Player', 18);
 
-
+	
 	# Check to see if the starmade_god_mode function returns true when used 
 	# against a player that exists.
 	test_result("god_mode active", starmade_god_mode($player, 1));

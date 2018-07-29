@@ -25,6 +25,7 @@ sub main {
 	my $player = $_[0];
 	my $plugin = "Civilization";
 
+	prep_test_category("Plugin: $plugin", 31, 1);
 
 	my $reg_dir = "./.reg/";
 	my $config_dir = "./config";
@@ -135,6 +136,8 @@ sub main {
 		system('rm', '-rf', $config_dir);
 	}
 	system('mv', $config_backup_dir, $config_dir);
+
+	finalize_testing();
 }
 
 

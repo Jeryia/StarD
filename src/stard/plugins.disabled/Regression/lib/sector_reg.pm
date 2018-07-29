@@ -26,10 +26,7 @@ sub sector_reg {
 	my $spawn = "2 2 2";
 	my $sector1 = "5 5 5";
 
-	if (!starmade_broadcast("###Running Sector Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
+	prep_test_category('Sector', 15);
 
 	# Check that starmade_change_section_for moves the player too the spawn sector
 	starmade_change_sector_for($player, $spawn);

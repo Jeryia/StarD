@@ -1,4 +1,7 @@
 package Starmade::Regression;
+use strict;
+use warnings;
+
 use lib("../../lib");
 use Starmade::Message;
 use Stard::Base;
@@ -9,7 +12,70 @@ require Exporter;
 @ISA = qw(Exporter);
 
 
-@EXPORT = qw(test_result test_command test_event);
+
+@EXPORT = qw(prep_test_category finalize_testing test_result test_command test_event);
+
+my %TESTS_TO_RUN = ();
+my %TESTS_RUN = ();
+my $CUR_CATEGORY = "";
+my $SUB_TEST = 0;
+my %FAILURES = ();
+
+## prep_test_category
+# prepare testing for a given category
+# INPUT1: category
+# INPUT2: tests to run
+# INPUT3: sub test
+sub prep_test_category {
+	my $category = shift(@_);
+	my $tests = shift(@_);
+	if (@_) {
+		$SUB_TEST = shift(@_);
+	}
+
+	$CUR_CATEGORY = $category;
+	$TESTS_TO_RUN{$category} = $tests;
+	$TESTS_RUN{$CUR_CATEGORY} = 0;
+	$FAILURES{$CUR_CATEGORY} = 0;
+	starmade_broadcast("### Running $category Tests ###");
+}
+
+## testing_finalize
+# end testing and report results
+sub finalize_testing {
+	my $total_tests = 0;
+	my $errors = 0;
+	starmade_broadcast("################################");
+	foreach my $category (keys %TESTS_TO_RUN) {
+		my $tests = $TESTS_RUN{$category};
+		$total_tests += $TESTS_RUN{$category};
+		$total_tests += $TESTS_RUN{$category};
+
+		starmade_broadcast("## $category: $TESTS_RUN{$category}/$TESTS_TO_RUN{$category}");
+		if ($TESTS_RUN{$category} != $TESTS_TO_RUN{$category}) {
+			$errors++;
+			starmade_broadcast("FAIL! We didn't run $TESTS_TO_RUN{$category} we only ran $TESTS_RUN{$category}!");
+		}
+		if ($FAILURES{$category}) {
+			$errors+=$FAILURES{$category};
+			starmade_broadcast("We failed $FAILURES{$category} tests!");
+		}
+	}
+	if (not $SUB_TEST) {
+		starmade_broadcast("Total tests run: $total_tests");
+	}
+	starmade_broadcast("############");
+	starmade_broadcast("Total Failures: $errors");
+	if (not $SUB_TEST) {
+		if ($errors) {
+			starmade_broadcast("Final Result: FAIL... :(");
+		}
+		else {
+			starmade_broadcast("Final Result: SUCCESS!!!!!");
+		}
+	}
+}
+
 
 ## test_result
 # Process the result of the test and report on it. Also wait .25 seconds to not 
@@ -21,17 +87,18 @@ sub test_result {
 	my $test = $_[0];
 	my $result = $_[1];
 	my $message = $_[2];
-	select(undef, undef, undef, 0.25);
+	select(undef, undef, undef, 0.1);
+	$TESTS_RUN{$CUR_CATEGORY}++;
 	if ($result) {
 		starmade_broadcast("$test - PASS");
 		return 1;
 	}
 	else {
 		starmade_broadcast("$test - FAIL");
+		$FAILURES{$CUR_CATEGORY}++;
 		if ($message) {
 			starmade_broadcast($message);
 		};
-		exit 1;
 	};
 	return 0;
 };

@@ -19,6 +19,7 @@ sub main {
 	my $player = $_[0];
 	my $plugin = "ConfigSet";
 
+	prep_test_category("Plugin: $plugin", 3, 1);
 
 	my $reg_dir = "./.reg/";
 
@@ -44,6 +45,8 @@ sub main {
 	unlink("$merge_dir/test.xml");
 	unlink("$config_dir/test.cfg");
 	unlink("$merge_dir/test.cfg");
+
+	finalize_testing();
 }
 
 

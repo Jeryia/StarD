@@ -19,7 +19,7 @@ main(@ARGV);
 sub main {
 	my $player = $_[0];
 	my $plugin = "Bounty";
-
+	prep_test_category("Plugin: $plugin", 4, 1);
 
 	my $ret;
 	my $bounty_player = 'asdf';
@@ -68,4 +68,6 @@ sub main {
 	# Check to make sure that if the bounty command is run against a player that 
 	# is not online that it will still function.
 	test_result("plugin-$plugin - bounty non-existant player", test_command("bounty", $player, $bounty_player, $bounty_credits) == 0);
+
+	finalize_testing();
 }

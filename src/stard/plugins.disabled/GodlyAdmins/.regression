@@ -20,6 +20,9 @@ sub main {
 	my $player = $_[0];
 	my $plugin = "GodlyAdmins";
 
+	prep_test_category("Plugin: $plugin", 1, 1);
 
 	test_result("$plugin - playerSpawn", test_event("playerSpawn", $player) == 0);
+
+	finalize_testing();
 }

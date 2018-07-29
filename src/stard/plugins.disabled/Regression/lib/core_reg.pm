@@ -30,10 +30,7 @@ sub stard_core_reg {
 	my $argfile;
 	my $result;
 
-	if (!starmade_broadcast("###Running Core Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
+	prep_test_category('Core', 32);
 
 	my @plugins = @{get_active_plugin_list()};
 	test_result("stard_core - get_active_plugin_list", $#plugins);

@@ -21,5 +21,8 @@ sub main {
 	my $plugin = "GodlyAdmins";
 
 
+
 	test_result("$plugin - playerSpawn", test_event("playerSpawn", $player) == 0);
+
+	finalize_testing();
 }

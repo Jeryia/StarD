@@ -34,11 +34,7 @@ sub multiplexer_reg {
 	my $test_cmd;
 	my $argfile;
 
-	if (!starmade_broadcast("###Running Multiplexer Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
-
+	prep_test_category('Multiplexer', 6);
 	
 
 	$test_cmd = "playerFaction";

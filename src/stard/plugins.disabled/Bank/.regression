@@ -22,7 +22,7 @@ sub main {
 	my %player_info;
 	my $last_credits;
 
-
+	prep_test_category('Plugin: Bank', 5, 1);
 	# Setup load bank and clear player bank
 	system("rm", "-f", "./Data/$player");
 	my $bank_credits = 1000;
@@ -66,5 +66,7 @@ sub main {
 	test_command("withdraw", $player, 100000000);
 	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - overdraw", $player_info{credits} == $last_credits);
+
+	finalize_testing();
 }
 

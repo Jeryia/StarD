@@ -20,6 +20,7 @@ sub main {
 	my $player = $_[0];
 	my $plugin = "Freestuff";
 
+	prep_test_category("Plugin: $plugin", 5, 1);
 
 	my $ret;
 	my $bounty_player = 'asdf';
@@ -34,4 +35,6 @@ sub main {
 	test_result("$plugin - get grapple", test_command("get", $player, "grapple") == 0);
 	test_result("$plugin - get rocket_launcher", test_command("get", $player, "rocket_launcher") == 0);
 	test_result("$plugin - get torch", test_command("get", $player, "torch") == 0);
+
+	finalize_testing();
 }

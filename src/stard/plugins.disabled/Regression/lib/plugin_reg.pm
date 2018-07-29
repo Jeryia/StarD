@@ -22,6 +22,7 @@ sub plugin_reg {
 	my $player = shift(@_);
 
 	my @plugins = sort(@{get_active_plugin_list()});
+	prep_test_category('Plugin', $#plugins +1);
 	foreach my $plugin (@plugins) {
 		test_result("Plugin $plugin - Final Result", plugin_reg_launch($plugin, $player));
 	}

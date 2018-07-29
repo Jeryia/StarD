@@ -22,6 +22,7 @@ sub main {
 	my $result;
 	my %player_info;
 	my $last_credits;
+	prep_test_category("Plugin: $plugin", 10, 1);
 
 	# unload the Test plugin before we start
 	starmade_broadcast("Setting up test environment. Please wait...");
@@ -50,5 +51,7 @@ sub main {
 	test_result("$plugin - motd", test_command("motd", $player) == 0);
 	test_result("$plugin - rules", test_command("rules", $player) == 0);
 	test_result("$plugin - stard", test_command("stard", $player, 'status') == 0);
+
+	finalize_testing();
 }
 

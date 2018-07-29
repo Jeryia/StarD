@@ -25,10 +25,7 @@ sub faction_reg {
 	my %factions_bname;
 	my %player_info;
 	my $faction = "Test Faction";
-	if (!starmade_broadcast("###Running Factions Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
+	prep_test_category('Faction', 21);
 
 	
 	# Clear out all factions (so we are sure to have no conflicts

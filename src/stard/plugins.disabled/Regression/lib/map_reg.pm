@@ -32,10 +32,7 @@ sub map_reg {
 	my %sector_info;
 	my @validate;
 
-	if (!starmade_broadcast("###Running Map Tests###")) {
-		print "failed to broadcast message :(\n";
-		exit 1;
-	}
+	prep_test_category('Map', 6);
 
 
 	# Check that we can clear the map locations of unite with starmade_clean_map_area

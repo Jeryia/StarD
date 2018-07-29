@@ -37,6 +37,8 @@ sub main {
 	my $ship_type;
 	my %config = %{stard_read_config($CONFIG)};
 
+	prep_test_category("Plugin: $plugin", 28, 1);
+
 	# clean up any current objects
 	foreach my $object (@{list_ship_objects($player)}) {
 		remove_ship_object($player, $object);
@@ -141,4 +143,6 @@ sub main {
 	test_result("$plugin - entityOverheat", test_event("entityOverheat", 'sdf') == 0);
 	test_result("$plugin - playerDeath", test_event("playerDeath", 'sdf', 'asdf') == 0);
 	test_result("$plugin - sectorChange", test_event("sectorChange", 'sdf', 'sdf', '0 0 0', '1 1 1') == 0);
+
+	finalize_testing();
 }
