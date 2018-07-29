@@ -1,1 +1,1 @@
-!lastlogin - display how long ago a given player last logged in.
+!lastlogin - Display how long ago a given player last logged in.

@@ -1,1 +1,0 @@
-Gives each player their own vault sector to store things (no one else can go there unless invited)

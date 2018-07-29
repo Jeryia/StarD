@@ -1,6 +1,6 @@
 General Commands:
 !core - Gives you a ship core, thrusters, and power
-!help <topic> - display help information on a topic
+!help <topic> - Display help information on a topic
 !limits - Print out ship size limits for this server.
 !motd - Prints out the server message of the day.
 !rules - Prints the server rules.

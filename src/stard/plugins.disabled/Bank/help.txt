@@ -1,1 +1,1 @@
-!help bank - display help information on banking.
+!help bank - Display help information on banking.
