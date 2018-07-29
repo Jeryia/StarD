@@ -6,11 +6,11 @@ use Cwd;
 use Storable qw(nstore retrieve);
 use lib("../../lib/perl");
 use Starmade::Base;
+use Starmade::Blueprints;
 use Starmade::Message;
 use Starmade::Player;
 use Starmade::Faction;
 use Starmade::Sector;
-use Starmade::Misc;
 
 use Stard::Base;
 use lib("./lib");
@@ -90,11 +90,11 @@ sub duel {
 		usage($player);
 	}
 
-	if (!in_bp_catalog($ship1)) {
+	if (!starmade_in_bp_catalog($ship1)) {
 		starmade_pm($player, "Error: $ship1 is not in the catalog!");
 		return 0;
 	}
-	if (!in_bp_catalog($ship2)) {
+	if (!starmade_in_bp_catalog($ship2)) {
 		starmade_pm($player, "Error: $ship2 is not in the catalog!");
 		return 0;
 	}
@@ -275,7 +275,7 @@ sub start_simulation {
 	}
 
 	foreach my $ship (@f1_ships) {
-		if (!in_bp_catalog($ship)) {
+		if (!starmade_in_bp_catalog($ship)) {
 			starmade_broadcast("SIM: configuration failure '$ship' is not in the ship catalog");
 			return 0;
 		}
@@ -285,7 +285,7 @@ sub start_simulation {
 		}
 	}
 	foreach my $ship (@f2_ships) {
-		if (!in_bp_catalog($ship)) {
+		if (!starmade_in_bp_catalog($ship)) {
 			starmade_broadcast("SIM: configuration failure '$ship' is not in the ship catalog");
 			return 0;
 		}
