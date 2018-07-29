@@ -1,0 +1,1 @@
+Prodives a ai simulator for setting up ai duels in a 1 sector sandbox.

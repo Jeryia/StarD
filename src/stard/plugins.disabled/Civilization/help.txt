@@ -1,0 +1,2 @@
+!buy - Buy things from a space station
+!quest - Take on quests for various rewards

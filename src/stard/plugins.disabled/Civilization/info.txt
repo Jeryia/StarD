@@ -1,0 +1,1 @@
+Allows for customized rpg like elements by adding the ability to interact with space stations, to to quests, buy/sell things, etc

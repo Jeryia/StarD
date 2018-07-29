@@ -1,0 +1,31 @@
+#!perl
+use strict;
+use warnings;
+
+use lib("./lib");
+use lib("../../lib/perl");
+use Starmade::Message;
+use Starmade::Regression;
+use Starmade::Player;
+
+
+my $stard_home = "../../";
+starmade_setup_lib_env($stard_home);
+
+main(@ARGV);
+
+sub main {
+	my $player = $_[0];
+	my $plugin = "PlayerVault";
+
+	prep_test_category("Plugin: $plugin", 2, 1);
+
+	starmade_change_sector_for($player, '2 2 2');
+	sleep 1;
+	test_result("$plugin - enter vault", test_command("vault", $player) == 0);
+	sleep 1;
+	test_result("$plugin - exit vault", test_command("vault", $player) == 0);
+
+	finalize_testing();
+}
+
