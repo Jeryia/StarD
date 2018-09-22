@@ -27,18 +27,26 @@ sub blueprints_reg {
 	my $input;
 	my $echo;
 
-	prep_test_category('Blueprint', 3);
+	prep_test_category('Blueprint', 8);
 	my %results;
+	my @array;
 	my $blueprint = 'Isanth Type-Zero Bm';
 
 	test_result("starmade_blueprint_info", starmade_in_bp_catalog($blueprint));
 	test_result("starmade_blueprint_info_lazy", starmade_in_bp_catalog_lazy($blueprint));
 	%results = %{starmade_blueprint_info($blueprint)};
-	test_result("starmade_blueprint_info", $results{'Price'});
+	test_result("starmade_blueprint_info: Price", $results{'Price'});
 
-	# disabled as these command current crash starmade
-	#test_result("starmade_blueprint_set_owner", starmade_blueprint_set_owner($blueprint, $player));
-	#test_result("starmade_blueprint_set_owner: no owner", starmade_blueprint_set_owner('Isanth Type-Zero Bm', ''));
+	test_result("starmade_blueprint_set_owner", starmade_blueprint_set_owner($blueprint, $player));
+	%results = %{starmade_blueprint_info($blueprint)};
+	test_result("starmade_blueprint_set_owner: validate", $results{'Owner'});
+	@array = @{starmade_catalog_list($player)};
+	test_result("starmade_catalog_list: owner validate", @array);
+	
+
+	test_result("starmade_blueprint_set_owner: no owner", starmade_blueprint_set_owner($blueprint, ''));
+	%results = %{starmade_blueprint_info($blueprint)};
+	test_result("starmade_blueprint_set_owner: validate negative", !$results{'Owner'});
 
 }
 

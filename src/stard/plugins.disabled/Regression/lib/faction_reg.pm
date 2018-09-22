@@ -78,17 +78,31 @@ sub faction_reg {
 	my %members = %{starmade_faction_list_members($faction_id)};
 	test_result("starmade_faction_list_members", defined $members{$player});
 
+	## Check that starmade_player_suspend_faction removes the player from the current faction
+	#test_result('starmade_player_suspend_faction', starmade_player_suspend_faction($player));
+	#sleep 1;
+	#%members = %{starmade_faction_list_members($faction_id)};
+	#test_result("starmade_player_suspend_faction - validate", ! defined $members{$player});
+	#sleep 1;
+
+	## Check that starmade_player_unsuspend_faction removes the player from the current faction
+	#test_result("starmade_player_unsuspend_faction", starmade_player_unsuspend_faction($player));
+	#sleep 1;
+	#%members = %{starmade_faction_list_members($faction_id)};
+	#test_result("starmade_player_unsuspend_faction - validate", defined $members{$player});
 
 	# Check to see if faction_del_member removes the player from the faction
 	test_result("starmade_faction_del_member", starmade_faction_del_member($player, $faction_id));
 	%player_info = %{starmade_player_info($player)};
 	test_result("starmade_faction_del_member - validate", ! defined $player_info{faction});
 
+	
 
 	# Check if starmade_faction_delete deletes the faction
 	test_result("starmade_faction_delete", starmade_faction_delete($faction_id));
 	%factions_bname = %{starmade_faction_list_bname()};
 	test_result("starmade_faction_delete - validate", !(defined $factions_bname{$faction}));
+
 	starmade_broadcast("\n\n");
 	print "\n\n";
 }
