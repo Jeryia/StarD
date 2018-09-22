@@ -32,7 +32,7 @@ sub interactive_reg {
 	my $test_cmd;
 	my $argfile;
 
-	prep_test_category('Interactive', 10);
+	prep_test_category('Interactive', 7);
 	
 	$test_cmd = "playerLogout";
 	$argfile = "./tmp/serverEvents/$test_cmd";
