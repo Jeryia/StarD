@@ -17,7 +17,7 @@ our (@ISA, @EXPORT);
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_clean_map_area starmade_setup_map starmade_repair_map starmade_recenter_map starmade_remap_map_factions starmade_spawn_mobs_bulk);
+@EXPORT= qw(starmade_clean_map_area starmade_setup_map starmade_repair_map starmade_spawn_mobs_bulk starmade_despawn_mobs_bulk starmade_recenter_map starmade_remap_map_factions);
 
 
 

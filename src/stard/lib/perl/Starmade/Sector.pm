@@ -8,7 +8,7 @@ use Starmade::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_setup_lib_env starmade_sector_chmod starmade_sector_info starmade_get_spawn_sector starmade_despawn_sector starmade_despawn_all starmade_spawn_entity starmade_spawn_entity_pos);
+@EXPORT= qw(starmade_sector_chmod starmade_sector_info starmade_get_spawn_sector starmade_despawn_sector starmade_despawn_all starmade_spawn_entity starmade_spawn_entity_pos);
 
 
 
@@ -200,14 +200,8 @@ sub starmade_spawn_entity {
 
 	starmade_if_debug(1, "starmade_spawn_entity($blueprint, $name, $sector, $faction, $ai)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/spawn_entity", $blueprint, $name, split(" ", $sector), $faction, $ai));
+	return _starmade_pf_cmd('starmade_spawn_entity', '/spawn_entity', $blueprint, $name, split(" ", $sector), $faction, $ai);
 
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_spawn_entity: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_spawn_entity: return: 1");
-	return 1;
 };
 
 ## starmade_spawn_entity_pos
@@ -236,14 +230,7 @@ sub starmade_spawn_entity_pos {
 
 	starmade_if_debug(1, "starmade_spawn_entity_pos($blueprint, $name, $sector, $pos, $faction, $ai)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/spawn_entity_pos", $blueprint, $name, split(" ",$sector), split(' ', $pos), $faction, $ai));
-
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_spawn_entity: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_spawn_entity: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_spawn_entity_pos', '/spawn_entity_pos', $blueprint, $name, split(" ",$sector), split(' ', $pos), $faction, $ai);
 };
 
 1;

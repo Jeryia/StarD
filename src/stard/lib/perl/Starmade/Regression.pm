@@ -16,10 +16,10 @@ require Exporter;
 @EXPORT = qw(prep_test_category finalize_testing test_result test_command test_event);
 
 my %TESTS_TO_RUN = ();
-my %TESTS_RUN = ();
+my %TESTS_PASSED = ();
 my $CUR_CATEGORY = "";
 my $SUB_TEST = 0;
-my %FAILURES = ();
+my %TESTS_FAILED = ();
 
 ## prep_test_category
 # prepare testing for a given category
@@ -35,8 +35,8 @@ sub prep_test_category {
 
 	$CUR_CATEGORY = $category;
 	$TESTS_TO_RUN{$category} = $tests;
-	$TESTS_RUN{$CUR_CATEGORY} = 0;
-	$FAILURES{$CUR_CATEGORY} = 0;
+	$TESTS_PASSED{$CUR_CATEGORY} = 0;
+	$TESTS_FAILED{$CUR_CATEGORY} = 0;
 	starmade_broadcast("### Running $category Tests ###");
 }
 
@@ -47,18 +47,18 @@ sub finalize_testing {
 	my $errors = 0;
 	starmade_broadcast("################################");
 	foreach my $category (keys %TESTS_TO_RUN) {
-		my $tests = $TESTS_RUN{$category};
-		$total_tests += $TESTS_RUN{$category};
-		$total_tests += $TESTS_RUN{$category};
+		my $tests = $TESTS_PASSED{$category};
+		$total_tests += $TESTS_PASSED{$category};
+		$total_tests += $TESTS_FAILED{$category};
 
-		starmade_broadcast("## $category: $TESTS_RUN{$category}/$TESTS_TO_RUN{$category}");
-		if ($TESTS_RUN{$category} != $TESTS_TO_RUN{$category}) {
+		starmade_broadcast("## $category: $TESTS_PASSED{$category}/$TESTS_TO_RUN{$category}");
+		if ($TESTS_PASSED{$category} != $TESTS_TO_RUN{$category}) {
 			$errors++;
-			starmade_broadcast("FAIL! We didn't run $TESTS_TO_RUN{$category} we only ran $TESTS_RUN{$category}!");
+			starmade_broadcast("FAIL! We didn't run $TESTS_TO_RUN{$category} we only ran $TESTS_PASSED{$category}!");
 		}
-		if ($FAILURES{$category}) {
-			$errors+=$FAILURES{$category};
-			starmade_broadcast("We failed $FAILURES{$category} tests!");
+		if ($TESTS_FAILED{$category}) {
+			$errors+=$TESTS_FAILED{$category};
+			starmade_broadcast("We failed $TESTS_FAILED{$category} tests!");
 		}
 	}
 	if (not $SUB_TEST) {
@@ -88,14 +88,14 @@ sub test_result {
 	my $result = $_[1];
 	my $message = $_[2];
 	select(undef, undef, undef, 0.1);
-	$TESTS_RUN{$CUR_CATEGORY}++;
 	if ($result) {
 		starmade_broadcast("$test - PASS");
+		$TESTS_PASSED{$CUR_CATEGORY}++;
 		return 1;
 	}
 	else {
 		starmade_broadcast("$test - FAIL");
-		$FAILURES{$CUR_CATEGORY}++;
+		$TESTS_FAILED{$CUR_CATEGORY}++;
 		if ($message) {
 			starmade_broadcast($message);
 		};

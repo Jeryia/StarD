@@ -8,7 +8,7 @@ use Starmade::Base;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT= qw(starmade_blueprint_info starmade_blueprint_delete starmade_blueprint_set_owner starmade_in_bp_catalog starmade_in_bp_catalog_lazy starmade_get_bp_catalog starmade_refresh_bp_catalog_cache);
+@EXPORT= qw(starmade_blueprint_info starmade_blueprint_delete starmade_blueprint_set_owner starmade_catalog_list starmade_in_bp_catalog starmade_in_bp_catalog_lazy starmade_get_bp_catalog starmade_refresh_bp_catalog_cache);
 
 
 my %SHIP_BP_CATALOG_CACHE = ();
@@ -41,42 +41,41 @@ sub starmade_blueprint_info {
 sub starmade_blueprint_delete {
 	my $blueprint = shift(@_);
 
-	my @output = starmade_cmd("/blueprint_delete", $blueprint);
-	Line: for my $line (@output) {
-		if ($line =~/^ERROR:/) {
-			return 0;
-		}
-	}
-	return 1;
+	return _starmade_pf_cmd('starmade_blueprint_delete', '/blueprint_delete', $blueprint);
 }
 
-#### DISABLED UNTIL StarMade makes this not crash the server!
 ## starmade_blueprint_set_owner
 # Set the owner of a given blueprint
 # INPUT1: blueprint name
 # OUTPUT: 1 if success 0 if failure
 sub starmade_blueprint_set_owner {
-#	my $blueprint = shift(@_);
-#	my $player = shift(@_);
-#
-#	my @output = starmade_cmd("/blueprint_set_owner", $blueprint, $player);
-#	Line: for my $line (@output) {
-#		if ($line =~/^ERROR:/) {
-#			return 0;
-#		}
-#	}
-#	return 1;
+	my $blueprint = shift(@_);
+	my $player = shift(@_);
+
+	return _starmade_pf_cmd('starmade_blueprint_set_owner', '/blueprint_set_owner', $blueprint, $player);
 }
 
-## _starmade_catalog_list
+## starmade_catalog_list
 # get the list of ships from the starmade catalog
-sub _starmade_catalog_list {
-	my @output = starmade_cmd("/list_ships");
+# INPUT1: (optional) owner
+sub starmade_catalog_list {
+	my $owner;
+	if (@_) {
+		$owner = shift(@_);
+	}
+
+	my @output;
+	if ($owner) {
+		@output = starmade_cmd("/list_blueprints_by_owner", $owner);
+	}
+	else {
+		@output = starmade_cmd("/list_blueprints");
+	}
 	my @list;
-	#RETURN: [SERVER, [CATALOG] [Isanth Type-Zero Mp, Isanth Type-Zero Cc], 0]
+	#RETURN: [SERVER, [CATALOG] INDEX 98: TCN Argosy MkVI save15, 0]
 	for my $line (@output) {
-		if ($line =~/RETURN: \[SERVER, \[CATALOG\] \[(.*)\], 0\]/) {
-			@list = split(", ", $1);
+		if ($line =~/RETURN: \[SERVER, \[CATALOG\] INDEX \d+: (.*), 0\]/) {
+			push(@list, $1);
 		}
 	}
 	return \@list;
@@ -124,7 +123,7 @@ sub starmade_get_bp_catalog {
 ## starmade_refresh_bp_catalog_cache
 # Refresh the cache of the blueprint catalog.
 sub starmade_refresh_bp_catalog_cache {
-	my @list = @{_starmade_catalog_list()};
+	my @list = @{starmade_catalog_list()};
 	foreach my $ship (@list) {
 		$SHIP_BP_CATALOG_CACHE{$ship} = 1;
 	}

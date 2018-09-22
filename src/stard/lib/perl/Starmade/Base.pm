@@ -16,26 +16,28 @@ use Stard::Base qw(stard_read_config get_stard_conf_field stard_setup_lib_env);
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT=qw(starmade_setup_lib_env starmade_escape_chars starmade_validate_env starmade_stdlib_set_debug starmade_if_debug starmade_cmd get_starmade_home get_server_home starmade_last_output starmade_read_starmade_server_config starmade_get_starmade_conf_field get_starmade_conf_field);
+@EXPORT=qw(starmade_setup_lib_env starmade_escape_chars starmade_validate_env starmade_stdlib_set_debug starmade_if_debug starmade_cmd get_starmade_home get_server_home starmade_last_output starmade_read_starmade_server_config starmade_get_starmade_conf_field get_starmade_conf_field _starmade_pf_cmd);
 
 
 ## Global settings
 # Location of stard's home directory
-my $stard_home;
+our $stard_home;
 # Location of the starmade directory (usually /var/starmade)
-my $starmade_home;
+our $starmade_home;
 # Location of the stard server directory
-my $starmade_server;
+our $starmade_server;
+# Location of temp player data
+our $player_data;
 # Hash of the stard config file
-my %stard_config;
+our %stard_config;
 # Hash of the starmade config file
-my %starmade_config;
+our %starmade_config;
 # Put the command we are to run together when running stard commands.
-my @starmade_cmd;
+our @starmade_cmd;
 # Current level of debugging set
-my $debug_level = 0;
+our $debug_level = 0;
 # The output of the last command run (used for debugging)
-my $starmade_last_output;
+our $starmade_last_output;
 
 
 
@@ -52,8 +54,8 @@ sub starmade_setup_lib_env {
 	starmade_if_debug(2, "starmade_setup_lib_env($stard_home)");
 	$starmade_home = "$stard_home/..";
 	$starmade_server = "$starmade_home/StarMade";
+	$player_data = "$stard_home/data/players";
 	stard_setup_lib_env($stard_home);
-	@starmade_cmd = ();
 
 	@starmade_cmd = ();
 	push(@starmade_cmd, "/usr/bin/java", "-jar");
@@ -222,7 +224,7 @@ sub starmade_read_server_config {
 };
 
 ## get_starmade_conf_field
-# get a specific field from the stard.cfg file
+# Get a specific field from the stard.cfg file
 # INPUT1: field to grab
 # OUTPUT: value of field
 sub get_starmade_conf_field {
@@ -236,6 +238,28 @@ sub get_starmade_conf_field {
 	starmade_validate_env();
 	starmade_if_debug(1, "get_starmade_conf_field: return: $starmade_config{$field}");
 	return $starmade_config{$field};
+}
+
+## _starmade_pf_cmd
+# Run a basic pass/fail command against starmade
+# INPUT1: string to call this function a part of
+# INPUT2: command
+# INPUT3-*: arguments
+sub _starmade_pf_cmd {
+	my $report = shift(@_);
+	my $cmd = shift(@_);
+	my @args = @_;
+
+	starmade_if_debug(2, "_starmade_pf_cmd($cmd, ". join(',', @args) .")");
+	my $output = join("", starmade_cmd($cmd, @args));
+	if ($output =~/ERROR/i) {
+		starmade_if_debug(2, "_starmade_pf_cmd: return: 0");
+		starmade_if_debug(1, "$report: return: 0");
+		return 0;
+	};
+	starmade_if_debug(2, "_starmade_pf_cmd: return: 1");
+	starmade_if_debug(1, "$report: return: 1");
+	return 1;
 }
 
 1;

@@ -33,7 +33,7 @@ use Starmade::Message;
 require Exporter;
 our (@ISA, @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw(starmade_setup_lib_env starmade_run_if_admin starmade_is_admin starmade_admin_list starmade_player_list starmade_player_info starmade_change_sector_for starmade_teleport_to starmade_god_mode starmade_invisibility_mode starmade_give_credits starmade_give_item starmade_give_metaitem starmade_give_item_id starmade_give_all_items starmade_set_spawn_player starmade_player_get_invetory starmade_player_get_invetory_bid);
+@EXPORT = qw(starmade_run_if_admin starmade_is_admin starmade_admin_list starmade_player_list starmade_player_info starmade_change_sector_for starmade_teleport_to starmade_god_mode starmade_invisibility_mode starmade_give_credits starmade_give_item starmade_give_metaitem starmade_give_item_id starmade_give_all_items starmade_set_spawn_player starmade_player_get_inventory starmade_player_get_invetory_bid starmade_put_player_in);
 
 use Starmade::Base;
 
@@ -285,13 +285,7 @@ sub starmade_change_sector_for {
 
 	starmade_if_debug(1, "starmade_change_sector_for($player, $sector)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/change_sector_for", $player, split(" ", $sector)));
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_change_sector_for: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_change_sector_for: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_change_sector_for', '/change_sector_for', $player, split(" ", $sector));
 };
 
 ## starmade_teleport_to
@@ -391,13 +385,7 @@ sub starmade_give_credits {
 
 	starmade_if_debug(1, "starmade_give_credits($player, $amount)");
 	starmade_validate_env();
-	my $output = join("",starmade_cmd("/give_credits", $player, $amount));
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_give_credits: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_give_credits: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_give_credits', '/give_credits', $player, $amount);
 };
 
 ## starmade_give_item
@@ -413,13 +401,7 @@ sub starmade_give_item {
 
 	starmade_if_debug(1, "starmade_give_item($player, $item, $amount)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/give", $player, $item, $amount));
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_give_item: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_give_item: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_give_item', '/give', $player, $item, $amount);
 };
 
 ## starmade_give_metaitem
@@ -433,13 +415,7 @@ sub starmade_give_metaitem {
 
 	starmade_if_debug(1, "starmade_give_metaitem($player, $item)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/give_metaitem", $player, $item));
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_give_metaitem: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_give_metaitem: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_give_metaitem', '/give_metaitem', $player, $item);
 };
 
 ## starmade_give_item_id
@@ -455,13 +431,7 @@ sub starmade_give_item_id {
 
 	starmade_if_debug(1, "starmade_give_item_id($player, $item, $amount)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/giveid", $player, $item, $amount));
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_give_item_id: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_give_item_id: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_give_item_id', '/giveid', $player, $item, $amount);
 };
 
 ## starmade_give_all_items
@@ -475,13 +445,7 @@ sub starmade_give_all_items {
 
 	starmade_if_debug(1, "starmade_give_all_items($player, $amount)");
 	starmade_validate_env();
-	my $output = starmade_cmd("/give_all_items", $player, $amount);
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_give_all_items: return: 0");
-		return 0;
-	}
-	starmade_if_debug(1, "starmade_give_all_items: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_give_all_items', '/give_all_items', $player, $amount);
 };
 
 ## starmade_set_spawn_player
@@ -493,25 +457,19 @@ sub starmade_set_spawn_player {
 
 	starmade_if_debug(1, "starmade_set_spawn_player($player)");
 	starmade_validate_env();
-	my $output = join("", starmade_cmd("/set_spawn_player", $player));
-	if ($output =~/ERROR/i) {
-		starmade_if_debug(1, "starmade_set_spawn_player: return: 0");
-		return 0;
-	};
-	starmade_if_debug(1, "starmade_set_spawn_player: return: 1");
-	return 1;
+	return _starmade_pf_cmd('starmade_set_spawn_player', '/set_spawn_player', $player);
 };
 
 ## starmade_player_get_invetory
 # Set the player's current position to be that player's spawn sector
 # INPUT1: name of player
 # OUTPUT: player's inventory in hash format: %HASH{inv slot}{entry} = value
-sub starmade_player_get_invetory {
+sub starmade_player_get_inventory {
 	my $player = $_[0];
 
-	starmade_if_debug(1, "starmade_player_get_invetory($player)");
+	starmade_if_debug(1, "starmade_player_get_inventory($player)");
 	starmade_validate_env();
-	my @lines = starmade_cmd("/player_get_invetory", $player);
+	my @lines = starmade_cmd("/player_get_inventory", $player);
 	my %inventory = ();
 	foreach my $line (@lines) {
 		# RETURN: [SERVER, [INVENTORY] Jeryia:  SLOT: 50; MULTI: false; TYPE: 16; META: -1; COUNT: 4204, 0]
@@ -542,6 +500,8 @@ sub starmade_player_get_invetory_bid {
 	my $player = $_[0];
 
 	starmade_if_debug(1, "starmade_player_get_invetory($player)");
+	starmade_validate_env();
+
 	my %inventory = %{starmade_player_get_invetory($player)};
 	my %inv_bid = ();
 	foreach my $slot (keys %inventory) {
@@ -569,4 +529,15 @@ sub starmade_player_get_invetory_bid {
 	}
 	return \%inv_bid;
 }
+
+## starmade_put_player_in
+# Puts a player in mentioned entity
+# INPUT1: player
+# INPUT2: entity uid
+sub starmade_put_player_in {
+	my ($player, $entity) = @_;
+
+	return _starmade_pf_cmd('starmade_put_player_in', '/player_put_into_entity_uid', $player, $entity);
+}
+
 1;
