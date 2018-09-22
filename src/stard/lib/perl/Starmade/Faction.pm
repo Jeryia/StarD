@@ -261,9 +261,6 @@ sub starmade_player_unsuspend_faction {
 
 	my $output = join("", starmade_cmd("/player_unsuspend_faction", $player));
 	if ($output =~/unsuspended faction for/) {
-		if (not $PLAYER_SUSPEND_CACHE{$player}) {
-			return 1;
-		}
 		starmade_if_debug(1, "starmade_player_unsuspend_faction: return: 1");
 		return 1;
 	};
