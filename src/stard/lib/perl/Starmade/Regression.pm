@@ -74,6 +74,10 @@ sub finalize_testing {
 			starmade_broadcast("Final Result: SUCCESS!!!!!");
 		}
 	}
+	if ($errors) {
+		return 0;
+	}
+	return 1;
 }
 
 

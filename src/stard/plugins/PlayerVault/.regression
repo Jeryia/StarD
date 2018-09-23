@@ -26,6 +26,9 @@ sub main {
 	sleep 1;
 	test_result("$plugin - exit vault", test_command("vault", $player) == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }
 

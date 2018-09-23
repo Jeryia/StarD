@@ -67,6 +67,9 @@ sub main {
 	%player_info = %{starmade_player_info($player)};
 	test_result("plugin-$plugin - overdraw", $player_info{credits} == $last_credits);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }
 

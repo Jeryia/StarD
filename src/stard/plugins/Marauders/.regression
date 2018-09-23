@@ -144,5 +144,8 @@ sub main {
 	test_result("$plugin - playerDeath", test_event("playerDeath", 'sdf', 'asdf') == 0);
 	test_result("$plugin - sectorChange", test_event("sectorChange", 'sdf', 'sdf', '0 0 0', '1 1 1') == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }

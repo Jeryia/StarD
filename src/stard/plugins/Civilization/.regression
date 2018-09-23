@@ -137,7 +137,10 @@ sub main {
 	}
 	system('mv', $config_backup_dir, $config_dir);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }
 
 

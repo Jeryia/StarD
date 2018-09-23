@@ -36,5 +36,8 @@ sub main {
 	test_result("$plugin - get rocket_launcher", test_command("get", $player, "rocket_launcher") == 0);
 	test_result("$plugin - get torch", test_command("get", $player, "torch") == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }

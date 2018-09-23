@@ -46,7 +46,10 @@ sub main {
 	unlink("$config_dir/test.cfg");
 	unlink("$merge_dir/test.cfg");
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }
 
 

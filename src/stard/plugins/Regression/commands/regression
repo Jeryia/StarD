@@ -7,6 +7,8 @@ use lib("../../lib/perl");
 use Stard::Base;
 use Starmade::Base;
 use Starmade::Message;
+use Starmade::Player;
+use Starmade::Regression;
 		
 use lib("./lib");
 use core_reg;
@@ -64,6 +66,13 @@ sub main {
 	my $test = $_[1];
 
 	starmade_broadcast("Regression requested...");
+        my %player_info = %{starmade_player_info($player)};
+        if (!$player_info{control}) {
+                starmade_broadcast("player must be conntrolling an object for regression testing!");
+                exit 1;
+        }
+        %player_info = ();
+
 
 	if (!$test || $test eq 'full') {
 		starmade_broadcast("Running full suite");
@@ -108,6 +117,6 @@ sub main {
 		starmade_pm($player, "Available suites:\nall\ncore\ngeneral\nplayer\nfaction\nsector\nmap\nmultiplexer\nplugin\ninteractive");
 		exit 0;
 	};
-	starmade_broadcast("All tests passed!");
+	finalize_testing();
 }
 

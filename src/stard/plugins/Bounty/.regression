@@ -69,5 +69,8 @@ sub main {
 	# is not online that it will still function.
 	test_result("plugin-$plugin - bounty non-existant player", test_command("bounty", $player, $bounty_player, $bounty_credits) == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }

@@ -10,7 +10,7 @@ use Starmade::Regression;
 
 my $stard_home = "../../";
 my $stard_plugins = "$stard_home/plugins";
-my $stard_enabled_plugins = "$stard_home/plugins";
+my $stard_enabled_plugins = "$stard_home/plugins.enabled";
 starmade_setup_lib_env($stard_home);
 
 main(@ARGV);
@@ -53,6 +53,9 @@ sub main {
 	test_result("$plugin - rules", test_command("rules", $player) == 0);
 	test_result("$plugin - stard", test_command("stard", $player, 'status') == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }
 

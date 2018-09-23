@@ -50,5 +50,8 @@ sub main {
 		test_command("lastlogin", $player, "kfhrb") == 0
 	);
 	
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }

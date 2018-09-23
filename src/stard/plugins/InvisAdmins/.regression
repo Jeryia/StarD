@@ -24,5 +24,8 @@ sub main {
 
 	test_result("$plugin - playerSpawn", test_event("playerSpawn", $player) == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }

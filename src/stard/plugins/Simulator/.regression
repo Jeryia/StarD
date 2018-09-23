@@ -21,6 +21,9 @@ sub main {
 
 	test_result("$plugin - sim duel test", test_command("sim", $player, "duel", 'Isanth Type-Zero Bm', 'Isanth Type-Zero Bm') == 0);
 
-	finalize_testing();
+	if(finalize_testing()) {
+		exit 0;
+	}
+	exit 1;
 }
 
