@@ -61,14 +61,10 @@ sub main {
 	open(my $lock_fh, "<", $prog) or die "Could not open '$prog': $!\n";
 	flock($lock_fh, 2) or die "Failed to lock '$prog':$!\n";
 	if ($command eq 'load') {
-		foreach my $plugin (@plugins) {
-			load_plugin($plugin, $player);
-		}
+		load_plugins(\@plugins, $player);
 	}
 	elsif ($command eq 'unload') {
-		foreach my $plugin (@plugins) {
-			unload_plugin($plugin, $player);
-		}
+		unload_plugins(\@plugins, $player);
 	}
 	elsif ($command eq 'info') {
 		if (!@plugins) {
@@ -88,61 +84,81 @@ sub main {
 	close($lock_fh);
 };	
 
-## load_plugin
+## load_plugins
 # loads the given plugin
-# INPUT1: plugin to load
+# INPUT1: plugins to load (array pointer)
 # INPUT2: player to display loading information to
-sub load_plugin {
-	my $plugin = $_[0];
-	my $player = $_[1];
+sub load_plugins {
+	my @plugins = @{shift(@_)};
+	my $player = shift(@_);
 
-	if (!$plugin) {
+	if (!@plugins) {
 		help($player);
 		exit 1;
 	}
+
+	# Check that we can load all mentioned plugins
 	my %disabled_plugins = %{get_disabled_plugins_hash()};
-	if (!$disabled_plugins{$plugin}) {
-		starmade_pm($player, "'$plugin' is already loaded or not available.");
-		help($player);
-		exit 1;
+	foreach my $plugin (@plugins) {
+		if (!$disabled_plugins{$plugin}) {
+			starmade_pm($player, "'$plugin' is already loaded or not available.");
+			help($player);
+			exit 1;
+		}
 	}
-	symlink("$plugins_dir/$plugin", "$plugins_enabled_dir/$plugin") or die "Failed to make link '$plugins_enabled_dir/$plugin': $!\n";
+
+	# Load plugins
+	foreach my $plugin (@plugins) {
+		symlink("../plugins/$plugin", "$plugins_enabled_dir/$plugin") or die "Failed to make link '$plugins_enabled_dir/$plugin': $!\n";
+	}
 	starmade_broadcast("Restarting Plugin Deamons. Standby...");
 	stop_stard_deamons($player);
 	start_stard_deamons($player);
 	starmade_broadcast("Plugin deamon restart complete!");
-	starmade_broadcast("Plugin: '$plugin' has been loaded");
+	foreach my $plugin (@plugins) {
+		starmade_broadcast("Plugin: '$plugin' has been loaded");
+	}
 }
 
 ## unload_plugin
-# unloads the given plugin
-# INPUT1: plugin unload
+# unloads the given plugins
+# INPUT1: plugins to unload (array pointer)
 # INPUT2: player to display info to
-sub unload_plugin {
-	my $plugin = $_[0];
-	my $player = $_[1];
+sub unload_plugins {
+	my @plugins = @{shift(@_)};
+	my $player = shift(@_);
 
-	if (!$plugin) {
+	if (!@plugins) {
 		help($player);
 		exit 1;
 	}
-	if ($plugin eq 'Base') {
-		starmade_pm($player, "Cannot remove 'Base' plugin, this would remove the !plugin command!");
-		exit 1;
-	}
+
+	# Check that we can unload all mentioned plugins
 	my %active_plugins = %{get_active_plugins_hash()};
-	if (!$active_plugins{$plugin}) {
-		starmade_pm($player, "Plugin: '$plugin' is not loaded.");
-		help($player);
-		exit 1;
+	foreach my $plugin (@plugins) {
+		if ($plugin eq 'Base') {
+			starmade_pm($player, "Cannot remove 'Base' plugin, this would remove the !plugin command!");
+			exit 1;
+		}
+		if (!$active_plugins{$plugin}) {
+			starmade_pm($player, "Plugin: '$plugin' is not loaded.");
+			help($player);
+			exit 1;
+		}
 	}
+
+	# Unload the plugins
 	starmade_broadcast("Restarting Plugin Deamons. Standby...");
 	stop_stard_deamons($player);
-	unlink("$plugins_enabled_dir/$plugin") or die "Failed to move '$plugins_enabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
+	foreach my $plugin (@plugins) {
+		unlink("$plugins_enabled_dir/$plugin") or die "Failed to move '$plugins_enabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
+	}
 	start_stard_deamons($player);
 	starmade_broadcast("Plugin deamon restart complete!");
 		
-	starmade_broadcast("Plugin: '$plugin' has been unloaded");
+	foreach my $plugin (@plugins) {
+		starmade_broadcast("Plugin: '$plugin' has been unloaded");
+	}
 }
 
 ## help
