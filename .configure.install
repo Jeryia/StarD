@@ -23,11 +23,12 @@ ifeq (\$(USERID), 0)
 	useradd -c 'Privilege-separated starmade server' -s /bin/bash -r -d \$(STARMADEDIR) \$(USER) 2> /dev/null || :
 	service stard stop || :
 endif
-	rsync -pr --exclude './plugins' --exclude './plugins.disabled' \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
+	rsync -pr --exclude './plugins' --exclude './plugins' \$(STARMADE_BUILD) \$(DESTDIR)\$(LOCALSTATEDIR)
 
-	mkdir -p \$(DESTDIR)\$(STARMADEDIR)/stard/plugins/Base
+	mkdir -p \$(DESTDIR)\$(STARMADEDIR)/stard/plugins
+	mkdir -p \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.enabled
+	ln -fs \$(DESTDIR)\$(STARMADEDIR)/stard/plugins/Base \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.enabled/Base
 	\$(DESTDIR)\$(STARMADEDIR)/stard/bin/stard_update_plugin \$(STARMADE_BUILD)/stard/plugins/*
-	\$(DESTDIR)\$(STARMADEDIR)/stard/bin/stard_update_plugin \$(STARMADE_BUILD)/stard/plugins.disabled/*
 
 	cp -pf \$(BUILD_DIR)/sbin/stard \$(DESTDIR)\$(SBINDIR)/
 	cp -pf \$(BUILD_DIR)/sbin/stard-backup \$(DESTDIR)\$(SBINDIR)/
@@ -45,17 +46,15 @@ ifeq (\$(USERID), 0)
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/spool
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins
-	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled
+	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/plugins.enabled
 	chown -R \$(USER):\$(USER) \$(DESTDIR)\$(STARMADEDIR)/stard/log
+
 endif
 " >> ./Makefile
 
-	for plugin in ./src/stard/plugins.disabled/*; do 
+	for plugin in ./src/stard/plugins/*; do 
 		name=$(basename $plugin)
-		echo "
-	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && cp -R '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name' '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/'\" || :
-	bash -c \"test -d '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' && rm -rf '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins.disabled/$name'\" || :
-" >> ./Makefile
+		echo "cp -R '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/$name' '\$(DESTDIR)\$(STARMADEDIR)/stard/plugins/'\" || :" >> ./Makefile
 	done
 	
 	if [ $INITV -eq 1 ]; then

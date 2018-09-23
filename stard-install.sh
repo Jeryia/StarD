@@ -317,10 +317,9 @@ function install_stard {
 	else
 		rsync -ar --exclude starmade/stard/stard-launcher.conf build/starmade "$INSTALLDIR/"
 		cp -n build/starmade/stard/stard-launcher.conf "$INSTALLDIR/starmade/stard/"
-		for plugin in ./src/stard/plugins.disabled/*; do 
+		for plugin in ./src/stard/plugins/*; do
 			name=$(basename $plugin)
-			test -d "$INSTALLDIR/starmade/stard/plugins/$name" && cp -R "$INSTALLDIR/starmade/stard/plugins.disabled/$name" "$INSTALLDIR/stard/plugins/"
-			test -d "$INSTALLDIR/starmade/stard/plugins/$name" && rm -rf "$INSTALLDIR/starmade/stard/plugins.disabled/$name"
+			cp -R "$INSTALLDIR/starmade/stard/plugins/$name" "$INSTALLDIR/stard/plugins/"
 		done
 	fi
 	

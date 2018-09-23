@@ -10,6 +10,7 @@ use Starmade::Regression;
 
 my $stard_home = "../../";
 my $stard_plugins = "$stard_home/plugins";
+my $stard_enabled_plugins = "$stard_home/plugins";
 starmade_setup_lib_env($stard_home);
 
 main(@ARGV);
@@ -32,7 +33,7 @@ sub main {
 	# Check to see if loading the test plugin via the plugin command loads the 
 	# plugin.
 	test_command("plugin", $player, "load", "Test");
-	test_result("$plugin - plugin load:", -d "$stard_plugins/Test");
+	test_result("$plugin - plugin load:", -d "$stard_enabled_plugins/Test");
 	$result = `../../bin/stard_daemons status | grep -q 'Test is running'; echo \$?`;
 	test_result("$plugin - plugin unload daemon:", $result == 0);
 
@@ -40,7 +41,7 @@ sub main {
 	# Check to see if unloading the Test plugin via the plugin command 
 	# actually unloads the test plugin.
 	test_command("plugin", $player, "unload", "Test");
-	test_result("$plugin - plugin unload:", ! -d "$stard_plugins/Test");
+	test_result("$plugin - plugin unload:", ! -d "$stard_enabled_plugins/Test");
 	$result = `../../bin/stard_daemons status | grep -q 'Test is'; echo \$?`;
 	test_result("$plugin - plugin unload daemon:", $result != 0);
 

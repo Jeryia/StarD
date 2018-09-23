@@ -57,12 +57,6 @@ useradd -c "Privilege-separated starmade server" -s /bin/bash -r -d /var/starmad
 service stard stop || :
 
 %post
-for plugin in `ls /var/starmade/stard/plugins.disabled/`; do
-	if [ -e /var/starmade/stard/plugins/$plugin ];then
-		cp -R "/var/starmade/stard/plugins.disabled/$plugin" "/var/starmade/stard/plugins/"
-		rm -rf "/var/starmade/stard/plugins.disabled/$plugin"
-	fi
-done
 /usr/bin/systemctl --system daemon-reload
 if [ $1 -ge 1 ] ; then
 	systemctl is-enabled stard > /dev/null && /usr/bin/systemctl start stard || :
@@ -93,11 +87,11 @@ fi
 %attr(755,root,root) /var/starmade/stard/libexec/*
 /var/starmade/stard/plugins/*
 /var/starmade/server
-%attr(755,starmade,starmade) /var/starmade/stard/plugins.disabled
+%attr(755,starmade,starmade) /var/starmade/stard/plugins
 
 
 %defattr(644,starmade,starmade, 0755)
-%dir /var/starmade/stard/plugins
+%dir /var/starmade/stard/plugins.enabled
 %dir /var/starmade/stard/log
 %dir /var/starmade/stard
 

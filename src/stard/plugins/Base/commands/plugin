@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use File::Copy;
+use Cwd qw(abs_path);
 
 use lib("../../lib/perl");
 use Starmade::Base;
@@ -30,8 +31,8 @@ my $base_home = '.';
 my $base_spool = "$base_home/spool";
 my $stard_home = "$base_home/../..";
 
+my $plugins_enabled_dir = "$stard_home/plugins.enabled";
 my $plugins_dir = "$stard_home/plugins";
-my $plugins_disabled_dir = "$stard_home/plugins.disabled";
 
 my $prog = $0;
 
@@ -105,7 +106,7 @@ sub load_plugin {
 		help($player);
 		exit 1;
 	}
-	move("$plugins_disabled_dir/$plugin", "$plugins_dir/$plugin") or die "Failed to move '$plugins_disabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
+	symlink("$plugins_dir/$plugin", "$plugins_enabled_dir/$plugin") or die "Failed to make link '$plugins_enabled_dir/$plugin': $!\n";
 	starmade_broadcast("Restarting Plugin Deamons. Standby...");
 	stop_stard_deamons($player);
 	start_stard_deamons($player);
@@ -137,7 +138,7 @@ sub unload_plugin {
 	}
 	starmade_broadcast("Restarting Plugin Deamons. Standby...");
 	stop_stard_deamons($player);
-	move("$plugins_dir/$plugin", "$plugins_disabled_dir/$plugin") or die "Failed to move '$plugins_dir/$plugin' to '$plugins_disabled_dir/$plugin'\n";
+	unlink("$plugins_enabled_dir/$plugin") or die "Failed to move '$plugins_enabled_dir/$plugin' to '$plugins_dir/$plugin'\n";
 	start_stard_deamons($player);
 	starmade_broadcast("Plugin deamon restart complete!");
 		
@@ -216,7 +217,17 @@ sub display_disabled_plugins {
 # puts disabled the plugins into a hash table for easy lookup
 # OUTPUT: hash table of plugins
 sub get_disabled_plugins_hash {
-	return get_dir_contents_hash($plugins_disabled_dir);
+	my %plugins = %{get_dir_contents_hash($plugins_dir)};
+
+	my %active = %{get_active_plugins_hash()};
+
+	my %disabled = ();
+	foreach my $plugin (keys %plugins) {
+		if (!$active{$plugin}) {
+			$disabled{$plugin} =1;
+		}
+	}
+	return \%disabled;
 }
 
 ## get_active_plugins_hash
@@ -261,7 +272,7 @@ sub display_plugin_info {
 	my %disabled_plugins = %{get_disabled_plugins_hash()};
 	if ($active_plugins{$plugin}) {
 		my $fh;
-		if (!open($fh, "<", "$plugins_dir/$plugin/info.txt")) {
+		if (!open($fh, "<", "$plugins_enabled_dir/$plugin/info.txt")) {
 			 starmade_cmd($player, "No information available for plugin '$plugin'");
 			exit 1;
 		}
@@ -270,7 +281,7 @@ sub display_plugin_info {
 	}
 	elsif ($disabled_plugins{$plugin}) {
 		my $fh;
-		if (!open($fh, "<", "$plugins_disabled_dir/$plugin/info.txt")) {
+		if (!open($fh, "<", "$plugins_dir/$plugin/info.txt")) {
 			 starmade_cmd($player, "No information available for plugin '$plugin'");
 			exit 1;
 		}

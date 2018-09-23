@@ -53,6 +53,7 @@ fi
 
 stard_home="$baseDir/stard"
 spool="$baseDir/spool"
+plugin_enabled_dir="$stard_home/plugins.enabled"
 plugin_dir="$stard_home/plugins"
 bin="$stard_home/bin"
 stard_log="$stard_home/log"
@@ -61,6 +62,9 @@ error="$spool/serverErr"
 input="$spool/serverIn"
 PLUGINS=`$stard_home/bin/stard_get_plugin_list`
 
+## make directories
+# make plugins directory and enable the Base plugin if needed
+mkdir "$plugin_enabled_dir" 2> /dev/null && ln -s "$plugin_dir/Base" "$plugin_enabled_dir/Base"
 
 ## Have starmade 'set itself up' if needbe
 if [ ! -e "$SERVER_DIR/version.txt" ]; then

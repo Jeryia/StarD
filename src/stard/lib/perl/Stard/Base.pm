@@ -60,7 +60,7 @@ my $debug_level = 0;
 sub stard_setup_lib_env {
 	$stard_home = $_[0];
 
-	$stard_plugins = "$stard_home/plugins";
+	$stard_plugins = "$stard_home/plugins.enabled";
 	$stard_log = "$stard_home/log";
 	$stard_plugin_log = "$stard_log/plugins";
 	stdout_log("stard_core setup. Found stard home: '$stard_home'", 6);

@@ -29,40 +29,19 @@ while [ "x" != "x$1" ]; do
 	shift
 
 	NEW_PLUGIN_BASENAME=`basename $NEW_PLUGIN`
-	ACTIVE_PLUGIN_DIR="$STARD_HOME/plugins"
-	INACTIVE_PLUGIN_DIR="$STARD_HOME/plugins.disabled"
+	PLUGIN_DIR="$STARD_HOME/plugins"
 	
-	mkdir -p "$ACTIVE_PLUGIN_DIR"
-	mkdir -p "$INACTIVE_PLUGIN_DIR"
+	mkdir -p "$PLUGIN_DIR"
 
-	if [ -d "$ACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME" ]; then
-		rsync -arv --delete \
-			--exclude '*.conf' \
-			--exclude '*.ini' \
-			--exclude '*.cnf' \
-			--exclude '*.cfg' \
-			"$NEW_PLUGIN/" \
-			"$ACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
-		rsync -arv --delete \
-			--ignore-existing \
-			"$NEW_PLUGIN/" \
-			"$ACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
-	elif [ -d "$INACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME" ]; then
-		rsync -arv --delete \
-			--exclude '*.conf' \
-			--exclude '*.ini' \
-			--exclude '*.cnf' \
-			--exclude '*.cfg' \
-			"$NEW_PLUGIN/" \
-			"$INACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
-		rsync -arv --delete \
-			--ignore-existing \
-			"$NEW_PLUGIN/" \
-			"$INACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
-	
-	else
-		rsync -arv
-			"$NEW_PLUGIN/" \
-			"$INACTIVE_PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
-	fi
+	rsync -arv --delete \
+		--exclude '*.conf' \
+		--exclude '*.ini' \
+		--exclude '*.cnf' \
+		--exclude '*.cfg' \
+		"$NEW_PLUGIN/" \
+		"$PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
+	rsync -arv --delete \
+		--ignore-existing \
+		"$NEW_PLUGIN/" \
+		"$PLUGIN_DIR/$NEW_PLUGIN_BASENAME/"
 done

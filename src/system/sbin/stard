@@ -81,7 +81,7 @@ chmod u+x $serverLoc
 # make sure ownership is good
 chown $USER:$GROUP $serverLoc
 chown -R $USER:$GROUP $baseDir/stard/plugins
-chown -R $USER:$GROUP $baseDir/stard/plugins.disabled
+chown -R $USER:$GROUP $baseDir/stard/plugins.enabled
 chown -R $USER:$GROUP $serverLoc/*
 
 

@@ -36,11 +36,11 @@ fi
 
 stard_home="$baseDir/stard"
 spool="$baseDir/spool"
-plugin_dir="$stard_home/plugins"
+plugin_enabled_dir="$stard_home/plugins.enabled"
 stard_log="$stard_home/log"
 stard_plugin_log="$stard_home/log/plugins/"
 ACTIVE_PLUGINS=`$stard_home/bin/stard_get_plugin_list`
-PLUGINS=`ls $plugin_dir`
+PLUGINS=`ls $plugin_enabled_dir`
 PROG=$0
 
 stard_bin="$stard_home/bin"
@@ -56,10 +56,10 @@ stard_run="$stard_home"
 # OUTPUT: 0 if plugin's daemon is running, 1 if not, 2 if plugin has no daemon
 function plugin_daemon_active {
 	plugin=$1
-	if [ -x "$plugin_dir/$plugin/daemon" ]; then
-		PIDFILE="$plugin_dir/$plugin/daemon.pid"
+	if [ -x "$plugin_enabled_dir/$plugin/daemon" ]; then
+		PIDFILE="$plugin_enabled_dir/$plugin/daemon.pid"
 		if [ -r "$PIDFILE" ]; then
-			pgrep -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1
+			pgrep -U $USER --pidfile $plugin_enabled_dir/$plugin/daemon.pid > /dev/null 2>&1
 			RET=$?
 			if [ $RET -eq 0 ]; then
 				return 0
@@ -100,12 +100,12 @@ function start_plugins {
 	notRunning=`plugin_status | grep 'not running' | awk '{print \$1}'`
 	setup_logging
 	for plugin in $notRunning; do
-		if [ -x "$plugin_dir/$plugin/daemon" ]; then
+		if [ -x "$plugin_enabled_dir/$plugin/daemon" ]; then
 			CWD=`pwd`
-			cd "$plugin_dir/$plugin"
-			exec_prefix=`$stard_bin/exec_prefix "$plugin_dir/$plugin/daemon"`
-			nohup $exec_prefix $plugin_dir/$plugin/daemon > "$stard_plugin_log/$plugin-log/$plugin-deamon.log" 2>&1 &
-			echo -n $! > $plugin_dir/$plugin/daemon.pid
+			cd "$plugin_enabled_dir/$plugin"
+			exec_prefix=`$stard_bin/exec_prefix "$plugin_enabled_dir/$plugin/daemon"`
+			nohup $exec_prefix $plugin_enabled_dir/$plugin/daemon > "$stard_plugin_log/$plugin-log/$plugin-deamon.log" 2>&1 &
+			echo -n $! > $plugin_enabled_dir/$plugin/daemon.pid
 			cd $CWD
 		fi
 	done
@@ -124,12 +124,12 @@ function prerun {
 	setup_logging
 	echo -n "Launching prerun scripts"
 	for plugin in $ACTIVE_PLUGINS; do
-		if [ -x "$plugin_dir/$plugin/prerun" ]; then
+		if [ -x "$plugin_enabled_dir/$plugin/prerun" ]; then
 			echo "Running $plugin prerun..."
 			CWD=`pwd`
-			cd "$plugin_dir/$plugin"
-			exec_prefix=`$stard_bin/exec_prefix "$plugin_dir/$plugin/prerun"`
-			$exec_prefix $plugin_dir/$plugin/prerun > "$stard_plugin_log/$plugin-log/prerun.log"
+			cd "$plugin_enabled_dir/$plugin"
+			exec_prefix=`$stard_bin/exec_prefix "$plugin_enabled_dir/$plugin/prerun"`
+			$exec_prefix $plugin_enabled_dir/$plugin/prerun > "$stard_plugin_log/$plugin-log/prerun.log"
 		fi
 	done
 	return 0
@@ -143,8 +143,8 @@ function stop_plugins {
 
 	daemons='0'
 	for plugin in $PLUGINS; do
-		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
-			PID=`cat $plugin_dir/$plugin/daemon.pid`
+		if [ -r "$plugin_enabled_dir/$plugin/daemon.pid" ]; then
+			PID=`cat $plugin_enabled_dir/$plugin/daemon.pid`
 			kill $PID
 			daemons='1'
 		fi
@@ -155,21 +155,21 @@ function stop_plugins {
 	fi
 	sleep 5
 	for plugin in $PLUGINS; do
-		if [ -r "$plugin_dir/$plugin/daemon.pid" ]; then
-			pkill -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+		if [ -r "$plugin_enabled_dir/$plugin/daemon.pid" ]; then
+			pkill -U $USER --pidfile $plugin_enabled_dir/$plugin/daemon.pid > /dev/null 2>&1 
 			sleep 1
-			pgrep -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+			pgrep -U $USER --pidfile $plugin_enabled_dir/$plugin/daemon.pid > /dev/null 2>&1 
 			RET=$?
 			if [ $RET -eq 0 ]; then
-				pkill -9 -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+				pkill -9 -U $USER --pidfile $plugin_enabled_dir/$plugin/daemon.pid > /dev/null 2>&1 
 			fi
 			sleep 1
-			pgrep -U $USER --pidfile $plugin_dir/$plugin/daemon.pid > /dev/null 2>&1 
+			pgrep -U $USER --pidfile $plugin_enabled_dir/$plugin/daemon.pid > /dev/null 2>&1 
 			RET=$?
 			if [ $RET -eq 0 ]; then
 				echo "Failed to kill $PID"
 			else
-				rm -f $plugin_dir/$plugin/daemon.pid
+				rm -f $plugin_enabled_dir/$plugin/daemon.pid
 			fi
 		fi
 	done

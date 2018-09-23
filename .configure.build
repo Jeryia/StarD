@@ -103,7 +103,6 @@ build_system:
 	cp -pfr \$(SYSTEM_SOURCE)/etc/ \$(BUILD_DIR)/etc
 	cp -pf \$(SYSTEM_SOURCE)/stard.initv \$(BUILD_DIR)/
 
-	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins.disabled
 	mkdir -p \$(BUILD_DIR)/starmade/stard/plugins
 	mkdir -p \$(BUILD_DIR)/starmade/stard/log
 	mkdir -p \$(BUILD_DIR)/starmade/stard/spool
